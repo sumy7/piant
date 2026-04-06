@@ -1,0 +1,9 @@
+packages:
+  - scripts/**
+  - packages/**
+  - examples/**
+  - '!**/compiled/**'
+  - '!**/dist/**'
+  - '!**/dist-*/**'
+
+hoistPattern: []

@@ -1,0 +1,26 @@
+{
+  "name": "piant-monorepo",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "scripts/*"
+  ],
+  "scripts": {
+    "build": "cross-env NX_DAEMON=false nx run-many -t build --exclude @examples/* @e2e/* --parallel=10",
+    "changeset": "changeset",
+    "format": "prettier --write . && heading-case --write",
+    "lint": "biome check",
+    "sort-package-json": "pnpx sort-package-json \"./package.json\" \"packages/*/package.json\" \"packages/compat/*/package.json\""
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.2.5",
+    "@changesets/cli": "^2.29.7",
+    "@rollup/plugin-typescript": "^12.1.4",
+    "@types/node": "^22.18.8",
+    "cross-env": "^10.1.0",
+    "nx": "^21.6.4",
+    "prettier": "^3.6.2",
+    "typescript": "^5.9.3"
+  },
+  "packageManager": "pnpm@10.18.1"
+}

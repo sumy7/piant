@@ -1,0 +1,67 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
+  },
+  "vcs": {
+    "enabled": true,
+    "defaultBranch": "main",
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "files": {
+    "includes": [
+      "**/packages/**",
+      "**/examples/**",
+      "**/e2e/**",
+      "**/scripts/**",
+      "**/website/**",
+      "!**/node_modules",
+      "!**/.nx",
+      "!**/dist",
+      "!**/dist-*",
+      "!**/doc_build",
+      "!**/compiled",
+      "!**/*.vue",
+      "!**/*.svelte",
+      "!**/template-lit-*/src/my-element.*",
+      "!e2e/cases/browser-logs/skip-build-error/src"
+    ],
+    "ignoreUnknown": true
+  },
+  "formatter": {
+    "enabled": false
+  },
+  "css": {
+    "parser": {
+      "cssModules": true
+    }
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      "correctness": {
+        "useUniqueElementIds": "off"
+      },
+      "style": {
+        "noNonNullAssertion": "off",
+        "useFilenamingConvention": {
+          "level": "error",
+          "options": {
+            "filenameCases": ["camelCase", "PascalCase", "export"]
+          }
+        }
+      },
+      "suspicious": {
+        "noTsIgnore": "off",
+        "noExplicitAny": "off",
+        "noConfusingVoidType": "off"
+      }
+    }
+  }
+}

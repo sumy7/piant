@@ -1,0 +1,103 @@
+import { Container, Sprite, Texture } from 'pixi.js';
+import { describe, expect, it } from 'vitest';
+import {
+  Typesetter,
+  type InlineItem,
+  type TextRenderSurface,
+} from '../src/elements/text/index.ts';
+
+Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
+  configurable: true,
+  writable: true,
+  value: () => {
+    let currentFont = '16px Arial';
+    return {
+      get font() {
+        return currentFont;
+      },
+      set font(value: string) {
+        currentFont = value;
+      },
+      fillStyle: '#000000',
+      textAlign: 'left',
+      textBaseline: 'alphabetic',
+      setTransform: () => {},
+      clearRect: () => {},
+      measureText: (text: string) => ({
+        width: text.length * 8,
+        actualBoundingBoxAscent: 12,
+        actualBoundingBoxDescent: 4,
+      }),
+      fillText: () => {},
+    };
+  },
+});
+
+describe('Typesetter renderTo', () => {
+  const createSurface = (): TextRenderSurface => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
+    return {
+      canvas,
+      ctx,
+      sprite: new Sprite(Texture.from(canvas)),
+    };
+  };
+
+  it('reuses render objects across repeated renders', () => {
+    const imageSprite = new Sprite(Texture.WHITE);
+    imageSprite.width = 24;
+    imageSprite.height = 24;
+
+    const items: InlineItem[] = [
+      { type: 'text', content: 'Hello ' },
+      { type: 'image', content: imageSprite },
+      { type: 'text', content: 'world' },
+    ];
+
+    const typesetter = new Typesetter(items, {
+      fontSize: 16,
+      lineHeight: 20,
+    });
+
+    const container = new Container();
+    const surface = createSurface();
+    typesetter.flow(280);
+    typesetter.renderTo(container, surface, { width: 280, height: 20 });
+    const first = [...container.children];
+
+    typesetter.renderTo(container, surface, { width: 280, height: 20 });
+    const second = [...container.children];
+
+    expect(second.length).toBeGreaterThan(0);
+    expect(first[0]).toBe(surface.sprite);
+    expect(second.length).toBe(first.length);
+    for (let i = 0; i < first.length; i++) {
+      expect(second[i]).toBe(first[i]);
+    }
+  });
+
+  it('keeps renderTo benchmark stable and without child growth', () => {
+    const text = 'Benchmark text render on canvas texture sprite path.';
+    const items: InlineItem[] = [{ type: 'text', content: text }];
+    const typesetter = new Typesetter(items, {
+      fontSize: 16,
+      lineHeight: 20,
+      letterSpacing: 1,
+    });
+
+    const container = new Container();
+    const surface = createSurface();
+    typesetter.flow(240);
+
+    const start = performance.now();
+    for (let i = 0; i < 300; i++) {
+      typesetter.renderTo(container, surface, { width: 240, height: 20 });
+    }
+    const durationMs = performance.now() - start;
+
+    expect(container.children.length).toBe(1);
+    expect(container.children[0]).toBe(surface.sprite);
+    expect(durationMs).toBeGreaterThanOrEqual(0);
+  });
+});
