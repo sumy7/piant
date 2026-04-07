@@ -69,34 +69,107 @@ export class PNode {
     return this._children.length > 0 ? this._children[0] : null;
   }
 
-  private drawBackground() {
-    this._viewBg
-      .clear()
-      .roundRect(
-        0,
-        0,
-        this._layoutNode.getComputedWidth(),
-        this._layoutNode.getComputedHeight(),
-        this._layoutStyle.borderRadius || 0,
+  private resolveBorderRadii(width: number, height: number) {
+    const baseRadius = this.toNonNegativeRadius(this._layoutStyle.borderRadius);
+    let topLeft = this.toNonNegativeRadius(
+      this._layoutStyle.borderTopLeftRadius ?? baseRadius,
+    );
+    let topRight = this.toNonNegativeRadius(
+      this._layoutStyle.borderTopRightRadius ?? baseRadius,
+    );
+    let bottomRight = this.toNonNegativeRadius(
+      this._layoutStyle.borderBottomRightRadius ?? baseRadius,
+    );
+    let bottomLeft = this.toNonNegativeRadius(
+      this._layoutStyle.borderBottomLeftRadius ?? baseRadius,
+    );
+
+    const maxRadius = Math.max(0, Math.min(width, height) / 2);
+    topLeft = Math.min(topLeft, maxRadius);
+    topRight = Math.min(topRight, maxRadius);
+    bottomRight = Math.min(bottomRight, maxRadius);
+    bottomLeft = Math.min(bottomLeft, maxRadius);
+
+    return {
+      topLeft,
+      topRight,
+      bottomRight,
+      bottomLeft,
+    };
+  }
+
+  private toNonNegativeRadius(value: unknown) {
+    if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) {
+      return 0;
+    }
+    return value;
+  }
+
+  private drawRoundedRect(
+    graphics: Graphics,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+  ) {
+    const radii = this.resolveBorderRadii(width, height);
+    const hasAnyRadius =
+      radii.topLeft > 0 ||
+      radii.topRight > 0 ||
+      radii.bottomRight > 0 ||
+      radii.bottomLeft > 0;
+
+    if (!hasAnyRadius) {
+      graphics.rect(x, y, width, height);
+      return;
+    }
+
+    if (
+      radii.topLeft === radii.topRight &&
+      radii.topLeft === radii.bottomRight &&
+      radii.topLeft === radii.bottomLeft
+    ) {
+      graphics.roundRect(x, y, width, height, radii.topLeft);
+      return;
+    }
+
+    graphics
+      .moveTo(x + radii.topLeft, y)
+      .lineTo(x + width - radii.topRight, y)
+      .arcTo(x + width, y, x + width, y + radii.topRight, radii.topRight)
+      .lineTo(x + width, y + height - radii.bottomRight)
+      .arcTo(
+        x + width,
+        y + height,
+        x + width - radii.bottomRight,
+        y + height,
+        radii.bottomRight,
       )
-      .fill({
-        color: this._layoutStyle.backgroundColor || 'transparent',
-      });
+      .lineTo(x + radii.bottomLeft, y + height)
+      .arcTo(x, y + height, x, y + height - radii.bottomLeft, radii.bottomLeft)
+      .lineTo(x, y + radii.topLeft)
+      .arcTo(x, y, x + radii.topLeft, y, radii.topLeft)
+      .closePath();
+  }
+
+  private drawBackground() {
+    const width = this._layoutNode.getComputedWidth();
+    const height = this._layoutNode.getComputedHeight();
+
+    this._viewBg.clear().beginPath();
+    this.drawRoundedRect(this._viewBg, 0, 0, width, height);
+    this._viewBg.fill({
+      color: this._layoutStyle.backgroundColor || 'transparent',
+    });
+
     this._viewMask.clear();
     if (this._layoutStyle.overflow === 'hidden') {
       this._view.mask = this._viewMask;
-      this._viewMask
-        .clear()
-        .roundRect(
-          0,
-          0,
-          this._layoutNode.getComputedWidth(),
-          this._layoutNode.getComputedHeight(),
-          this._layoutStyle.borderRadius || 0,
-        )
-        .fill({
-          color: 'red',
-        });
+      this._viewMask.clear().beginPath();
+      this.drawRoundedRect(this._viewMask, 0, 0, width, height);
+      this._viewMask.fill({
+        color: 'red',
+      });
     } else {
       this._view.mask = null;
     }

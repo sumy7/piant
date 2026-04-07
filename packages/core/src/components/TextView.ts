@@ -2,7 +2,7 @@ import { PText } from '../elements/PText';
 import {
   DEFAULT_BLOCK_PROPS,
   DEFAULT_INLINE_PROPS,
-  TextStyles,
+  type TextStyles,
 } from '../elements/text/textStyles';
 import type { Getter } from '../reactivity';
 import { memo } from '../reactivity';

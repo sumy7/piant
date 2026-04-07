@@ -14,6 +14,22 @@ export type VisualStyles = {
    * Border radius in pixels for rounded corners
    */
   borderRadius: number;
+  /**
+   * Top-left border radius in pixels
+   */
+  borderTopLeftRadius: number;
+  /**
+   * Top-right border radius in pixels
+   */
+  borderTopRightRadius: number;
+  /**
+   * Bottom-right border radius in pixels
+   */
+  borderBottomRightRadius: number;
+  /**
+   * Bottom-left border radius in pixels
+   */
+  borderBottomLeftRadius: number;
 
   /**
    * Opacity of the view (0 to 1)
