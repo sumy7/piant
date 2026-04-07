@@ -22,6 +22,6 @@ import './index.css';
   render(App, root);
 
   window.onresize = () => {
-    root.setStyle({ width: app.screen.width, height: app.screen.height });
+    root.setStyle({ width: window.innerWidth, height: window.innerHeight });
   };
 })();
