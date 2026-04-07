@@ -4,7 +4,7 @@ import {
   Typesetter,
   type InlineItem,
   type TextRenderSurface,
-} from '../src/elements/text/index.ts';
+} from '../src/elements/text';
 
 Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
   configurable: true,
@@ -99,5 +99,36 @@ describe('Typesetter renderTo', () => {
     expect(container.children.length).toBe(1);
     expect(container.children[0]).toBe(surface.sprite);
     expect(durationMs).toBeGreaterThanOrEqual(0);
+  });
+
+  it('renders same image source in multiple positions without parent conflict', () => {
+    const sharedSource = new Sprite(Texture.WHITE);
+    sharedSource.width = 18;
+    sharedSource.height = 18;
+
+    const items: InlineItem[] = [
+      { type: 'image', source: sharedSource, width: 18, height: 18 },
+      { type: 'text', content: ' gap ' },
+      { type: 'image', source: sharedSource, width: 18, height: 18 },
+    ];
+
+    const typesetter = new Typesetter(items, {
+      fontSize: 16,
+      lineHeight: 20,
+    });
+
+    const container = new Container();
+    const surface = createSurface();
+    typesetter.flow(300);
+    typesetter.renderTo(container, surface, { width: 300, height: 24 });
+
+    const imageNodes = container.children.filter(
+      (node) => node !== surface.sprite,
+    ) as Sprite[];
+
+    expect(imageNodes.length).toBe(2);
+    expect(imageNodes[0]).not.toBe(imageNodes[1]);
+    expect(imageNodes[0].texture).toBe(sharedSource.texture);
+    expect(imageNodes[1].texture).toBe(sharedSource.texture);
   });
 });

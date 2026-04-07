@@ -26,15 +26,14 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "linebreak": "^1.1.0",
     "mobx": "^6.15.0",
-    "pixi.js": "^8.14.0",
+    "pixi.js": "^8.17.1",
     "yoga-layout": "^3.2.1"
   },
   "devDependencies": {
     "@chenglou/pretext": "workspace:0.0.4",
     "@microsoft/api-extractor": "^7.53.1",
-    "@rslib/core": "0.15.1",
+    "@rslib/core": "0.20.3",
     "@vitest/ui": "^4.1.2",
     "happy-dom": "^20.8.9",
     "reflect-metadata": "^0.2.2",

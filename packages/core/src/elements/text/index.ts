@@ -1,59 +1,35 @@
 import {
   materializeRichInlineLineRange,
   measureRichInlineStats,
-  prepareRichInline,
-  walkRichInlineLineRanges,
   type PreparedRichInline,
+  prepareRichInline,
   type RichInlineItem,
   type RichInlineLine,
   type RichInlineLineRange,
+  walkRichInlineLineRanges,
 } from '@chenglou/pretext/rich-inline';
-import { Container, Sprite, Texture } from 'pixi.js';
+import { Sprite, Texture, type Container } from 'pixi.js';
+import type {
+  InlineBaseStyle,
+  InlineImageItem,
+  InlineItem,
+  ImageSource,
+  TextLayoutStyle,
+  TextRenderSurface,
+  VerticalAlign,
+} from './types';
 
-export type TextAlign = 'left' | 'center' | 'right';
-
-export type TextLayoutStyle = {
-  fontSize: number;
-  color: string;
-  lineHeight: number | string;
-  fontFamily: string;
-  fontWeight: string | number;
-  fontStyle: 'normal' | 'italic' | 'oblique' | string;
-  letterSpacing: number;
-  textTransform: 'none' | 'uppercase' | 'lowercase' | 'capitalize';
-  whiteSpace: 'normal' | 'nowrap' | string;
-  wordBreak: 'break-word' | 'normal' | string;
-  textAlign: TextAlign;
-};
-
-type InlineBaseStyle = Partial<TextLayoutStyle> & {
-  width?: number;
-  height?: number;
-};
-
-export type InlineTextItem = InlineBaseStyle & {
-  type: 'text';
-  content: string;
-};
-
-export type InlineImageItem = InlineBaseStyle & {
-  type: 'image';
-  content?: Sprite;
-  src?: Sprite;
-};
-
-export type InlineItem = InlineTextItem | InlineImageItem;
-
-export type TextRenderSurface = {
-  sprite: Sprite;
-  canvas: HTMLCanvasElement;
-  ctx: CanvasRenderingContext2D;
+type LineBox = {
+  y: number;
+  height: number;
+  baselineOffset: number;
 };
 
 const DEFAULT_TEXT_STYLE: TextLayoutStyle = {
   fontSize: 16,
   color: '#000000',
-  lineHeight: 20,
+  lineHeight: 'normal',
+  verticalAlign: 'baseline',
   fontFamily: 'Arial',
   fontWeight: 'normal',
   fontStyle: 'normal',
@@ -64,14 +40,23 @@ const DEFAULT_TEXT_STYLE: TextLayoutStyle = {
   textAlign: 'left',
 };
 
+const IMAGE_PLACEHOLDER = '\uFFFC';
+const IMAGE_PLACEHOLDER_FONT = 'normal 1px Arial';
+
 export class Typesetter {
   private _contents: InlineItem[] = [];
   private _styles: TextLayoutStyle = DEFAULT_TEXT_STYLE;
   private _prepared: PreparedRichInline | null = null;
   private _cachedWidth: number | null = null;
   private _cachedLines: RichInlineLine[] = [];
+  private _cachedLineBoxes: LineBox[] = [];
   private _cachedStats: { lineCount: number; maxLineWidth: number } | null =
     null;
+  private _measureCtx: CanvasRenderingContext2D | null = null;
+  private _imageSpriteSlots: Array<{
+    sprite: Sprite;
+    texture: Texture | null;
+  }> = [];
   private _textMeasureCache = new Map<
     string,
     { width: number; ascent: number; descent: number; height: number }
@@ -97,14 +82,14 @@ export class Typesetter {
     this.ensureLayout(layoutWidth);
 
     const stats = this._cachedStats ?? { lineCount: 0, maxLineWidth: 0 };
-    const lineCount = Math.max(1, stats.lineCount);
+    const measuredHeight = this.getTotalLayoutHeight();
     const measuredWidth = Number.isFinite(layoutWidth)
       ? Math.min(stats.maxLineWidth, layoutWidth)
       : stats.maxLineWidth;
 
     return {
       width: measuredWidth,
-      height: lineCount * this.getResolvedLineHeight(),
+      height: measuredHeight,
     };
   }
 
@@ -117,17 +102,18 @@ export class Typesetter {
     this.ensureLayout(layoutWidth);
 
     const nextChildren: Sprite[] = [];
+    let imageSlotIndex = 0;
     const renderWidth = this.resolveRenderWidth(bounds?.width, layoutWidth);
     const renderHeight = this.resolveRenderHeight(bounds?.height);
     let hasText = false;
 
     this.prepareTextSurface(surface, renderWidth, renderHeight);
 
-    const lineHeight = this.getResolvedLineHeight();
     for (let lineIndex = 0; lineIndex < this._cachedLines.length; lineIndex++) {
       const line = this._cachedLines[lineIndex]!;
+      const lineBox = this._cachedLineBoxes[lineIndex];
+      if (!lineBox) continue;
       const textAlignOffset = this.getTextAlignOffset(renderWidth, line.width);
-      const baselineY = lineIndex * lineHeight;
       let currentX = textAlignOffset;
 
       for (const fragment of line.fragments) {
@@ -139,27 +125,39 @@ export class Typesetter {
         }
 
         if (sourceItem.type === 'image') {
-          const sprite = this.resolveImageSprite(sourceItem);
-          if (sprite) {
-            const imageWidth = this.resolveImageWidth(sourceItem, sprite);
-            const imageHeight = this.resolveImageHeight(sourceItem, sprite);
-            sprite.width = imageWidth;
-            sprite.height = imageHeight;
-            sprite.x = currentX;
-            sprite.y = baselineY + Math.max(0, (lineHeight - imageHeight) / 2);
-            nextChildren.push(sprite);
+          const source = this.resolveImageSource(sourceItem);
+          if (source) {
+            const style = this.resolveItemStyle(sourceItem);
+            const imageWidth = this.resolveImageWidth(sourceItem, source);
+            const imageHeight = this.resolveImageHeight(sourceItem, source);
+            const imageSlot = this.getImageSlot(imageSlotIndex++);
+            this.updateImageSlot(
+              imageSlot,
+              source,
+              imageWidth,
+              imageHeight,
+              currentX,
+              this.resolveInlineY(
+                style.verticalAlign,
+                lineBox,
+                imageHeight,
+                imageHeight,
+              ),
+            );
+            nextChildren.push(imageSlot.sprite);
           }
         } else {
           const renderedText = fragment.text.replace(/\u200B/g, '');
           if (renderedText.length > 0) {
             const style = this.resolveItemStyle(sourceItem);
+            const metrics = this.getTextMetrics(renderedText, style);
             this.drawTextFragment(
               surface,
               renderedText,
               style,
               currentX,
-              baselineY,
-              lineHeight,
+              lineBox,
+              metrics,
             );
             hasText = true;
           }
@@ -181,6 +179,7 @@ export class Typesetter {
     this._prepared = null;
     this._cachedWidth = null;
     this._cachedLines = [];
+    this._cachedLineBoxes = [];
     this._cachedStats = null;
   }
 
@@ -196,13 +195,14 @@ export class Typesetter {
 
     const items: RichInlineItem[] = this._contents.map((item) => {
       if (item.type === 'image') {
-        const style = this.resolveItemStyle(item);
-        const imageSprite = this.resolveImageSprite(item);
+        const source = this.resolveImageSource(item);
         return {
-          text: '\u200B',
-          font: this.toFont(style),
+          // Keep a measurable placeholder for rich-inline, but shrink font so
+          // image layout effectively depends on extraWidth.
+          text: IMAGE_PLACEHOLDER,
+          font: IMAGE_PLACEHOLDER_FONT,
           break: 'never',
-          extraWidth: this.resolveImageWidth(item, imageSprite),
+          extraWidth: this.resolveImageWidth(item, source),
         };
       }
 
@@ -230,6 +230,7 @@ export class Typesetter {
     this._cachedWidth = width;
     this._cachedLines = lines;
     this._cachedStats = measureRichInlineStats(prepared, width);
+    this._cachedLineBoxes = this.buildLineBoxes(lines);
   }
 
   private resolveItemStyle(item?: InlineBaseStyle): TextLayoutStyle {
@@ -255,8 +256,8 @@ export class Typesetter {
     return text;
   }
 
-  private getResolvedLineHeight(): number {
-    const lineHeight = this._styles.lineHeight;
+  private getResolvedLineHeightForStyle(style: TextLayoutStyle): number {
+    const lineHeight = style.lineHeight;
     if (
       typeof lineHeight === 'number' &&
       Number.isFinite(lineHeight) &&
@@ -266,12 +267,14 @@ export class Typesetter {
     }
 
     if (typeof lineHeight === 'string') {
-      if (lineHeight.endsWith('px')) {
-        const px = Number.parseFloat(lineHeight);
-        if (Number.isFinite(px) && px > 0) return px;
+      if (lineHeight.endsWith('x')) {
+        const multi = Number.parseFloat(lineHeight);
+        if (Number.isFinite(multi) && multi > 0) {
+          return style.fontSize * multi;
+        }
       }
       if (lineHeight === 'normal') {
-        return this._styles.fontSize * 1.2;
+        return style.fontSize * 1.2;
       }
       const numeric = Number.parseFloat(lineHeight);
       if (Number.isFinite(numeric) && numeric > 0) {
@@ -279,16 +282,26 @@ export class Typesetter {
       }
     }
 
-    return this._styles.fontSize * 1.2;
+    return style.fontSize * 1.2;
   }
 
-  private resolveImageSprite(item: InlineImageItem): Sprite | null {
-    return item.content ?? item.src ?? null;
+  private getResolvedLineHeight(): number {
+    return this.getResolvedLineHeightForStyle(this._styles);
+  }
+
+  private resolveImageSource(item: InlineImageItem): ImageSource | null {
+    return item.source ?? item.src ?? item.content ?? null;
+  }
+
+  private resolveImageTexture(source: ImageSource | null): Texture | null {
+    if (!source) return null;
+    if (source instanceof Sprite) return source.texture;
+    return source instanceof Texture ? source : null;
   }
 
   private resolveImageWidth(
     item: InlineImageItem,
-    sprite: Sprite | null,
+    source: ImageSource | null,
   ): number {
     if (
       typeof item.width === 'number' &&
@@ -297,15 +310,17 @@ export class Typesetter {
     ) {
       return item.width;
     }
-    if (!sprite) return this._styles.fontSize;
-    if (sprite.texture?.width) return sprite.texture.width;
-    if (sprite.width) return sprite.width;
+    if (!source) return this._styles.fontSize;
+
+    const texture = this.resolveImageTexture(source);
+    if (texture?.width) return texture.width;
+    if (source instanceof Sprite && source.width) return source.width;
     return this._styles.fontSize;
   }
 
   private resolveImageHeight(
     item: InlineImageItem,
-    sprite: Sprite | null,
+    source: ImageSource | null,
   ): number {
     if (
       typeof item.height === 'number' &&
@@ -314,9 +329,11 @@ export class Typesetter {
     ) {
       return item.height;
     }
-    if (!sprite) return this.getResolvedLineHeight();
-    if (sprite.texture?.height) return sprite.texture.height;
-    if (sprite.height) return sprite.height;
+    if (!source) return this.getResolvedLineHeight();
+
+    const texture = this.resolveImageTexture(source);
+    if (texture?.height) return texture.height;
+    if (source instanceof Sprite && source.height) return source.height;
     return this.getResolvedLineHeight();
   }
 
@@ -352,8 +369,67 @@ export class Typesetter {
       return height;
     }
 
-    const lineCount = Math.max(1, this._cachedStats?.lineCount ?? 0);
-    return Math.max(1, lineCount * this.getResolvedLineHeight());
+    return this.getTotalLayoutHeight();
+  }
+
+  private getTotalLayoutHeight() {
+    if (this._cachedLineBoxes.length === 0) {
+      return Math.max(1, this.getResolvedLineHeight());
+    }
+    const last = this._cachedLineBoxes[this._cachedLineBoxes.length - 1]!;
+    return Math.max(1, last.y + last.height);
+  }
+
+  private buildLineBoxes(lines: RichInlineLine[]): LineBox[] {
+    const result: LineBox[] = [];
+    let y = 0;
+
+    for (const line of lines) {
+      let maxLineHeight = Math.max(1, this.getResolvedLineHeight());
+      let maxBaselineOffset = 0;
+
+      for (const fragment of line.fragments) {
+        const sourceItem = this._contents[fragment.itemIndex];
+        if (!sourceItem) continue;
+
+        const style = this.resolveItemStyle(sourceItem);
+        maxLineHeight = Math.max(
+          maxLineHeight,
+          this.getResolvedLineHeightForStyle(style),
+        );
+
+        if (sourceItem.type === 'image') {
+          const imageSource = this.resolveImageSource(sourceItem);
+          const imageHeight = this.resolveImageHeight(sourceItem, imageSource);
+          maxLineHeight = Math.max(maxLineHeight, imageHeight);
+          if (style.verticalAlign === 'baseline') {
+            maxBaselineOffset = Math.max(maxBaselineOffset, imageHeight);
+          }
+        } else {
+          const text = fragment.text.replace(/\u200B/g, '');
+          if (text.length === 0) continue;
+          const metrics = this.getTextMetrics(text, style);
+          maxLineHeight = Math.max(maxLineHeight, metrics.height);
+          if (style.verticalAlign === 'baseline') {
+            maxBaselineOffset = Math.max(maxBaselineOffset, metrics.ascent);
+          }
+        }
+      }
+
+      const baselineOffset =
+        maxBaselineOffset > 0
+          ? Math.min(maxLineHeight, maxBaselineOffset)
+          : Math.min(maxLineHeight, Math.ceil(maxLineHeight * 0.8));
+
+      result.push({
+        y,
+        height: maxLineHeight,
+        baselineOffset,
+      });
+      y += maxLineHeight;
+    }
+
+    return result;
   }
 
   private prepareTextSurface(
@@ -383,12 +459,11 @@ export class Typesetter {
 
   private getTextMetrics(text: string, style: TextLayoutStyle) {
     const font = this.toFont(style);
-    const cacheKey = `${font}|${text}`;
+    const cacheKey = `${font}|${style.letterSpacing}|${text}`;
     const cached = this._textMeasureCache.get(cacheKey);
     if (cached) return cached;
 
-    const measureCanvas = document.createElement('canvas');
-    const measureCtx = measureCanvas.getContext('2d');
+    const measureCtx = this.getMeasureContext();
     if (!measureCtx) {
       return {
         width: text.length * style.fontSize * 0.5,
@@ -426,13 +501,17 @@ export class Typesetter {
     text: string,
     style: TextLayoutStyle,
     x: number,
-    baselineY: number,
-    lineHeight: number,
+    lineBox: LineBox,
+    metrics: { width: number; ascent: number; descent: number; height: number },
   ) {
     const { ctx } = surface;
     const font = this.toFont(style);
-    const metrics = this.getTextMetrics(text, style);
-    const drawY = baselineY + Math.max(0, (lineHeight - metrics.height) / 2);
+    const drawY = this.resolveInlineY(
+      style.verticalAlign,
+      lineBox,
+      metrics.height,
+      metrics.ascent,
+    );
 
     ctx.font = font;
     ctx.fillStyle = style.color;
@@ -454,6 +533,67 @@ export class Typesetter {
         ctx.fillText(text, x, drawY + metrics.ascent);
       }
     }
+  }
+
+  private resolveInlineY(
+    align: VerticalAlign,
+    lineBox: LineBox,
+    boxHeight: number,
+    baselineAscent: number,
+  ) {
+    if (align === 'top') return lineBox.y;
+    if (align === 'middle') {
+      return lineBox.y + Math.max(0, (lineBox.height - boxHeight) / 2);
+    }
+    if (align === 'bottom') {
+      return lineBox.y + Math.max(0, lineBox.height - boxHeight);
+    }
+
+    // baseline
+    return lineBox.y + Math.max(0, lineBox.baselineOffset - baselineAscent);
+  }
+
+  private getMeasureContext() {
+    if (this._measureCtx) return this._measureCtx;
+    const canvas = document.createElement('canvas');
+    this._measureCtx = canvas.getContext('2d');
+    return this._measureCtx;
+  }
+
+  private getImageSlot(index: number): {
+    sprite: Sprite;
+    texture: Texture | null;
+  } {
+    const existed = this._imageSpriteSlots[index];
+    if (existed) return existed;
+
+    const slot = {
+      sprite: new Sprite(Texture.EMPTY),
+      texture: null,
+    };
+    slot.sprite.roundPixels = true;
+    this._imageSpriteSlots.push(slot);
+    return slot;
+  }
+
+  private updateImageSlot(
+    slot: { sprite: Sprite; texture: Texture | null },
+    source: ImageSource,
+    width: number,
+    height: number,
+    x: number,
+    y: number,
+  ) {
+    const texture = this.resolveImageTexture(source);
+    if (texture && slot.texture !== texture) {
+      slot.sprite.texture = texture;
+      slot.texture = texture;
+    }
+
+    slot.sprite.width = width;
+    slot.sprite.height = height;
+    slot.sprite.x = x;
+    slot.sprite.y = y;
   }
 
   private updateTextSurfaceSprite(
@@ -490,3 +630,5 @@ export class Typesetter {
     }
   }
 }
+
+export type * from './types';

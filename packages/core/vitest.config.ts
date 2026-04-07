@@ -1,20 +1,15 @@
+import path from 'node:path';
 import { defineConfig } from 'vitest/config';
-import path from 'path';
 
 export default defineConfig({
   test: {
     globals: true,
     environment: 'happy-dom',
-    include: ['**/__tests__/**/*.{ts,tsx}', '**/*.test.{ts,tsx}'],
+    include: ['**/tests/**/*.{ts,tsx}', '**/*.test.{ts,tsx}'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
-      exclude: [
-        'node_modules',
-        'dist',
-        '**/*.d.ts',
-        'rslib.config.ts',
-      ],
+      exclude: ['node_modules', 'dist', '**/*.d.ts', 'rslib.config.ts'],
     },
     alias: {
       '@': path.resolve(__dirname, './src'),

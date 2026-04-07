@@ -1,6 +1,11 @@
 import { Sprite, Texture } from 'pixi.js';
 import { PNode } from './PNode';
-import { type InlineItem, type TextRenderSurface, Typesetter } from './text';
+import {
+  type ImageSource,
+  type InlineItem,
+  type TextRenderSurface,
+  Typesetter,
+} from './text';
 
 export class PText extends PNode {
   _textContent: InlineItem[] = [];
@@ -25,6 +30,7 @@ export class PText extends PNode {
       fontSize: 16,
       color: '#000000',
       lineHeight: 20,
+      verticalAlign: 'baseline',
       fontFamily: 'Arial',
       fontWeight: 'normal',
       fontStyle: 'normal',
@@ -47,6 +53,7 @@ export class PText extends PNode {
       'fontSize',
       'color',
       'lineHeight',
+      'verticalAlign',
       'fontFamily',
       'fontWeight',
       'fontStyle',
@@ -73,14 +80,23 @@ export class PText extends PNode {
       if (content.type === 'text') {
         return { ...content, type: 'text' };
       } else if (content.type === 'image') {
-        const sprite = content.src;
-        if (sprite.texture && sprite.texture.width === 0) {
-          sprite.texture.once('update', () => {
+        const source: ImageSource | undefined =
+          content.source ?? content.src ?? content.content;
+
+        const texture =
+          source instanceof Sprite
+            ? source.texture
+            : source instanceof Texture
+              ? source
+              : undefined;
+
+        if (texture && texture.width === 0) {
+          (texture as any).once?.('update', () => {
             this._layoutNode.markDirty();
             this.markDirty();
           });
         }
-        return { ...content, type: 'image', content: sprite };
+        return { ...content, type: 'image', source };
       }
       return content;
     });

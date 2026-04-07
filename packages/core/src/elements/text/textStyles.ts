@@ -11,6 +11,7 @@ export const DEFAULT_INLINE_PROPS: TextStyles = {
   fontSize: 16,
   color: '#000000',
   lineHeight: 20,
+  verticalAlign: 'baseline',
   fontFamily: 'Arial',
   fontWeight: 'normal',
   fontStyle: 'normal',

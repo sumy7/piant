@@ -6,6 +6,7 @@ export function App() {
     pageContainer: {
       width: '100%',
       height: '100%',
+      display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
       padding: 32,
@@ -14,11 +15,13 @@ export function App() {
     panel: {
       width: 720,
       maxWidth: '100%',
+      height: '100%',
       gap: 16,
       padding: 24,
       backgroundColor: '#f6f2ea',
       borderRadius: 20,
     },
+    titleBlock: {},
     title: {
       fontSize: 28,
       color: '#0f172a',
@@ -27,24 +30,33 @@ export function App() {
     subtitle: {
       fontSize: 15,
       color: '#475569',
-      lineHeight: 24,
+      lineHeight: '1.4x',
+    },
+    textListBlock: {
+      flex: 1,
+      width: '100%',
+      height: '100%',
     },
   });
 
   return (
     <View style={styles.pageContainer}>
       <View style={styles.panel}>
-        <TextView style={styles.title}>
-          <Span>Text Layout Playground</Span>
-        </TextView>
-        <TextView style={styles.subtitle}>
-          <Span>
-            This example isolates text layout scenarios including inline images,
-            line wrapping, alignment, line height, letter spacing, text
-            transforms, and overflow.
-          </Span>
-        </TextView>
-        <TextList />
+        <View>
+          <TextView style={styles.title}>
+            <Span>Text Layout Playground</Span>
+          </TextView>
+          <TextView style={styles.subtitle}>
+            <Span>
+              This example isolates text layout scenarios including inline
+              images, line wrapping, alignment, line height, letter spacing,
+              text transforms, and overflow.
+            </Span>
+          </TextView>
+        </View>
+        <View style={styles.textListBlock}>
+          <TextList />
+        </View>
       </View>
     </View>
   );
