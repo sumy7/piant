@@ -601,12 +601,27 @@ export class Typesetter {
     width: number,
     height: number,
   ) {
+    // Update the texture source to reflect canvas changes
     const source = (surface.sprite.texture as any).source;
     if (source && typeof source.update === 'function') {
       source.update();
     }
+
+    // In PixiJS v8, we need to update the texture after canvas resize
+    // The texture frame should match the actual canvas size
+    const texture = surface.sprite.texture;
+    if (texture) {
+      // Update the texture's frame to match the new canvas dimensions
+      texture.frame.width = surface.canvas.width;
+      texture.frame.height = surface.canvas.height;
+      if (typeof texture.updateUvs === 'function') {
+        texture.updateUvs();
+      }
+    }
+
     surface.sprite.x = 0;
     surface.sprite.y = 0;
+    // Set sprite size to logical dimensions (not canvas pixel dimensions)
     surface.sprite.width = width;
     surface.sprite.height = height;
   }
