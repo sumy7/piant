@@ -87,14 +87,18 @@ describe('ErrorBoundary', () => {
     });
   });
 
-  it('does not throw when error occurs without handlers in context', () => {
-    expect(() => {
-      root(() => {
-        ErrorBoundary({
-          fallback: 'err' as any,
-          children: 'ok' as any,
-        });
+  it('handles error when no outer error handlers exist in context', () => {
+    root(() => {
+      const result = ErrorBoundary({
+        fallback: 'err' as any,
+        children: 'ok' as any,
       });
-    }).not.toThrow();
+
+      expect((result as any)()).toBe('ok');
+
+      handleError(new Error('no-handler-context'));
+
+      expect((result as any)()).toBe('err');
+    });
   });
 });

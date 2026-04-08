@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { root } from '../src/reactivity/effects';
+import { handleError } from '../src/reactivity/errors';
 import {
   createEffect,
   createMemo,
@@ -146,8 +147,13 @@ describe('onError', () => {
     root(() => {
       const errors: Error[] = [];
       onError((e) => errors.push(e));
-      // Verify handler was registered without throwing
-      expect(errors).toEqual([]);
+
+      // Trigger an error — the registered handler should receive it
+      const testError = new Error('hook-error');
+      handleError(testError);
+
+      expect(errors).toHaveLength(1);
+      expect(errors[0]).toBe(testError);
     });
   });
 });
