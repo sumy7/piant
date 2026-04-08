@@ -7,14 +7,15 @@ describe('handleError', () => {
     expect(() => handleError(new Error('boom'))).toThrow('boom');
   });
 
-  it('calls registered error handler', () => {
+  it('calls registered error handler with the same error instance', () => {
     const handler = vi.fn();
     const owner = createOwner();
     owner.context[SYMBOL_ERRORS] = [handler];
+    const testError = new Error('test-error');
     runWithOwner(owner, () => {
-      handleError(new Error('test-error'));
+      handleError(testError);
     });
-    expect(handler).toHaveBeenCalledWith(new Error('test-error'));
+    expect(handler).toHaveBeenCalledWith(testError);
   });
 
   it('passes string errors to handlers as-is', () => {
@@ -65,11 +66,12 @@ describe('runErrors', () => {
     const child = createOwner();
     child.owner = parent;
 
+    const handlerError = new Error('handler-error');
     const badHandler = () => {
-      throw new Error('handler-error');
+      throw handlerError;
     };
     runErrors('original', [badHandler], child);
-    expect(parentHandler).toHaveBeenCalledWith(new Error('handler-error'));
+    expect(parentHandler).toHaveBeenCalledWith(handlerError);
   });
 
   it('throws when handler errors and no parent owner', () => {

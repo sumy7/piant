@@ -1,9 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ErrorBoundary } from '../src/components/ErrorBoundary';
 import { root } from '../src/reactivity/effects';
-import { createState } from '../src/reactivity/hooks';
-import { runWithOwner, createOwner } from '../src/reactivity/owner';
-import { SYMBOL_ERRORS } from '../src/reactivity/errors';
+import { handleError } from '../src/reactivity/errors';
 
 describe('ErrorBoundary', () => {
   it('renders children when there is no error', () => {
@@ -16,84 +14,80 @@ describe('ErrorBoundary', () => {
     });
   });
 
-  it('renders static fallback when setErrored is called', () => {
+  it('renders static fallback when error is triggered', () => {
     root(() => {
-      let setErr: (e: Error | null) => void = () => {};
-
-      // Intercept createState calls by running ErrorBoundary inside an owner
-      // that captures the error handler
-      const capturedErrors: ((e: any) => void)[] = [];
-      const owner = createOwner();
-      owner.context[SYMBOL_ERRORS] = capturedErrors;
-
-      let result: any;
-      runWithOwner(owner, () => {
-        result = ErrorBoundary({
-          fallback: 'error occurred' as any,
-          children: 'ok' as any,
-        });
-        // The ErrorBoundary registers its own error handler
-        // directly trigger setErrored via registered handler
-        if (capturedErrors.length > 0) {
-          capturedErrors[0](new Error('test'));
-        }
+      const result = ErrorBoundary({
+        fallback: 'error occurred' as any,
+        children: 'ok' as any,
       });
 
-      // After the error boundary caught the error, it should show fallback
-      const rendered = result?.();
-      if (rendered === 'ok') {
-        // The internal error state hasn't propagated yet; just verify no throw
-        expect(rendered).toBeDefined();
-      } else {
-        expect(rendered).toBe('error occurred');
-      }
+      // Initially renders children
+      expect((result as any)()).toBe('ok');
+
+      // onError registered setErrored on the root owner; trigger it
+      handleError(new Error('test'));
+
+      // After error, should synchronously show fallback
+      expect((result as any)()).toBe('error occurred');
     });
   });
 
   it('renders fallback function with error and reset', () => {
     root(() => {
-      const errors: Error[] = [];
-      const resets: Array<() => void> = [];
+      const capturedErrors: Error[] = [];
+      const capturedResets: Array<() => void> = [];
 
-      const fallbackFn = (err: Error, reset: () => void) => {
-        errors.push(err);
-        resets.push(reset);
-        return `error: ${err.message}` as any;
-      };
-
-      // Render ErrorBoundary with a function fallback
       const result = ErrorBoundary({
-        fallback: fallbackFn as any,
+        fallback: ((err: Error, reset: () => void) => {
+          capturedErrors.push(err);
+          capturedResets.push(reset);
+          return `error: ${err.message}` as any;
+        }) as any,
         children: 'content' as any,
       });
 
       // Initially renders children
       expect((result as any)()).toBe('content');
+
+      // Trigger an error
+      const testError = new Error('test-error');
+      handleError(testError);
+
+      // The function fallback should be called with error and reset callback
+      const rendered = (result as any)();
+      expect(rendered).toBe('error: test-error');
+      expect(capturedErrors[0]).toBe(testError);
+      expect(typeof capturedResets[0]).toBe('function');
     });
   });
 
   it('renders children after reset', () => {
     root(() => {
-      const [errored, setErrored] = createState<Error | null>(null);
+      let capturedReset: (() => void) | null = null;
 
-      // Manually simulate the internal state that ErrorBoundary manages
-      // by verifying the component structure returns children when no error
       const result = ErrorBoundary({
-        fallback: (err: Error, reset: () => void) => {
-          reset();
-          return 'fallback' as any;
-        },
+        fallback: ((_err: Error, reset: () => void) => {
+          capturedReset = reset;
+          return 'in-error' as any;
+        }) as any,
         children: 'children' as any,
       });
 
-      // When no error, renders children
+      // Initially renders children
+      expect((result as any)()).toBe('children');
+
+      // Trigger error
+      handleError(new Error('reset-test'));
+      expect((result as any)()).toBe('in-error');
+      expect(capturedReset).not.toBeNull();
+
+      // Reset — should go back to rendering children
+      capturedReset!();
       expect((result as any)()).toBe('children');
     });
   });
 
   it('does not throw when error occurs without handlers in context', () => {
-    // When running outside a root, errors thrown inside effect may bubble up
-    // The ErrorBoundary itself should not crash during construction
     expect(() => {
       root(() => {
         ErrorBoundary({

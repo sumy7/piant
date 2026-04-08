@@ -49,21 +49,16 @@ describe('For', () => {
     });
   });
 
-  it('reacts to array changes', () => {
+  it('reacts to array changes via reactive each prop', () => {
     root(() => {
       const [get, set] = createState([1, 2, 3]);
       const result = For({
-        each: get() as number[],
+        get each() { return get() as number[]; },
         children: (item) => item * 2 as any,
       });
       expect((result as any)()).toEqual([2, 4, 6]);
       set([4, 5]);
-      // A new For call with updated array
-      const result2 = For({
-        each: [4, 5],
-        children: (item) => item * 2 as any,
-      });
-      expect((result2 as any)()).toEqual([8, 10]);
+      expect((result as any)()).toEqual([8, 10]);
     });
   });
 });

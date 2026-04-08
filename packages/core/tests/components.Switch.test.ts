@@ -46,37 +46,48 @@ describe('Switch', () => {
     });
   });
 
-  it('reacts to condition changes', () => {
+  it('reacts to condition changes via reactive when prop', () => {
     root(() => {
       const [flag, setFlag] = createState(false);
       const result = Switch({
         fallback: 'off' as any,
-        children: [Match({ when: flag() as boolean, children: 'on' as any })] as any,
+        children: [Match({ get when() { return flag(); }, children: 'on' as any })] as any,
       });
-      // Initial: flag is false
+
       expect((result as any)()).toBe('off');
 
-      // New Switch with updated condition
       setFlag(true);
-      const result2 = Switch({
-        fallback: 'off' as any,
-        children: [Match({ when: true, children: 'on' as any })] as any,
-      });
-      expect((result2 as any)()).toBe('on');
+      expect((result as any)()).toBe('on');
     });
   });
 
-  it('calls non-keyed child function with a getter for the condition', () => {
+  it('calls non-keyed child function with a getter for the condition value', () => {
     root(() => {
-      // For non-keyed Match, child receives a getter function wrapping the condition
-      const childFn = (getVal: () => unknown) => (typeof getVal === 'function' ? 'ok' : 'fail') as any;
+      const sentinel = 'child-rendered';
+      let getterValue: unknown = undefined;
+
+      // Use a class instance so MobX deepEnhancer doesn't wrap function
+      // properties as zero-length actions (only plain objects are converted).
+      class MatchConfig {
+        constructor(
+          public when: unknown,
+          public children: (...args: any[]) => any,
+        ) {}
+      }
+
+      const childFn = function (getVal: () => unknown) {
+        getterValue = getVal;
+        return sentinel;
+      };
+
       const result = Switch({
-        children: [Match({ when: true, children: childFn as any })] as any,
+        children: [new MatchConfig(true, childFn)] as any,
       });
       const rendered = (result as any)();
-      // The rendered value is what childFn returned, or a derived reactive value
-      expect(rendered).not.toBeNull();
-      expect(rendered).not.toBeUndefined();
+      expect(rendered).toBe(sentinel);
+      expect(typeof getterValue).toBe('function');
+      // The getter should return the truthy condition value
+      expect((getterValue as () => unknown)()).toBe(true);
     });
   });
 

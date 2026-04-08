@@ -88,14 +88,22 @@ describe('memo', () => {
     });
   });
 
-  it('does not update observable when value is equal', () => {
+  it('does not propagate updates to dependents when computed value stays equal', () => {
     root(() => {
       const [get, set] = createState(1);
       const m = memo(() => (get() > 0 ? 'positive' : 'non-positive'));
-      expect(m()).toBe('positive');
-      set(2); // still positive
-      // The cached observable value stays the same
-      expect(m()).toBe('positive');
+      const observed: string[] = [];
+
+      effect(() => {
+        observed.push(m());
+      });
+
+      expect(observed).toEqual(['positive']);
+
+      set(2); // still positive — value of m() unchanged
+
+      // Dependents should not have re-run since the observable value is equal
+      expect(observed).toEqual(['positive']);
     });
   });
 

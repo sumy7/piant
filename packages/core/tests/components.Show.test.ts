@@ -30,27 +30,19 @@ describe('Show', () => {
     });
   });
 
-  it('reacts to changing condition', () => {
+  it('reacts to changing condition via reactive when prop', () => {
     root(() => {
       const [visible, setVisible] = createState<boolean>(false);
       const result = Show({
-        when: visible() as boolean,
+        get when() { return visible(); },
         children: 'shown' as any,
         fallback: 'hidden' as any,
       });
 
-      // Initial state
       expect((result as any)()).toBe('hidden');
 
-      // Toggle visible
       setVisible(true);
-      // Re-evaluate with updated condition (Show memoizes the condition)
-      const result2 = Show({
-        when: true,
-        children: 'shown' as any,
-        fallback: 'hidden' as any,
-      });
-      expect((result2 as any)()).toBe('shown');
+      expect((result as any)()).toBe('shown');
     });
   });
 

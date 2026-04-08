@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { root } from '../src/reactivity/effects';
 import { createContext, lookup, useContext } from '../src/reactivity/context';
-import { runWithOwner, createOwner } from '../src/reactivity/owner';
+import { createOwner, runWithOwner } from '../src/reactivity/owner';
 
 describe('createContext', () => {
   it('creates a context with a unique id', () => {
@@ -89,12 +89,22 @@ describe('Context.Provider', () => {
   it('provides context value to children via Provider', () => {
     const ctx = createContext<number>(0);
     root(() => {
-      const owner = createOwner();
-      owner.context = { [ctx.id]: 10 };
       let value: number | undefined;
-      runWithOwner(owner, () => {
-        value = useContext(ctx);
+
+      const rendered = ctx.Provider({
+        value: 10,
+        children: () => {
+          // Zero-arg child: resolved by children() into a memo, executed immediately
+          value = useContext(ctx);
+          return value;
+        },
       });
+
+      // Evaluate the returned getter to ensure children are resolved
+      if (typeof rendered === 'function') {
+        rendered();
+      }
+
       expect(value).toBe(10);
     });
   });

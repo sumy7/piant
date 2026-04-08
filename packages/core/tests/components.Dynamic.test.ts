@@ -57,16 +57,11 @@ describe('Dynamic', () => {
 
   it('passes props correctly to component function', () => {
     root(() => {
-      const passedProps: any[] = [];
-      const comp = (p: any) => {
-        passedProps.push(p);
-        return null as any;
-      };
-      Dynamic({ component: comp as any, props: { a: 1, b: 2 } });
-      // evaluate result to trigger component call
+      const comp = vi.fn((p: any) => null as any);
       const result = Dynamic({ component: comp as any, props: { a: 1, b: 2 } });
       (result as any)();
-      expect(passedProps[0]).toEqual({ a: 1, b: 2 });
+      expect(comp).toHaveBeenCalledTimes(1);
+      expect(comp).toHaveBeenCalledWith({ a: 1, b: 2 });
     });
   });
 });
