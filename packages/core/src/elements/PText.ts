@@ -14,6 +14,7 @@ export class PText extends PNode {
   _textCanvas = document.createElement('canvas');
   _textCtx: CanvasRenderingContext2D;
   _textSprite: Sprite;
+  _textTexture: Texture;
 
   constructor(items: InlineItem[] | string = []) {
     super();
@@ -22,8 +23,11 @@ export class PText extends PNode {
       throw new Error('2d canvas context is required for PText rendering.');
     }
     this._textCtx = ctx;
-    this._textSprite = new Sprite(Texture.from(this._textCanvas));
-    this._textSprite.roundPixels = true;
+    this._textTexture = Texture.from(this._textCanvas);
+    this._textSprite = new Sprite({
+      texture: Texture.EMPTY,
+      roundPixels: true,
+    });
     this._textContent =
       typeof items === 'string' ? [{ type: 'text', content: items }] : items;
     this._textLayoutStyle = {
@@ -115,6 +119,7 @@ export class PText extends PNode {
     super.applyLayout();
     const surface: TextRenderSurface = {
       sprite: this._textSprite,
+      texture: this._textTexture,
       canvas: this._textCanvas,
       ctx: this._textCtx,
     };

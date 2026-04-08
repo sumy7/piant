@@ -8,12 +8,12 @@ import {
   type RichInlineLineRange,
   walkRichInlineLineRanges,
 } from '@chenglou/pretext/rich-inline';
-import { Sprite, Texture, type Container } from 'pixi.js';
+import { type Container, Sprite, Texture, TextureSource } from 'pixi.js';
 import type {
+  ImageSource,
   InlineBaseStyle,
   InlineImageItem,
   InlineItem,
-  ImageSource,
   TextLayoutStyle,
   TextRenderSurface,
   VerticalAlign,
@@ -105,6 +105,7 @@ export class Typesetter {
     let imageSlotIndex = 0;
     const renderWidth = this.resolveRenderWidth(bounds?.width, layoutWidth);
     const renderHeight = this.resolveRenderHeight(bounds?.height);
+
     let hasText = false;
 
     this.prepareTextSurface(surface, renderWidth, renderHeight);
@@ -449,12 +450,8 @@ export class Typesetter {
       surface.canvas.height = pixelHeight;
     }
 
-    if (typeof surface.ctx.setTransform === 'function') {
-      surface.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    }
-    if (typeof surface.ctx.clearRect === 'function') {
-      surface.ctx.clearRect(0, 0, width, height);
-    }
+    surface.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    surface.ctx.clearRect(0, 0, pixelWidth, pixelHeight);
   }
 
   private getTextMetrics(text: string, style: TextLayoutStyle) {
@@ -601,14 +598,14 @@ export class Typesetter {
     width: number,
     height: number,
   ) {
-    const source = (surface.sprite.texture as any).source;
-    if (source && typeof source.update === 'function') {
-      source.update();
-    }
-    surface.sprite.x = 0;
-    surface.sprite.y = 0;
-    surface.sprite.width = width;
-    surface.sprite.height = height;
+    surface.texture.source.update();
+    surface.texture.update();
+
+    // FIXME: 更新了 texure 但是 持有的 Sprite 宽高未更新
+    surface.sprite = new Sprite({
+      texture: surface.texture,
+      roundPixels: true,
+    });
   }
 
   private reconcileChildren(container: Container, nextChildren: Sprite[]) {
