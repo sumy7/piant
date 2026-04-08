@@ -98,7 +98,16 @@ export class Typesetter {
     surface: TextRenderSurface,
     bounds?: { width?: number; height?: number },
   ) {
-    const layoutWidth = this._cachedWidth ?? Number.POSITIVE_INFINITY;
+    // Use the caller-supplied bounds.width (the Yoga-computed width from
+    // applyLayout) as the layout width so that the text is always re-flowed
+    // and the texture is updated whenever the rendered width changes.
+    const boundsWidth = bounds?.width;
+    const layoutWidth =
+      typeof boundsWidth === 'number' &&
+      Number.isFinite(boundsWidth) &&
+      boundsWidth > 0
+        ? this.normalizeLayoutWidth(boundsWidth)
+        : (this._cachedWidth ?? Number.POSITIVE_INFINITY);
     this.ensureLayout(layoutWidth);
 
     const nextChildren: Sprite[] = [];
@@ -601,10 +610,9 @@ export class Typesetter {
     width: number,
     height: number,
   ) {
-    const source = (surface.sprite.texture as any).source;
-    if (source && typeof source.update === 'function') {
-      source.update();
-    }
+    // Notify PixiJS that the canvas content and/or size has changed so that
+    // the GPU texture is re-uploaded with the new text rendering.
+    surface.sprite.texture.source.update();
     surface.sprite.x = 0;
     surface.sprite.y = 0;
     surface.sprite.width = width;
