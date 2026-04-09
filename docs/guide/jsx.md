@@ -46,15 +46,15 @@ const name = 'Piant';
 Piant 的响应式值（`createState` 返回的 getter）是函数，需要**调用**才能读取当前值：
 
 ```tsx
-import { createState, TextView } from '@piant/core';
+import { createState, View, TextView } from '@piant/core';
 
 function Counter() {
   const [count, setCount] = createState(0);
 
   return (
-    <TextView onClick={() => setCount(count() + 1)}>
-      {count()}
-    </TextView>
+    <View onClick={() => setCount(count() + 1)}>
+      <TextView>{count()}</TextView>
+    </View>
   );
 }
 ```

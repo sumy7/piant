@@ -60,7 +60,7 @@ import { App } from './App';
 
 ```tsx
 // src/App.tsx
-import { createState, StyleSheet, View, TextView } from 'piant';
+import { createState, StyleSheet, View, TextView } from '@piant/core';
 
 export function App() {
   const [count, setCount] = createState(0);

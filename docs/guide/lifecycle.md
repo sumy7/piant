@@ -28,7 +28,7 @@ function MyComponent() {
 - 组件卸载时
 
 ```tsx
-import { createEffect, onCleanup } from '@piant/core';
+import { createEffect, createState, onCleanup } from '@piant/core';
 
 function TimerComponent() {
   const [count, setCount] = createState(0);

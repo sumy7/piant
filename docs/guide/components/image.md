@@ -6,7 +6,7 @@
 
 ```tsx
 import { Image } from '@piant/core';
-import { Sprite, Texture } from 'pixi.js';
+import { Sprite } from 'pixi.js';
 
 function MyImage() {
   const sprite = Sprite.from('/path/to/image.png');

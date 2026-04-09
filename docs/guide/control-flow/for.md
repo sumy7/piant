@@ -9,8 +9,7 @@ Piant 提供了两个列表渲染组件：`For` 和 `Index`，适用于不同的
 ### 基本用法
 
 ```tsx
-import { For, View, TextView } from '@piant/core';
-import { createState } from '@piant/core';
+import { For, View, TextView, createState } from '@piant/core';
 
 function TodoList() {
   const [items, setItems] = createState(['苹果', '香蕉', '橙子']);

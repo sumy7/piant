@@ -5,8 +5,7 @@
 ## 基本用法
 
 ```tsx
-import { Switch, Match, TextView } from '@piant/core';
-import { createState } from '@piant/core';
+import { Switch, Match, TextView, createState } from '@piant/core';
 
 function StatusDisplay() {
   const [status, setStatus] = createState<'loading' | 'success' | 'error'>('loading');

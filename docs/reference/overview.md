@@ -23,10 +23,8 @@ export { ErrorBoundary } from './components/ErrorBoundary';
 export { PRoot } from './elements/PRoot';
 
 // 响应式 API
-export { createState, createEffect, createMemo } from './reactivity/hooks';
+export { createState, createEffect, createMemo, onMount, onCleanup, onError, createSelector } from './reactivity/hooks';
 export { createContext, useContext } from './reactivity/context';
-export { onMount, onCleanup, onError } from './reactivity/hooks';
-export { createSelector } from './reactivity/hooks';
 export { memo } from './reactivity/effects';
 
 // 渲染器

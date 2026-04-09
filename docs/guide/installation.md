@@ -15,7 +15,7 @@ npm install @piant/core
 yarn add @piant/core
 ```
 
-同时安装 PixiJS（peerDependency）：
+pixi.js 是 `@piant/core` 的直接依赖，会随 `@piant/core` 一起自动安装。但由于应用代码会直接从 `pixi.js` 导入（如 `Application`、`Graphics`、`Sprite` 等），建议也在项目中显式安装：
 
 ```bash
 pnpm add pixi.js

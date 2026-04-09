@@ -38,7 +38,7 @@ Piant 支持大多数 CSS Flexbox 属性，包括：
 <View
   style={{
     width: 200,        // 固定宽度（像素）
-    height: '50%',     // 百分比宽度
+    height: '50%',     // 百分比高度
     minWidth: 100,
     maxWidth: 400,
     position: 'absolute',

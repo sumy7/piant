@@ -5,8 +5,7 @@
 ## 基本用法
 
 ```tsx
-import { Show, View, TextView } from '@piant/core';
-import { createState } from '@piant/core';
+import { Show, View, TextView, createState } from '@piant/core';
 
 function Toggle() {
   const [visible, setVisible] = createState(true);

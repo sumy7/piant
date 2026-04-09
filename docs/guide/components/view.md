@@ -74,9 +74,7 @@ const styles = StyleSheet.create({
 ## 获取节点引用
 
 ```tsx
-import { PView } from '@piant/core';
-
-let viewRef: PView;
+let viewRef: any; // 运行时为 PView 实例（内部类型，未对外导出）
 
 <View ref={(el) => (viewRef = el)} style={{ width: 100, height: 100 }}>
   {/* ... */}
