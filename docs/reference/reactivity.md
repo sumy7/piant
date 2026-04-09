@@ -160,26 +160,12 @@ function onError(fn: (error: any) => void): void;
 
 ## splitProps
 
-将 props 对象按指定 key 分割为多个部分，常用于组件内部分离不同类型的 props。
+`splitProps` 用于按指定 key 将 props 对象分割为多个部分，常见于组件内部实现中对样式、事件和其余属性的拆分。
 
-```ts
-function splitProps<T, K1 extends keyof T>(
-  props: T,
-  keys1: K1[]
-): [Pick<T, K1>, Omit<T, K1>];
+> 当前 `splitProps` 仅作为内部工具使用，**不是** `@piant/core` 对外导出的公共 API。
+> 因此，应用代码不应将其视为稳定可用的参考接口。
 
-// 支持最多 5 组 key
-```
-
-**示例：**
-```ts
-const [styleProps, eventProps, rest] = splitProps(
-  props,
-  ['style'],
-  ['onClick', 'onMouseDown']
-);
-```
-
+如果后续版本对外导出该能力，再补充完整的函数签名与使用示例。
 ---
 
 ## 类型定义
