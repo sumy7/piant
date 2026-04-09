@@ -65,14 +65,14 @@ Piant 支持大多数 CSS Flexbox 属性，包括：
 ```tsx
 <View
   style={{
-    padding: 16,           // 四边内边距
-    paddingHorizontal: 12, // 左右内边距
-    paddingVertical: 8,    // 上下内边距
+    padding: 16,        // 四边内边距
+    paddingInline: 12,  // 左右内边距
+    paddingBlock: 8,    // 上下内边距
     paddingTop: 4,
     paddingBottom: 4,
     paddingLeft: 8,
     paddingRight: 8,
-    margin: 8,             // 外边距（同理）
+    margin: 8,          // 外边距（同理）
   }}
 />
 ```
