@@ -31,10 +31,10 @@ function Container() {
 | `style` | `ViewStyles \| ViewStyles[]` | 样式对象或样式数组 |
 | `children` | `any` | 子元素 |
 | `ref` | `(el: PView) => void` | 获取底层节点实例 |
-| `onClick` | `() => void` | 点击事件 |
-| `onMouseDown` | `(e: Event) => void` | 鼠标按下事件 |
-| `onMouseUp` | `(e: Event) => void` | 鼠标抬起事件 |
-| 其他事件属性 | — | 详见[事件处理](/guide/events) |
+| `onClick` | `(e: FederatedPointerEvent) => void` | 点击事件 |
+| `onMouseDown` | `(e: FederatedPointerEvent) => void` | 鼠标按下事件 |
+| `onMouseUp` | `(e: FederatedPointerEvent) => void` | 鼠标抬起事件 |
+| 其他事件属性 | — | 详见[事件处理](/guide/events)，事件回调参数为 PixiJS 的 federated event（如 `FederatedPointerEvent`） |
 
 ## 样式数组
 
