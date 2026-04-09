@@ -35,9 +35,6 @@ export { render } from './renderer';
 // 样式
 export { StyleSheet } from './styleSheet';
 
-// 工具
-export { splitProps } from './reactivity/props';
-
 // 钩子
 export { onTick } from './hooks/onTick';
 ```
