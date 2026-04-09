@@ -5,8 +5,11 @@
 ```ts
 const StyleSheet: {
   create(obj: Record<string, ViewStyles>): Record<string, ViewStyles>;
-  flatten(style: ViewStyles | ViewStyles[] | false | null | undefined): ViewStyles;
-  compose(style1: ViewStyles | null | undefined, style2: ViewStyles | null | undefined): ViewStyles | null | undefined;
+  flatten(style?: ViewStyles | ViewStyles[] | false | null | undefined): ViewStyles | undefined;
+  compose(
+    style1?: ViewStyles | null,
+    style2?: ViewStyles | null
+  ): ViewStyles | ViewStyles[] | undefined;
 };
 ```
 
@@ -23,19 +26,20 @@ const styles = StyleSheet.create({
 
 ### StyleSheet.flatten
 
-将样式数组展平为单个对象，后面的属性覆盖前面的。
+将样式数组展平为单个对象，后面的属性覆盖前面的。当传入 `null`、`undefined`、`false` 或非对象值时返回 `undefined`。
 
 ```ts
 StyleSheet.flatten([style1, style2, false, style3]);
-// 返回合并后的样式对象
+// 返回合并后的样式对象，或 undefined（当输入为空/非对象时）
 ```
 
 ### StyleSheet.compose
 
-合并两个样式，`style2` 优先级更高。
+合并两个样式，`style2` 优先级更高。当两个样式都存在时，返回 `[style1, style2]` 数组供后续 `flatten` 处理；若其中一个为假值，则直接返回另一个，不分配新数组。
 
 ```ts
 StyleSheet.compose(baseStyle, overrideStyle);
+// 返回 style2 覆盖 style1 的样式，或 ViewStyles[]（两者均存在时），或 undefined（均为假值时）
 ```
 
 ---

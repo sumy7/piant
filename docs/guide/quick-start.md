@@ -30,7 +30,7 @@ pnpm dev
 
 ```ts
 // src/index.ts
-import { PRoot, render } from 'piant';
+import { PRoot, render } from '@piant/core';
 import { Application } from 'pixi.js';
 import { App } from './App';
 

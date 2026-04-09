@@ -19,7 +19,7 @@ function MyComponent() {
 }
 ```
 
-> **注意**：`onMount` 内部使用 `untrack`，不会追踪响应式依赖，仅执行一次。
+> **注意**：`onMount` 内部使用 MobX 的 `untracked`，不会追踪响应式依赖，仅执行一次。
 
 ## onCleanup
 
@@ -28,7 +28,7 @@ function MyComponent() {
 - 组件卸载时
 
 ```tsx
-import { createEffect, createState, onCleanup } from '@piant/core';
+import { createEffect, createState, onCleanup, TextView } from '@piant/core';
 
 function TimerComponent() {
   const [count, setCount] = createState(0);

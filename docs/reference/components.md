@@ -178,7 +178,7 @@ function Match<T>(props: MatchProps<T>): JSX.Element;
 ```ts
 interface DynamicProps {
   component: JSX.Element;
-  props?: any;
+  props: any;
 }
 
 function Dynamic(props: DynamicProps): JSX.Element;

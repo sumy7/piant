@@ -31,7 +31,7 @@ function DynamicExample() {
 | 属性 | 类型 | 说明 |
 |------|------|------|
 | `component` | `JSX.Element` | 要渲染的组件（函数组件或元素） |
-| `props` | `any` | 传递给目标组件的 props |
+| `props` | `any` | 传递给目标组件的 props（当 `component` 为函数组件时有效） |
 
 ## 响应式切换组件
 

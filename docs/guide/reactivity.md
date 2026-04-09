@@ -188,4 +188,4 @@ type Setter<T> = {
 
 - **必须调用 getter**：`count()` 而不是 `count`，否则不会被追踪为依赖
 - **批量更新**：MobX 会自动批量更新，无需手动调用类似 `batch()` 的方法
-- **untrack**：如果需要在 effect 中读取值但不追踪依赖，使用 `untrack(() => value())`
+- **不追踪读取**：如果需要在 effect 中读取值但不追踪依赖，使用 MobX 的 `untracked(() => value())`（`import { untracked } from 'mobx'`）
