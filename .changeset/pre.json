@@ -1,0 +1,11 @@
+{
+  "mode": "pre",
+  "tag": "alpha",
+  "initialVersions": {
+    "@piant/babel-preset-piant": "0.0.1",
+    "@piant/core": "0.0.1"
+  },
+  "changesets": [
+    "gold-suits-lead"
+  ]
+}

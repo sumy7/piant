@@ -36,8 +36,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build docs
-        run: pnpm docs:build
+      - name: Build docs and examples for Pages
+        run: pnpm pages:build
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

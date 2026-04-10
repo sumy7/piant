@@ -1,5 +1,6 @@
 {
   "name": "@piant/examples-todos",
+  "description": "待办清单示例：演示列表渲染、局部更新与常见表单交互。",
   "private": true,
   "scripts": {
     "dev": "rsbuild dev --open",

@@ -1,5 +1,6 @@
 {
   "name": "@piant/examples-text-layout",
+  "description": "文本排版示例：演示 TextView 与图文混排相关能力。",
   "private": true,
   "scripts": {
     "dev": "rsbuild dev --open",

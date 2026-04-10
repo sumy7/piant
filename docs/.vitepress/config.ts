@@ -4,6 +4,7 @@ export default defineConfig({
   title: 'Piant',
   description: '基于 PixiJS 的画布布局引擎',
   lang: 'zh-CN',
+  ignoreDeadLinks: [/^\/examples\//],
 
   themeConfig: {
     nav: [
@@ -19,6 +20,7 @@ export default defineConfig({
             { text: '简介', link: '/guide/introduction' },
             { text: '快速开始', link: '/guide/quick-start' },
             { text: '安装与配置', link: '/guide/installation' },
+            { text: '示例项目', link: '/guide/examples' },
           ],
         },
         {
@@ -46,7 +48,10 @@ export default defineConfig({
             { text: 'For 与 Index', link: '/guide/control-flow/for' },
             { text: 'Switch 与 Match', link: '/guide/control-flow/switch' },
             { text: 'Dynamic', link: '/guide/control-flow/dynamic' },
-            { text: 'ErrorBoundary', link: '/guide/control-flow/error-boundary' },
+            {
+              text: 'ErrorBoundary',
+              link: '/guide/control-flow/error-boundary',
+            },
           ],
         },
         {
@@ -59,15 +64,11 @@ export default defineConfig({
         },
         {
           text: '事件与交互',
-          items: [
-            { text: '事件处理', link: '/guide/events' },
-          ],
+          items: [{ text: '事件处理', link: '/guide/events' }],
         },
         {
           text: '生命周期',
-          items: [
-            { text: '生命周期钩子', link: '/guide/lifecycle' },
-          ],
+          items: [{ text: '生命周期钩子', link: '/guide/lifecycle' }],
         },
       ],
       '/reference/': [
@@ -84,9 +85,7 @@ export default defineConfig({
       ],
     },
 
-    socialLinks: [
-      { icon: 'github', link: 'https://github.com/sumy7/piant' },
-    ],
+    socialLinks: [{ icon: 'github', link: 'https://github.com/sumy7/piant' }],
 
     footer: {
       message: 'Released under the MIT License.',

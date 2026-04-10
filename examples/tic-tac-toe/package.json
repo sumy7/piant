@@ -1,5 +1,6 @@
 {
   "name": "@piant/examples-tic-tac-toe",
+  "description": "井字棋示例：演示组件组合、状态更新与交互事件处理。",
   "private": true,
   "scripts": {
     "dev": "rsbuild dev --open",
