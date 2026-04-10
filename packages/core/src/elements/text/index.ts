@@ -61,6 +61,7 @@ export class Typesetter {
     string,
     { width: number; ascent: number; descent: number; height: number }
   >();
+  private _debugTextRendering = false;
 
   constructor(items: InlineItem[] = [], style: Partial<TextLayoutStyle> = {}) {
     this._contents = items;
@@ -75,6 +76,10 @@ export class Typesetter {
   setContents(items: InlineItem[] = []) {
     this._contents = items;
     this.invalidate();
+  }
+
+  setDebugTextRendering(enabled: boolean) {
+    this._debugTextRendering = !!enabled;
   }
 
   flow(width: number) {
@@ -107,6 +112,7 @@ export class Typesetter {
     const renderHeight = this.resolveRenderHeight(bounds?.height);
 
     let hasText = false;
+    let hasDebugOverlay = false;
 
     this.prepareTextSurface(surface, renderWidth, renderHeight);
 
@@ -168,8 +174,13 @@ export class Typesetter {
       }
     }
 
+    if (this._debugTextRendering) {
+      this.drawDebugOverlay(surface, renderWidth);
+      hasDebugOverlay = this._cachedLineBoxes.length > 0;
+    }
+
     this.updateTextSurfaceSprite(surface, renderWidth, renderHeight);
-    if (hasText) {
+    if (hasText || hasDebugOverlay) {
       nextChildren.unshift(surface.sprite);
     }
 
@@ -394,25 +405,34 @@ export class Typesetter {
         if (!sourceItem) continue;
 
         const style = this.resolveItemStyle(sourceItem);
-        maxLineHeight = Math.max(
-          maxLineHeight,
-          this.getResolvedLineHeightForStyle(style),
-        );
+        const resolvedStyleLineHeight = this.getResolvedLineHeightForStyle(style);
 
         if (sourceItem.type === 'image') {
           const imageSource = this.resolveImageSource(sourceItem);
           const imageHeight = this.resolveImageHeight(sourceItem, imageSource);
-          maxLineHeight = Math.max(maxLineHeight, imageHeight);
+          const inlineBoxHeight = Math.max(resolvedStyleLineHeight, imageHeight);
+          const topLeading = Math.max(0, inlineBoxHeight - imageHeight) / 2;
+
+          maxLineHeight = Math.max(maxLineHeight, inlineBoxHeight);
           if (style.verticalAlign === 'baseline') {
-            maxBaselineOffset = Math.max(maxBaselineOffset, imageHeight);
+            maxBaselineOffset = Math.max(
+              maxBaselineOffset,
+              topLeading + imageHeight,
+            );
           }
         } else {
           const text = fragment.text.replace(/\u200B/g, '');
           if (text.length === 0) continue;
           const metrics = this.getTextMetrics(text, style);
-          maxLineHeight = Math.max(maxLineHeight, metrics.height);
+          const inlineBoxHeight = Math.max(resolvedStyleLineHeight, metrics.height);
+          const topLeading = Math.max(0, inlineBoxHeight - metrics.height) / 2;
+
+          maxLineHeight = Math.max(maxLineHeight, inlineBoxHeight);
           if (style.verticalAlign === 'baseline') {
-            maxBaselineOffset = Math.max(maxBaselineOffset, metrics.ascent);
+            maxBaselineOffset = Math.max(
+              maxBaselineOffset,
+              topLeading + metrics.ascent,
+            );
           }
         }
       }
@@ -532,6 +552,26 @@ export class Typesetter {
     }
   }
 
+  private drawDebugOverlay(surface: TextRenderSurface, renderWidth: number) {
+    const { ctx } = surface;
+
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255, 71, 87, 0.75)';
+    ctx.lineWidth = 1;
+
+    for (const lineBox of this._cachedLineBoxes) {
+      ctx.strokeRect(0, lineBox.y, renderWidth, lineBox.height);
+
+      const baselineY = lineBox.y + lineBox.baselineOffset;
+      ctx.beginPath();
+      ctx.moveTo(0, baselineY);
+      ctx.lineTo(renderWidth, baselineY);
+      ctx.stroke();
+    }
+
+    ctx.restore();
+  }
+
   private resolveInlineY(
     align: VerticalAlign,
     lineBox: LineBox,
@@ -610,6 +650,8 @@ export class Typesetter {
       texture,
       roundPixels: true,
     });
+    surface.sprite.width = width;
+    surface.sprite.height = height;
   }
 
   private reconcileChildren(container: Container, nextChildren: Sprite[]) {

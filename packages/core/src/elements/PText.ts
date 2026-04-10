@@ -15,6 +15,7 @@ export class PText extends PNode {
   _textCtx: CanvasRenderingContext2D;
   _textSprite: Sprite;
   _textTexture: Texture;
+  _debugTextRendering = false;
 
   constructor(items: InlineItem[] | string = []) {
     super();
@@ -108,6 +109,16 @@ export class PText extends PNode {
     this._textContent = items;
     this._textTypesetter.setContents(items);
     this._layoutNode.markDirty();
+    this.markDirty();
+  }
+
+  setDebugTextRendering(enabled: boolean) {
+    const next = !!enabled;
+    if (this._debugTextRendering === next) {
+      return;
+    }
+    this._debugTextRendering = next;
+    this._textTypesetter.setDebugTextRendering(this._debugTextRendering);
     this.markDirty();
   }
 

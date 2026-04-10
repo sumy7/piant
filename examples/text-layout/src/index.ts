@@ -18,6 +18,7 @@ import './index.css';
     width: app.screen.width,
     height: app.screen.height,
   });
+  root.setDebugOptions({ textRendering: true });
 
   render(App, root);
 

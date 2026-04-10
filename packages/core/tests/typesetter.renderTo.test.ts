@@ -133,4 +133,25 @@ describe('Typesetter renderTo', () => {
     expect(imageNodes[0].texture).toBe(sharedSource.texture);
     expect(imageNodes[1].texture).toBe(sharedSource.texture);
   });
+
+  it('adds top leading when lineHeight exceeds glyph height', () => {
+    const items: InlineItem[] = [{ type: 'text', content: 'Hello' }];
+    const typesetter = new Typesetter(items, {
+      fontSize: 16,
+      lineHeight: 20,
+    });
+
+    const drawCalls: Array<{ x: number; y: number }> = [];
+    const surface = createSurface();
+    surface.ctx.fillText = ((_text: string, x: number, y: number) => {
+      drawCalls.push({ x, y });
+    }) as CanvasRenderingContext2D['fillText'];
+
+    const container = new Container();
+    typesetter.flow(200);
+    typesetter.renderTo(container, surface, { width: 200, height: 20 });
+
+    expect(drawCalls.length).toBeGreaterThan(0);
+    expect(drawCalls[0]?.y).toBe(14);
+  });
 });
