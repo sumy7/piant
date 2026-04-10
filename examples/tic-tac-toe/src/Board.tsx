@@ -1,4 +1,4 @@
-import { For, StyleSheet, View } from 'piant';
+import { For, StyleSheet, View } from '@piant/core';
 import Cell, { type CellValue } from './Cell';
 
 interface BoardProps {

@@ -1,4 +1,4 @@
-import { createState, StyleSheet, TextView, View } from 'piant';
+import { createState, StyleSheet, TextView, View } from '@piant/core';
 
 interface TodoInputProps {
   onAddTodo?: (text: string) => void;

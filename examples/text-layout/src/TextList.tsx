@@ -8,7 +8,7 @@ import {
   StyleSheet,
   TextView,
   View,
-} from 'piant';
+} from '@piant/core';
 import { Assets, Sprite } from 'pixi.js';
 import BunnyImg from './bunny.png?url';
 

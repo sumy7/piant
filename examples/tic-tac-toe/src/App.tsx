@@ -1,4 +1,4 @@
-import { createState, Show, StyleSheet, TextView, View } from 'piant';
+import { createState, Show, StyleSheet, TextView, View } from '@piant/core';
 import Board from './Board';
 import type { CellValue } from './Cell';
 

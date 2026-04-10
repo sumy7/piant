@@ -1,4 +1,4 @@
-import { createState, StyleSheet, View } from 'piant';
+import { createState, StyleSheet, View } from '@piant/core';
 import TodoInput from './TodoInput';
 import TodoList, { type Todo } from './TodoList';
 import TodoTitle from './TodoTitle';

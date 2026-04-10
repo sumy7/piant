@@ -8,6 +8,7 @@
   "scripts": {
     "build": "cross-env NX_DAEMON=false nx run-many -t build --exclude @examples/* @e2e/* --parallel=10",
     "changeset": "changeset",
+    "postinstall": "pnpm -r --filter \"./packages/*\" --if-present run build",
     "pages:build": "node scripts/build-pages.mjs",
     "docs:build": "pnpm --filter @piant/monorepo-docs build",
     "docs:dev": "pnpm --filter @piant/monorepo-docs dev",

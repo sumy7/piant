@@ -1,4 +1,4 @@
-import { Span, StyleSheet, TextView, View } from 'piant';
+import { Span, StyleSheet, TextView, View } from '@piant/core';
 import TextList from './TextList';
 
 export function App() {

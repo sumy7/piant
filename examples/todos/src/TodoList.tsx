@@ -1,4 +1,4 @@
-import { For, Image, Show, StyleSheet, TextView, View } from 'piant';
+import { For, Image, Show, StyleSheet, TextView, View } from '@piant/core';
 import { CheckIcon, TrashIcon, UncheckIcon } from './icons';
 
 export interface Todo {

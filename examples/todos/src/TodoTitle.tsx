@@ -1,4 +1,4 @@
-import { StyleSheet, TextView, View } from 'piant';
+import { StyleSheet, TextView, View } from '@piant/core';
 
 const TodoTitle = () => {
   const styles = StyleSheet.create({
