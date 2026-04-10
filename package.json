@@ -8,6 +8,8 @@
   "scripts": {
     "build": "cross-env NX_DAEMON=false nx run-many -t build --exclude @examples/* @e2e/* --parallel=10",
     "changeset": "changeset",
+    "docs:build": "pnpm --filter @piant/monorepo-docs build",
+    "docs:dev": "pnpm --filter @piant/monorepo-docs dev",
     "format": "prettier --write . && heading-case --write",
     "lint": "biome check",
     "sort-package-json": "pnpx sort-package-json \"./package.json\" \"packages/*/package.json\" \"packages/compat/*/package.json\""
