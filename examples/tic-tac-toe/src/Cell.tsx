@@ -40,19 +40,16 @@ const Cell = (props: CellProps) => {
     props.onClick(props.index);
   };
 
+  const textViewStyles = () =>
+    props.value === 'X'
+      ? styles.textX
+      : props.value === 'O'
+        ? styles.textO
+        : styles.empty;
+
   return (
     <View style={styles.cell} onClick={handleClick}>
-      <TextView
-        style={
-          props.value === 'X'
-            ? styles.textX
-            : props.value === 'O'
-              ? styles.textO
-              : styles.empty
-        }
-      >
-        {props.value ?? ' '}
-      </TextView>
+      <TextView style={textViewStyles()}>{props.value ?? ' '}</TextView>
     </View>
   );
 };
