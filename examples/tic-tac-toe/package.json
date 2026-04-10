@@ -1,0 +1,21 @@
+{
+  "name": "@piant/examples-tic-tac-toe",
+  "private": true,
+  "scripts": {
+    "dev": "rsbuild dev --open",
+    "build": "rsbuild build",
+    "preview": "rsbuild preview"
+  },
+  "dependencies": {
+    "@piant/core": "workspace:*",
+    "@pixi/devtools": "^2.0.1",
+    "piant": "workspace:@piant/core@*",
+    "pixi.js": "^8.17.1"
+  },
+  "devDependencies": {
+    "@rsbuild/core": "1.7.5",
+    "@rsbuild/plugin-babel": "1.0.6",
+    "@piant/babel-preset-piant": "workspace:*",
+    "typescript": "^5.9.2"
+  }
+}
