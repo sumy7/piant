@@ -42,7 +42,15 @@ const Cell = (props: CellProps) => {
 
   return (
     <View style={styles.cell} onClick={handleClick}>
-      <TextView style={props.value === 'X' ? styles.textX : props.value === 'O' ? styles.textO : styles.empty}>
+      <TextView
+        style={
+          props.value === 'X'
+            ? styles.textX
+            : props.value === 'O'
+              ? styles.textO
+              : styles.empty
+        }
+      >
         {props.value ?? ' '}
       </TextView>
     </View>

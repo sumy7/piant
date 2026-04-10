@@ -8,7 +8,7 @@ module.exports = (context, options = {}) => {
         {
           moduleName: '@piant/core',
           builtIns: [
-            // 'For',
+            'For',
             'Show',
             'Switch',
             'Match',
@@ -16,8 +16,8 @@ module.exports = (context, options = {}) => {
             // 'SuspenseList',
             // 'Portal',
             // 'Index',
-            // 'Dynamic',
-            // 'ErrorBoundary',
+            'Dynamic',
+            'ErrorBoundary',
           ],
           contextToCustomElements: true,
           wrapConditionals: true,
