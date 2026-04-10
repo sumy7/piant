@@ -2,6 +2,7 @@ packages:
   - scripts/**
   - packages/**
   - examples/**
+  - docs
   - '!**/compiled/**'
   - '!**/dist/**'
   - '!**/dist-*/**'
