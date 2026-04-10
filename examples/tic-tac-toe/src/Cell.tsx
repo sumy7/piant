@@ -35,15 +35,15 @@ const styles = StyleSheet.create({
   },
 });
 
-const Cell = ({ value, index, onClick }: CellProps) => {
+const Cell = (props: CellProps) => {
   const handleClick = () => {
-    onClick(index);
+    props.onClick(props.index);
   };
 
   return (
     <View style={styles.cell} onClick={handleClick}>
-      <TextView style={value === 'X' ? styles.textX : value === 'O' ? styles.textO : styles.empty}>
-        {value ?? ' '}
+      <TextView style={props.value === 'X' ? styles.textX : props.value === 'O' ? styles.textO : styles.empty}>
+        {props.value ?? ' '}
       </TextView>
     </View>
   );

@@ -16,13 +16,13 @@ const styles = StyleSheet.create({
   },
 });
 
-const Board = ({ cells, onCellClick }: BoardProps) => {
-  const rows = [
-    [0, 1, 2],
-    [3, 4, 5],
-    [6, 7, 8],
-  ];
+const rows = [
+  [0, 1, 2],
+  [3, 4, 5],
+  [6, 7, 8],
+];
 
+const Board = (props: BoardProps) => {
   return (
     <View style={styles.board}>
       <For each={rows}>
@@ -30,7 +30,7 @@ const Board = ({ cells, onCellClick }: BoardProps) => {
           <View style={styles.row}>
             <For each={row}>
               {(index) => (
-                <Cell value={cells[index]} index={index} onClick={onCellClick} />
+                <Cell value={props.cells[index]} index={index} onClick={props.onCellClick} />
               )}
             </For>
           </View>
