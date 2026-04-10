@@ -44,7 +44,7 @@ export type InlineItem = InlineTextItem | InlineImageItem;
 
 export type TextRenderSurface = {
   sprite: Sprite;
-  texture: Texture;
+  texture?: Texture;
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D;
 };

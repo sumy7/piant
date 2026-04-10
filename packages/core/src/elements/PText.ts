@@ -127,5 +127,11 @@ export class PText extends PNode {
       width: this._layoutNode.getComputedWidth(),
       height: this._layoutNode.getComputedHeight(),
     });
+
+    // Keep component-held references aligned with renderTo temporary sprite recreation.
+    this._textSprite = surface.sprite;
+    if (surface.texture) {
+      this._textTexture = surface.texture;
+    }
   }
 }

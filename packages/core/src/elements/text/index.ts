@@ -598,12 +598,16 @@ export class Typesetter {
     width: number,
     height: number,
   ) {
-    surface.texture.source.update();
-    surface.texture.update();
+    const texture =
+      surface.texture ?? surface.sprite.texture ?? Texture.from(surface.canvas);
+    surface.texture = texture;
+
+    (texture.source as TextureSource | undefined)?.update?.();
+    texture.update();
 
     // FIXME: 更新了 texure 但是 持有的 Sprite 宽高未更新
     surface.sprite = new Sprite({
-      texture: surface.texture,
+      texture,
       roundPixels: true,
     });
   }
