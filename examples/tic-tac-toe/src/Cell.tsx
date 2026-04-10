@@ -19,12 +19,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#16213e',
     borderRadius: 8,
   },
-  cellX: {
-    backgroundColor: '#16213e',
-  },
-  cellO: {
-    backgroundColor: '#16213e',
-  },
   textX: {
     fontSize: 48,
     fontWeight: 'bold',

@@ -80,7 +80,7 @@ export function App() {
 
   const handleCellClick = (index: number) => {
     if (isGameOver() || cells()[index]) return;
-    const next = cells().slice() as CellValue[];
+    const next = cells().slice();
     next[index] = isXTurn() ? 'X' : 'O';
     setCells(next);
     setIsXTurn(!isXTurn());
