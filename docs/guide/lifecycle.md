@@ -28,7 +28,7 @@ function MyComponent() {
 - 组件卸载时
 
 ```tsx
-import { createEffect, createState, onCleanup, TextView } from '@piant/core';
+import { createEffect, createState, onCleanup, Text } from '@piant/core';
 
 function TimerComponent() {
   const [count, setCount] = createState(0);
@@ -42,7 +42,7 @@ function TimerComponent() {
     onCleanup(() => clearInterval(timer));
   });
 
-  return <TextView>{count()}</TextView>;
+  return <Text>{count()}</Text>;
 }
 ```
 

@@ -36,7 +36,7 @@ export default defineConfig({
           items: [
             { text: 'View', link: '/guide/components/view' },
             { text: 'Image', link: '/guide/components/image' },
-            { text: 'TextView', link: '/guide/components/textview' },
+            { text: 'Text', link: '/guide/components/text' },
             { text: 'ScrollView', link: '/guide/components/scrollview' },
             { text: 'CustomView', link: '/guide/components/customview' },
           ],

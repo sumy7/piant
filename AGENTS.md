@@ -17,7 +17,7 @@
 
 `packages/core/src` 目录边界：
 
-- `components/`：公开组件（`View`、`TextView`、`For`、`Show`、`Switch` 等）。
+- `components/`：公开组件（`View`、`Text`、`For`、`Show`、`Switch` 等）。
 - `elements/`：底层渲染节点与 Pixi/Yoga 对接实现。
 - `reactivity/`：响应式原语与上下文能力。
 - `renderer/`：渲染入口与更新流程。
@@ -47,7 +47,7 @@
 
 - 涉及 PixiJS API 时，优先参考官方 LLM 文档：<https://pixijs.com/llms.txt>。
 - JSX 使用前提是配置 `@piant/babel-preset-piant`（参考示例与 README 中 rsbuild 配置）。
-- 修改 `TextView` 相关逻辑时，避免在 JSX 内部写复杂内联条件/插值表达式；优先先计算再传值，以减少不必要的响应式副作用。
+- 修改 `Text` 相关逻辑时，避免在 JSX 内部写复杂内联条件/插值表达式；优先先计算再传值，以减少不必要的响应式副作用。
 - 变更 API 或行为时，优先补充/更新 `packages/core/tests` 下对应 Vitest 用例。
 
 ## Docs Map (Link, Don’t Embed)

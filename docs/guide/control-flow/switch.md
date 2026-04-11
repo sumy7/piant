@@ -5,21 +5,21 @@
 ## 基本用法
 
 ```tsx
-import { Switch, Match, TextView, createState } from '@piant/core';
+import { Switch, Match, Text, createState } from '@piant/core';
 
 function StatusDisplay() {
   const [status, setStatus] = createState<'loading' | 'success' | 'error'>('loading');
 
   return (
-    <Switch fallback={<TextView>未知状态</TextView>}>
+    <Switch fallback={<Text>未知状态</Text>}>
       <Match when={status() === 'loading'}>
-        <TextView>加载中...</TextView>
+        <Text>加载中...</Text>
       </Match>
       <Match when={status() === 'success'}>
-        <TextView>加载成功！</TextView>
+        <Text>加载成功！</Text>
       </Match>
       <Match when={status() === 'error'}>
-        <TextView>加载失败</TextView>
+        <Text>加载失败</Text>
       </Match>
     </Switch>
   );
@@ -50,7 +50,7 @@ const [user, setUser] = createState<User | null>(null);
 
 <Switch>
   <Match when={user()}>
-    {(u) => <TextView>欢迎，{u().name}</TextView>}
+    {(u) => <Text>欢迎，{u().name}</Text>}
   </Match>
 </Switch>
 ```

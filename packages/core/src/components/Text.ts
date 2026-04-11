@@ -82,7 +82,7 @@ export function collectTextViewNodes(
       if (props.bold) currentStyle.fontWeight = 'bold';
       if (props.italic) currentStyle.fontStyle = 'italic';
 
-      if (typeName === 'ImageSpan' || typeName === 'imageSpan') {
+      if (typeName === 'Img' || typeName === 'img') {
         nodes.push({ type: 'imageSpan', src: props.src, style: currentStyle });
         return;
       }
@@ -115,13 +115,13 @@ export function collectTextViewNodes(
   return nodes;
 }
 
-export interface TextViewProps {
+export interface TextProps {
   style?: TextStyles | TextStyles[];
   children?: JSX.Element;
   ref?: (ref: PText) => void;
 }
 
-export function TextView(props: TextViewProps) {
+export function Text(props: TextProps) {
   const [styleProps, childrenProps, otherProps] = splitProps(
     props,
     ['style'],
@@ -148,7 +148,7 @@ export function TextView(props: TextViewProps) {
     });
 
     effect(() => {
-      console.log('TextView children changed');
+      console.log('Text children changed');
       const nodes = collectTextViewNodes(children(), getTextViewStyles());
       const contents = nodes
         .map((n) => {
@@ -179,7 +179,7 @@ export function Span(props: any) {
   }));
 }
 
-export function ImageSpan(props: any) {
+export function Img(props: any) {
   return memo(() => ({
     type: 'imageSpan',
     props: props,

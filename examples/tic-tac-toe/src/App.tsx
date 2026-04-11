@@ -1,4 +1,4 @@
-import { createState, Show, StyleSheet, TextView, View } from '@piant/core';
+import { createState, Show, StyleSheet, Text, View } from '@piant/core';
 import Board from './Board';
 import type { CellValue } from './Cell';
 
@@ -94,7 +94,7 @@ export function App() {
   return (
     <View style={styles.container}>
       <View style={styles.panel}>
-        <TextView style={styles.title}>Tic Tac Toe</TextView>
+        <Text style={styles.title}>Tic Tac Toe</Text>
 
         <Show
           when={winner()}
@@ -102,22 +102,22 @@ export function App() {
             <Show
               when={isDraw()}
               fallback={
-                <TextView style={styles.statusText}>
+                <Text style={styles.statusText}>
                   Player {isXTurn() ? 'X' : 'O'}'s turn
-                </TextView>
+                </Text>
               }
             >
-              <TextView style={styles.drawText}>It's a draw!</TextView>
+              <Text style={styles.drawText}>It's a draw!</Text>
             </Show>
           }
         >
-          <TextView style={styles.winnerText}>Player {winner()} wins!</TextView>
+          <Text style={styles.winnerText}>Player {winner()} wins!</Text>
         </Show>
 
         <Board cells={cells()} onCellClick={handleCellClick} />
 
         <View style={styles.resetButton} onClick={handleReset}>
-          <TextView style={styles.resetText}>Restart</TextView>
+          <Text style={styles.resetText}>Restart</Text>
         </View>
       </View>
     </View>

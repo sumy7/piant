@@ -5,12 +5,12 @@
 ## 基本用法
 
 ```tsx
-import { ErrorBoundary, TextView } from '@piant/core';
+import { ErrorBoundary, Text } from '@piant/core';
 
 function App() {
   return (
     <ErrorBoundary
-      fallback={<TextView>发生了错误，请刷新重试</TextView>}
+      fallback={<Text>发生了错误，请刷新重试</Text>}
     >
       <RiskyComponent />
     </ErrorBoundary>
@@ -26,9 +26,9 @@ function App() {
 <ErrorBoundary
   fallback={(err, reset) => (
     <View>
-      <TextView>错误：{err.message}</TextView>
+      <Text>错误：{err.message}</Text>
       <View onClick={reset} style={{ backgroundColor: '#0066cc', padding: 8, borderRadius: 4 }}>
-        <TextView style={{ color: 'white' }}>重试</TextView>
+        <Text style={{ color: 'white' }}>重试</Text>
       </View>
     </View>
   )}

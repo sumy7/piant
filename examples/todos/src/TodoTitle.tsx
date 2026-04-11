@@ -1,4 +1,4 @@
-import { StyleSheet, TextView, View } from '@piant/core';
+import { StyleSheet, Text, View } from '@piant/core';
 
 const TodoTitle = () => {
   const styles = StyleSheet.create({
@@ -9,7 +9,7 @@ const TodoTitle = () => {
 
   return (
     <View style={styles.title}>
-      <TextView>My Todos</TextView>
+      <Text>My Todos</Text>
     </View>
   );
 };

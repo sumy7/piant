@@ -1,4 +1,4 @@
-import { createState, StyleSheet, TextView, View } from '@piant/core';
+import { createState, StyleSheet, Text, View } from '@piant/core';
 
 interface TodoInputProps {
   onAddTodo?: (text: string) => void;
@@ -42,10 +42,10 @@ const TodoInput = ({ onAddTodo }: TodoInputProps) => {
   return (
     <View style={styles.container}>
       <View style={styles.input}>
-        <TextView>{inputValue()}</TextView>
+        <Text>{inputValue()}</Text>
       </View>
       <View style={styles.button} onClick={onClick}>
-        <TextView style={styles.buttonText}>Add</TextView>
+        <Text style={styles.buttonText}>Add</Text>
       </View>
     </View>
   );

@@ -5,7 +5,7 @@
 ## 基本用法
 
 ```tsx
-import { Show, View, TextView, createState } from '@piant/core';
+import { Show, View, Text, createState } from '@piant/core';
 
 function Toggle() {
   const [visible, setVisible] = createState(true);
@@ -13,7 +13,7 @@ function Toggle() {
   return (
     <View>
       <Show when={visible()}>
-        <TextView>内容可见</TextView>
+        <Text>内容可见</Text>
       </Show>
     </View>
   );
@@ -40,8 +40,8 @@ function Toggle() {
 ```tsx
 const [user, setUser] = createState<User | null>(null);
 
-<Show when={user()} fallback={<TextView>未登录</TextView>}>
-  {(u) => <TextView>欢迎，{u().name}</TextView>}
+<Show when={user()} fallback={<Text>未登录</Text>}>
+  {(u) => <Text>欢迎，{u().name}</Text>}
 </Show>
 ```
 

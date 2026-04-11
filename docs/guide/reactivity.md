@@ -95,7 +95,7 @@ function App() {
 // 消费者
 function Child() {
   const theme = useContext(ThemeContext);
-  return <TextView>{theme}</TextView>;
+  return <Text>{theme}</Text>;
 }
 ```
 
@@ -118,7 +118,7 @@ function ListItem({ id }: { id: string }) {
       style={{ backgroundColor: isSelected(id) ? '#e0e0ff' : 'transparent' }}
       onClick={() => setSelectedId(id)}
     >
-      <TextView>{id}</TextView>
+      <Text>{id}</Text>
     </View>
   );
 }
