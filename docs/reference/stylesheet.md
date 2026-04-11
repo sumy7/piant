@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
 
 ```ts
 StyleSheet.flatten([style1, style2, false, style3]);
-// 返回合并后的样式对象，或 undefined（输入为空/非对象时）
+// 返回合并后的样式对象；空数组或仅含假值时返回 {}（空对象）；非对象/null 输入返回 undefined
 ```
 
 ### StyleSheet.compose

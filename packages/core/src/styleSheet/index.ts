@@ -9,6 +9,7 @@ import type {
 } from './types';
 
 export type {
+  ResolvedStyleSheet,
   StyleEntry,
   StyleObject,
   StyleReference,
@@ -31,9 +32,11 @@ function resolveEntry<T extends object>(
   for (const parent of entry.parents) {
     if (typeof parent === 'string') {
       if (visited.has(parent)) {
-        console.warn(
-          `[StyleSheet] Circular style inheritance detected: ${[...chain, parent].join(' → ')}. Parent "${parent}" will be skipped.`,
-        );
+        if (process.env.NODE_ENV !== 'production') {
+          console.warn(
+            `[StyleSheet] Circular style inheritance detected: ${[...chain, parent].join(' → ')}. Parent "${parent}" will be skipped.`,
+          );
+        }
         continue;
       }
       const parentEntry = definition[parent];
@@ -98,8 +101,9 @@ export const StyleSheet = {
    * Falsy values (`null`, `undefined`, `false`) are ignored.
    *
    * Scope: `flatten` only expands array nesting — it does **not** process
-   * `StyleReference` inheritance declarations. For full style resolution
-   * including inheritance, use `StyleSheet.resolve`.
+   * `StyleReference` inheritance declarations. Inheritance is fully resolved
+   * at `StyleSheet.create` time; both `flatten` and `resolve` operate on
+   * already-expanded style objects.
    *
    * @example
    * ```
@@ -129,7 +133,7 @@ export const StyleSheet = {
    * // styles.primary => { padding: 12, borderRadius: 8, backgroundColor: '#0055ff' }
    * ```
    */
-  create<T extends Record<string, StyleEntry<any>>>(
+  create<TStyle extends object = ViewStyles, T extends Record<string, StyleEntry<TStyle>> = Record<string, StyleEntry<TStyle>>>(
     obj: T,
   ): ResolvedStyleSheet<T> {
     const result = {} as ResolvedStyleSheet<T>;
