@@ -13,7 +13,7 @@
   - [ ] break words
   - [ ] ellipsis
   - [ ] decoration (underline / strikethrough)
-- [ ] 为 TextView 增加对应 style/API（仅在必要时新增）
+- [ ] 为 Text 增加对应 style/API（仅在必要时新增）
 - [ ] 增加回归测试（覆盖中英文、换行、极窄容器、长文本）
 - [ ] 提供示例页面（建议新增 `examples/text-layout` 对应演示场景）
 - [ ] 更新文档

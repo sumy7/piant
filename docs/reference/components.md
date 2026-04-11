@@ -32,24 +32,24 @@ interface ImageStyles extends ViewStyles {
 
 ---
 
-## TextView
+## Text
 
 ```ts
-interface TextViewProps {
+interface TextProps {
   style?: TextStyles | TextStyles[];
   children?: JSX.Element;
   ref?: (el: PText) => void;
 }
 ```
 
-详见：[TextView 组件文档](/guide/components/textview)
+详见：[Text 组件文档](/guide/components/text)
 
 ---
 
 ## Span
 
 ```ts
-// Span 内联文本样式包裹器，仅用于 TextView 内部
+// Span 内联文本样式包裹器，仅用于 Text 内部
 function Span(props: {
   style?: TextStyles;
   bold?: boolean;
@@ -60,11 +60,11 @@ function Span(props: {
 
 ---
 
-## ImageSpan
+## Img
 
 ```ts
-// ImageSpan 行内图片，仅用于 TextView 内部
-function ImageSpan(props: {
+// Img 行内图片，仅用于 Text 内部
+function Img(props: {
   src: Sprite | Graphics;
   style?: TextStyles;
 }): JSX.Element;

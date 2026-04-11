@@ -1,20 +1,20 @@
-# TextView
+# Text
 
-`TextView` 是 Piant 中用于渲染富文本内容的组件，支持内联样式、多字体、图文混排等功能。所有文本内容都必须包裹在 `TextView` 中。
+`Text` 是 Piant 中用于渲染富文本内容的组件，支持内联样式、多字体、图文混排等功能。所有文本内容都必须包裹在 `Text` 中。
 
 ## 基本用法
 
 ```tsx
-import { TextView } from '@piant/core';
+import { Text } from '@piant/core';
 
-<TextView>Hello, Piant!</TextView>
+<Text>Hello, Piant!</Text>
 ```
 
 ```tsx
 // 带样式
-<TextView style={{ fontSize: 20, color: '#333', fontWeight: 'bold' }}>
+<Text style={{ fontSize: 20, color: '#333', fontWeight: 'bold' }}>
   标题文本
-</TextView>
+</Text>
 ```
 
 ## 使用 Span 设置内联样式
@@ -22,38 +22,38 @@ import { TextView } from '@piant/core';
 `Span` 用于给文本片段单独设置样式：
 
 ```tsx
-import { TextView, Span } from '@piant/core';
+import { Text, Span } from '@piant/core';
 
-<TextView style={{ fontSize: 16, color: '#333' }}>
+<Text style={{ fontSize: 16, color: '#333' }}>
   这是<Span style={{ color: 'red', fontWeight: 'bold' }}>红色粗体</Span>文字
-</TextView>
+</Text>
 ```
 
 ## 图文混排
 
-使用 `ImageSpan` 可以在文字行内插入图片：
+使用 `Img` 可以在文字行内插入图片：
 
 ```tsx
-import { TextView, Span, ImageSpan } from '@piant/core';
+import { Text, Span, Img } from '@piant/core';
 import { Graphics } from 'pixi.js';
 
 const icon = new Graphics().svg(iconSvg);
 
-<TextView>
+<Text>
   <Span>点击</Span>
-  <ImageSpan src={icon} style={{ width: 16, height: 16 }} />
+  <Img src={icon} style={{ width: 16, height: 16 }} />
   <Span>图标</Span>
-</TextView>
+</Text>
 ```
 
 ## Props
 
-### TextView Props
+### Text Props
 
 | 属性 | 类型 | 说明 |
 |------|------|------|
 | `style` | `TextStyles \| TextStyles[]` | 文本样式（同时支持布局样式和文本样式） |
-| `children` | `JSX.Element` | 子内容，可以是字符串、`Span`、`ImageSpan` |
+| `children` | `JSX.Element` | 子内容，可以是字符串、`Span`、`Img` |
 | `ref` | `(el: PText) => void` | 获取底层节点实例 |
 
 ### Span Props
@@ -63,9 +63,9 @@ const icon = new Graphics().svg(iconSvg);
 | `style` | `TextStyles` | 内联文本样式 |
 | `bold` | `boolean` | 快捷设置 `fontWeight: 'bold'` |
 | `italic` | `boolean` | 快捷设置 `fontStyle: 'italic'` |
-| `children` | `string \| Span \| ImageSpan` | 子内容 |
+| `children` | `string \| Span \| Img` | 子内容 |
 
-### ImageSpan Props
+### Img Props
 
 | 属性 | 类型 | 说明 |
 |------|------|------|
@@ -87,12 +87,12 @@ const icon = new Graphics().svg(iconSvg);
 | `textTransform` | `'none' \| 'uppercase' \| 'lowercase' \| 'capitalize'` | `'none'` | 文本变换 |
 | `whiteSpace` | `'normal' \| 'nowrap'` | `'normal'` | 空白字符处理 |
 | `wordBreak` | `'normal' \| 'break-all' \| 'break-word'` | `'break-word'` | 换行规则 |
-| `verticalAlign` | `'baseline' \| 'middle' \| 'top' \| 'bottom'` | `'baseline'` | 垂直对齐（用于 ImageSpan） |
+| `verticalAlign` | `'baseline' \| 'middle' \| 'top' \| 'bottom'` | `'baseline'` | 垂直对齐（用于 Img） |
 
 ## 完整示例
 
 ```tsx
-import { StyleSheet, Span, TextView } from '@piant/core';
+import { StyleSheet, Span, Text } from '@piant/core';
 
 const styles = StyleSheet.create({
   body: {
@@ -111,14 +111,14 @@ const styles = StyleSheet.create({
   },
 });
 
-<TextView style={styles.body}>
+<Text style={styles.body}>
   使用 <Span style={styles.highlight}>Piant</Span> 构建
   <Span style={styles.code}> Canvas </Span> 应用。
-</TextView>
+</Text>
 ```
 
 ## 注意事项
 
-- 直接在 `<View>` 中使用字符串子节点会产生警告，文本必须放在 `<TextView>` 中
-- `Span` 和 `ImageSpan` 只能用于 `TextView` 内部，不能单独使用
-- `TextView` 的布局由外层的 `View` 尺寸决定，文字会在该区域内自动换行
+- 直接在 `<View>` 中使用字符串子节点会产生警告，文本必须放在 `<Text>` 中
+- `Span` 和 `Img` 只能用于 `Text` 内部，不能单独使用
+- `Text` 的布局由外层的 `View` 尺寸决定，文字会在该区域内自动换行

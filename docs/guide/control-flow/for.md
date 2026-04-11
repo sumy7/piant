@@ -9,7 +9,7 @@ Piant 提供了两个列表渲染组件：`For` 和 `Index`，适用于不同的
 ### 基本用法
 
 ```tsx
-import { For, View, TextView, createState } from '@piant/core';
+import { For, View, Text, createState } from '@piant/core';
 
 function TodoList() {
   const [items, setItems] = createState(['苹果', '香蕉', '橙子']);
@@ -19,8 +19,8 @@ function TodoList() {
       <For each={items()}>
         {(item, index) => (
           <View style={{ flexDirection: 'row', gap: 8 }}>
-            <TextView>{index() + 1}.</TextView>
-            <TextView>{item}</TextView>
+            <Text>{index() + 1}.</Text>
+            <Text>{item}</Text>
           </View>
         )}
       </For>
@@ -34,7 +34,7 @@ function TodoList() {
 当 `each` 数组为空时，渲染 `fallback`：
 
 ```tsx
-<For each={items()} fallback={<TextView>暂无数据</TextView>}>
+<For each={items()} fallback={<Text>暂无数据</Text>}>
   {(item) => <ItemComponent item={item} />}
 </For>
 ```
@@ -60,12 +60,12 @@ function TodoList() {
 ### 基本用法
 
 ```tsx
-import { Index, View, TextView } from '@piant/core';
+import { Index, View, Text } from '@piant/core';
 
 <Index each={items()}>
   {(item, index) => (
     <View>
-      <TextView>{index}: {item()}</TextView>
+      <Text>{index}: {item()}</Text>
     </View>
   )}
 </Index>

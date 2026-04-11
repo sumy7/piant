@@ -31,7 +31,7 @@ const styles = StyleSheet.create({
 
 // 使用
 <View style={styles.container}>
-  <TextView style={styles.title}>标题</TextView>
+  <Text style={styles.title}>标题</Text>
 </View>
 ```
 

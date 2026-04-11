@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
 
 ## 文本视觉样式
 
-`TextView` 额外支持以下视觉样式属性，详见 [TextView](/guide/components/textview)：
+`Text` 额外支持以下视觉样式属性，详见 [Text](/guide/components/text)：
 
 | 属性 | 类型 | 说明 |
 |------|------|------|

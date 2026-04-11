@@ -5,14 +5,14 @@
 ## 基本用法
 
 ```tsx
-import { ScrollView, View, TextView } from '@piant/core';
+import { ScrollView, View, Text } from '@piant/core';
 
 function MyScrollList() {
   return (
     <ScrollView style={{ width: 300, height: 200 }}>
       {Array.from({ length: 20 }, (_, i) => (
         <View style={{ height: 40, borderBottomWidth: 1, borderColor: '#eee' }}>
-          <TextView>列表项 {i + 1}</TextView>
+          <Text>列表项 {i + 1}</Text>
         </View>
       ))}
     </ScrollView>

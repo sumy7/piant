@@ -1,4 +1,4 @@
-import { Span, StyleSheet, TextView, View } from '@piant/core';
+import { Span, StyleSheet, Text, View } from '@piant/core';
 import TextList from './TextList';
 
 export function App() {
@@ -43,16 +43,16 @@ export function App() {
     <View style={styles.pageContainer}>
       <View style={styles.panel}>
         <View>
-          <TextView style={styles.title}>
+          <Text style={styles.title}>
             <Span>Text Layout Playground</Span>
-          </TextView>
-          <TextView style={styles.subtitle}>
+          </Text>
+          <Text style={styles.subtitle}>
             <Span>
               This example isolates text layout scenarios including inline
               images, line wrapping, alignment, line height, letter spacing,
               text transforms, and overflow.
             </Span>
-          </TextView>
+          </Text>
         </View>
         <View style={styles.textListBlock}>
           <TextList />

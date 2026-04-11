@@ -60,7 +60,7 @@ import { App } from './App';
 
 ```tsx
 // src/App.tsx
-import { createState, StyleSheet, View, TextView } from '@piant/core';
+import { createState, StyleSheet, View, Text } from '@piant/core';
 
 export function App() {
   const [count, setCount] = createState(0);
@@ -89,7 +89,7 @@ export function App() {
   return (
     <View style={styles.container}>
       <View style={styles.button} onClick={() => setCount(count() + 1)}>
-        <TextView style={styles.text}>点击了 {count()} 次</TextView>
+        <Text style={styles.text}>点击了 {count()} 次</Text>
       </View>
     </View>
   );

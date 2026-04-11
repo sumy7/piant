@@ -1,4 +1,4 @@
-import { StyleSheet, TextView, View } from '@piant/core';
+import { StyleSheet, Text, View } from '@piant/core';
 
 export type CellValue = 'X' | 'O' | null;
 
@@ -49,7 +49,7 @@ const Cell = (props: CellProps) => {
 
   return (
     <View style={styles.cell} onClick={handleClick}>
-      <TextView style={textViewStyles()}>{props.value ?? ' '}</TextView>
+      <Text style={textViewStyles()}>{props.value ?? ' '}</Text>
     </View>
   );
 };

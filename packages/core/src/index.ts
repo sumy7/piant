@@ -5,7 +5,7 @@ export { Image } from './components/Image';
 export { ScrollView } from './components/ScrollView';
 export { Show } from './components/Show';
 export { Match, Switch } from './components/Switch';
-export { ImageSpan, Span, TextView } from './components/TextView';
+export { Img, Span, Text, type TextProps } from './components/Text';
 export { CustomView } from './components/CustomView'
 export { View } from './components/View';
 export { PRoot } from './elements/PRoot';

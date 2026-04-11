@@ -1,4 +1,4 @@
-import { For, Image, Show, StyleSheet, TextView, View } from '@piant/core';
+import { For, Image, Show, StyleSheet, Text, View } from '@piant/core';
 import { CheckIcon, TrashIcon, UncheckIcon } from './icons';
 
 export interface Todo {
@@ -60,10 +60,10 @@ const TodoItem = ({ item, onCompleteChange, onDelete }: TodoItemProps) => {
         <Image style={styles.checkBox} src={CheckIcon()} />
       </Show>
       <View style={styles.taskId}>
-        <TextView>TASK-{item.id}</TextView>
+        <Text>TASK-{item.id}</Text>
       </View>
       <View style={styles.taskText}>
-        <TextView>{item.text}</TextView>
+        <Text>{item.text}</Text>
       </View>
       <Image
         style={styles.deleteIcon}
