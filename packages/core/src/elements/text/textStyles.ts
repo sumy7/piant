@@ -3,6 +3,13 @@ import type { TextLayoutStyle } from './index';
 
 export type TextStyles = ViewStyles & Partial<TextLayoutStyle>;
 
+/**
+ * Combined text + layout + visual styles.
+ * This is the full style type used by text-rendering components such as `Text`.
+ * Alias for `TextStyles`.
+ */
+export type TextViewStyles = TextStyles;
+
 export const DEFAULT_BLOCK_PROPS: TextStyles = {
   boxSizing: 'border-box',
 };

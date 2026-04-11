@@ -1,6 +1,12 @@
 import type { ColorSource } from 'pixi.js';
 import type { YogaStyles } from './yogaStyles';
 
+/**
+ * Layout styles powered by Yoga (flexbox).
+ * Alias for `YogaStyles` — use this type when referring to layout-only properties.
+ */
+export type LayoutStyles = YogaStyles;
+
 export type VisualStyles = {
   /**
    * Background color using PIXI color source format

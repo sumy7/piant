@@ -1,15 +1,9 @@
-import type { ViewStyles } from '../elements/layout/viewStyles';
-
-export default function composeStyles(
-  style1?: Record<string, ViewStyles>,
-  style2?: Record<string, ViewStyles>,
-):
-  | Record<string, ViewStyles>
-  | Record<string, ViewStyles>[]
-  | ViewStyles
-  | undefined {
+export default function composeStyles<T extends object = object>(
+  style1?: Partial<T> | null,
+  style2?: Partial<T> | null,
+): Partial<T> | [Partial<T>, Partial<T>] | undefined {
   if (!style1) {
-    return style2;
+    return style2 ?? undefined;
   }
   if (!style2) {
     return style1;

@@ -1,3 +1,4 @@
+export { CustomView } from './components/CustomView';
 export { Dynamic } from './components/Dynamic';
 export { ErrorBoundary } from './components/ErrorBoundary';
 export { For, Index } from './components/For';
@@ -6,9 +7,10 @@ export { ScrollView } from './components/ScrollView';
 export { Show } from './components/Show';
 export { Match, Switch } from './components/Switch';
 export { Img, Span, Text, type TextProps } from './components/Text';
-export { CustomView } from './components/CustomView'
 export { View } from './components/View';
+export type { ImageStyles, LayoutStyles, ViewStyles, VisualStyles } from './elements/layout/viewStyles';
 export { PRoot } from './elements/PRoot';
+export type { TextStyles, TextViewStyles } from './elements/text/textStyles';
 export * from './h';
 export * from './hooks';
 export * from './reactivity';
