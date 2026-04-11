@@ -74,7 +74,7 @@ function generateExamplesDoc(examples) {
 
   for (const example of examples) {
     lines.push(
-      `| ${example.pkgName} | ${example.description} | [${example.previewPath}](${example.previewPath}) |`,
+      `| ${example.pkgName} | ${example.description} | <a href="${example.previewPath}" target="_blank">${example.previewPath}</a> |`,
     );
   }
 
