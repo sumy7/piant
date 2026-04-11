@@ -162,9 +162,53 @@ const dynamicStyle = createMemo(() =>
 
 继承样式中，优先级从低到高依次为：父样式（多父时按声明顺序，右侧覆盖左侧） → 子样式自身 → 传入的 `style` prop。
 
+## 推荐使用场景
+
+| API | 推荐场景 |
+|-----|----------|
+| `create` | 模块初始化时声明静态样式集合 |
+| `extend` | 在 `create` 内部复用和派生已有样式 |
+| `flatten` | 将已展开的样式对象数组合并为单个对象 |
+| `resolve` | 运行时统一消费来自 props 的样式（对象/数组/假值均可） |
+| `compose` | 性能敏感的二元样式合并（避免数组分配） |
+
+**何时用 `flatten` vs `resolve`**
+
+- 样式已经是展开的对象数组时 → 使用 `flatten`。
+- 消费来自外部 props 的 `style`（类型是 `StyleValue<T>`，不确定是对象还是数组还是假值）→ 使用 `resolve`，它是更安全的统一入口。
+
+## 组件 style prop 的类型声明
+
+自定义组件中推荐使用 `StyleValue<T>` 标注 `style` prop：
+
+```ts
+import type { StyleValue, ViewStyles } from '@piant/core';
+
+interface MyComponentProps {
+  style?: StyleValue<ViewStyles>;
+}
+```
+
+这样使用方可以传入单个对象、数组或 `isActive && style` 表达式，全部兼容。
+
+
+
 ## 类型系统
 
-`StyleSheet.create` 支持泛型，默认使用 `ViewStyles`，也可以指定 `TextStyles` 用于文本组件：
+样式类型层次：
+
+```
+LayoutStyles  ← Yoga flexbox 布局属性（YogaStyles 的公开名称）
+VisualStyles  ← 视觉外观（背景色、圆角、透明度等）
+ViewStyles    = LayoutStyles & Partial<VisualStyles>
+ImageStyles   = ViewStyles & { objectFit? }
+TextStyles    = ViewStyles & Partial<TextLayoutStyle>  ← 文本样式完整能力集
+TextViewStyles = TextStyles                            ← Text 组件对外主类型
+```
+
+`LayoutStyles` 与 `YogaStyles` 完全等价，前者是推荐的对外名称，后者是绑定实现的内部名称。
+
+`TextViewStyles` 与 `TextStyles` 完全等价，用于 `Text` / `TextView` 组件的 prop 类型声明时推荐使用 `TextViewStyles`，更明确地表达组件用途。
 
 ```ts
 import type { ViewStyles, TextStyles, TextViewStyles } from '@piant/core';
@@ -174,15 +218,4 @@ const viewStyle: ViewStyles = { width: 100, padding: 8 };
 
 // Text 组件样式（包含布局和文字属性）
 const textStyle: TextViewStyles = { fontSize: 16, color: '#111', padding: 8 };
-```
-
-样式类型层次：
-
-```
-LayoutStyles  ← Yoga flexbox 布局属性（YogaStyles 的别名）
-VisualStyles  ← 视觉外观（背景色、圆角、透明度等）
-ViewStyles    = LayoutStyles & Partial<VisualStyles>
-ImageStyles   = ViewStyles & { objectFit? }
-TextStyles    = ViewStyles & Partial<TextLayoutStyle>
-TextViewStyles = TextStyles
 ```

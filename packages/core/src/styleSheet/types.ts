@@ -4,7 +4,7 @@
  */
 export interface StyleReference<T extends object = object> {
   readonly __isStyleRef: true;
-  readonly parents: Array<string | Partial<T>>;
+  readonly parents: readonly (string | Partial<T>)[];
   readonly style: Partial<T>;
 }
 
@@ -34,3 +34,35 @@ export type StyleValue<T extends object = object> =
  * Either a plain partial style object, or a `StyleReference` created by `StyleSheet.extend`.
  */
 export type StyleEntry<T extends object> = Partial<T> | StyleReference<T>;
+
+/**
+ * Shorthand for `Partial<T>` — a plain style object with all properties optional.
+ *
+ * @example
+ * ```ts
+ * const style: StyleObject<ViewStyles> = { padding: 12, flex: 1 };
+ * ```
+ */
+export type StyleObject<T extends object> = Partial<T>;
+
+/**
+ * The shape of an object passed to `StyleSheet.create`.
+ * Maps style keys to either plain style objects or `StyleReference` inheritance declarations.
+ *
+ * @example
+ * ```ts
+ * const def: StyleSheetDefinition<ViewStyles> = {
+ *   base: { padding: 12 },
+ *   primary: StyleSheet.extend('base', { backgroundColor: '#0055ff' }),
+ * };
+ * ```
+ */
+export type StyleSheetDefinition<T extends object> = Record<string, StyleEntry<T>>;
+
+/**
+ * Computes the resolved output type of `StyleSheet.create`.
+ * Each `StyleReference<S>` entry maps to `Partial<S>`; plain style object entries keep their type.
+ */
+export type ResolvedStyleSheet<T extends Record<string, StyleEntry<any>>> = {
+  [K in keyof T]: T[K] extends StyleReference<infer S> ? Partial<S> : T[K];
+};

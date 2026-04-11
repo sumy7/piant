@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { StyleSheet } from '../src/styleSheet';
 import composeStyles from '../src/styleSheet/composeStyles';
 import flattenStyle from '../src/styleSheet/flattenStyle';
@@ -271,11 +271,83 @@ describe('StyleSheet', () => {
       }).not.toThrow();
     });
 
+    it('circular reference: logs a warning and skips the circular parent', () => {
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      StyleSheet.create({
+        a: StyleSheet.extend('b', { color: 'red' } as any),
+        b: StyleSheet.extend('a', { color: 'blue' } as any),
+      } as any);
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Circular'),
+      );
+      warnSpy.mockRestore();
+    });
+
+    it('circular reference: each key still resolves the non-circular part', () => {
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const styles = StyleSheet.create({
+        // 'a' inherits 'b'; 'b' inherits 'a' — circular.
+        // When resolving 'a': goes into 'b', which tries to go back to 'a' (skipped).
+        //   So 'b' resolves to just its own style { color: 'blue' }, then 'a' adds { padding: 4 }.
+        // When resolving 'b': goes into 'a', which tries to go back to 'b' (skipped).
+        //   So 'a' resolves to just its own style { padding: 4 }, then 'b' adds { color: 'blue' }.
+        a: StyleSheet.extend('b', { padding: 4 } as any),
+        b: StyleSheet.extend('a', { color: 'blue' } as any),
+      } as any);
+      expect(styles.a).toEqual({ color: 'blue', padding: 4 });
+      expect(styles.b).toEqual({ padding: 4, color: 'blue' });
+      warnSpy.mockRestore();
+    });
+
     it('ignores unknown parent keys gracefully', () => {
       const styles = StyleSheet.create({
         derived: StyleSheet.extend('nonexistent', { padding: 8 } as any),
       } as any);
       expect(styles.derived).toEqual({ padding: 8 });
+    });
+
+    it('handles mixed parent types (key and object in same array)', () => {
+      const extra = { opacity: 0.8 } as any;
+      const styles = StyleSheet.create({
+        base: { padding: 12 } as any,
+        mixed: StyleSheet.extend(['base', extra], { color: 'red' } as any),
+      } as any);
+      expect(styles.mixed).toEqual({ padding: 12, opacity: 0.8, color: 'red' });
+    });
+
+    it('resolves cross-key inheritance in declaration order (child before parent)', () => {
+      // 'child' declared before 'parent' — resolution must still work
+      const styles = StyleSheet.create({
+        child: StyleSheet.extend('parent', { color: 'blue' } as any),
+        parent: { padding: 8 } as any,
+      } as any);
+      expect(styles.child).toEqual({ padding: 8, color: 'blue' });
+    });
+  });
+
+  describe('resolve edge cases', () => {
+    it('resolves array with all falsy values to empty object', () => {
+      const result = StyleSheet.resolve([null, false, undefined] as any);
+      expect(result).toEqual({});
+    });
+
+    it('resolves array with mixed falsy and valid styles', () => {
+      const result = StyleSheet.resolve([
+        { flex: 1 } as any,
+        null,
+        false,
+        undefined,
+        { color: 'blue' } as any,
+      ]);
+      expect(result).toEqual({ flex: 1, color: 'blue' });
+    });
+
+    it('resolves deeply nested arrays', () => {
+      const result = StyleSheet.resolve([
+        [{ flex: 1 }, [{ padding: 4 }, { padding: 8 }]],
+        { color: 'red' } as any,
+      ]);
+      expect(result).toEqual({ flex: 1, padding: 8, color: 'red' });
     });
   });
 });
