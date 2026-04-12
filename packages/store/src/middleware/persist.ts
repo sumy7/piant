@@ -85,10 +85,10 @@ export function persist<T extends object>(
     }
   };
 
-  return (set, get, api: StoreApi<T>) => {
+  return (baseSet, get, api: StoreApi<T>) => {
     // Replace api.setState so that ALL state updates — including external
     // calls to useStore.setState — go through our persistence logic.
-    const originalSetState = set;
+    const originalSetState = baseSet;
     const patchedSetState: SetState<T> = (partial) => {
       originalSetState(partial);
       saveToStorage(get);

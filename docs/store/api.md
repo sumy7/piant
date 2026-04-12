@@ -49,10 +49,14 @@ const useBearStore = createStore<BearState>((set) => ({
 ## `StateCreator<T>`
 
 ```ts
-type StateCreator<T extends object> = (set: SetState<T>, get: GetState<T>) => T;
+type StateCreator<T extends object> = (
+  set: SetState<T>,
+  get: GetState<T>,
+  api: StoreApi<T>,
+) => T;
 ```
 
-传给 `createStore` 的初始化函数类型。
+传给 `createStore` 的初始化函数类型。Middleware 可以在 creator 返回前替换 `api.setState`，从而拦截所有状态更新。
 
 ---
 

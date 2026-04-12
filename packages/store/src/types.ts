@@ -30,8 +30,10 @@ export interface StoreApi<T> {
 
 /**
  * The initializer function passed to `createStore`.
- * Receives `set`, `get` and the store `api` to define the initial state and actions.
- * Middleware may override `api.setState` to intercept all state updates.
+ * Receives `set`, `get` and the shared mutable store `api`.
+ * Middleware may override `api.setState` before the creator returns so that
+ * all subsequent state updates — including external `useStore.setState` calls —
+ * go through the middleware pipeline.
  */
 export type StateCreator<T extends object> = (
   set: SetState<T>,

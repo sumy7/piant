@@ -22,16 +22,14 @@ import type { GetState, SetState, StateCreator, StoreApi } from '../types';
  */
 export function combine<T extends object, A extends object>(
   initialState: T,
-  actionsCreator: (set: SetState<T & A>, get: GetState<T & A>, api: StoreApi<T & A>) => A,
+  actionsCreator: (
+    set: SetState<T & A>,
+    get: GetState<T & A>,
+    api: StoreApi<T & A>,
+  ) => A,
 ): StateCreator<T & A> {
+  // `set`, `get`, `api` are all typed as `T & A` in the returned StateCreator,
+  // so no unsafe casts are needed here.
   return (set, get, api) =>
-    Object.assign(
-      {},
-      initialState,
-      actionsCreator(
-        set as SetState<T & A>,
-        get as GetState<T & A>,
-        api as unknown as StoreApi<T & A>,
-      ),
-    ) as T & A;
+    Object.assign({}, initialState, actionsCreator(set, get, api)) as T & A;
 }
