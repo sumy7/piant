@@ -3,6 +3,7 @@ import type {
   GetState,
   SetState,
   StateCreator,
+  StoreApi,
   Subscribe,
   UseStore,
 } from './types';
@@ -10,8 +11,9 @@ import type {
 /**
  * Creates a MobX-backed store with a zustand-style API.
  *
- * @param creator - Initializer function that receives `set` and `get` helpers
- *   and returns the initial state (data + actions).
+ * @param creator - Initializer function that receives `set`, `get`, and the
+ *   shared store `api`. Middleware may replace `api.setState` before the
+ *   creator returns so that all future state updates go through the middleware.
  * @returns A store hook that returns the reactive state object when called.
  *   The hook also exposes `getState`, `setState`, and `subscribe` as static methods.
  *
@@ -41,7 +43,11 @@ export function createStore<T extends object>(
   // `state` is assigned after creator runs; captured via closure in set/get
   let state: T;
 
-  const setState: SetState<T> = (partial) => {
+  // Build a shared mutable api object so middleware can override setState.
+  // Using `as` here because subscribe is wired up after `state` is initialised.
+  const api = {} as StoreApi<T>;
+
+  const coreSetState: SetState<T> = (partial) => {
     const update =
       typeof partial === 'function' ? partial(state) : partial;
     runInAction(() => {
@@ -51,12 +57,18 @@ export function createStore<T extends object>(
 
   const getState: GetState<T> = () => state;
 
+  // Expose setState via the shared api. Middleware may replace api.setState
+  // before the creator returns; createStore will use whichever version is
+  // present in api after the creator has run.
+  api.setState = coreSetState;
+  api.getState = getState;
+
   // Run creator to get initial state (may contain data + action functions).
   // MobX's `observable()` automatically:
   //   - makes plain data properties observable
   //   - wraps functions as MobX actions (batched, no strict-mode warnings)
   //   - makes getter properties computed
-  const initialState = creator(setState, getState);
+  const initialState = creator(api.setState, getState, api);
   state = observable(initialState) as T;
 
   const subscribe: Subscribe<T> = (listener) => {
@@ -69,13 +81,16 @@ export function createStore<T extends object>(
     );
   };
 
+  api.subscribe = subscribe;
+
   function useStore(): T {
     return state;
   }
 
-  useStore.getState = getState;
-  useStore.setState = setState;
-  useStore.subscribe = subscribe;
+  // Snapshot current api values (middleware may have overridden setState).
+  useStore.getState = api.getState;
+  useStore.setState = api.setState;
+  useStore.subscribe = api.subscribe;
 
   return useStore as UseStore<T>;
 }

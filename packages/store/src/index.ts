@@ -1,2 +1,12 @@
 export { createStore } from './createStore';
-export type { GetState, SetState, StateCreator, StoreApi, Subscribe, UseStore } from './types';
+export { combine, persist } from './middleware';
+export type {
+  GetState,
+  PersistOptions,
+  SetState,
+  StateCreator,
+  StoreApi,
+  StorageAdapter,
+  Subscribe,
+  UseStore,
+} from './types';
