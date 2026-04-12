@@ -84,6 +84,7 @@ type ScrollViewProps = {
   style?: ViewStyles | ViewStyles[];
   children?: any;
   ref?: (el: PScrollView) => void;
+  horizontal?: boolean;
 } & EventProps;
 ```
 

@@ -17,7 +17,7 @@
 - [x] 增加回归测试（覆盖中英文、换行、极窄容器、长文本）
 - [x] 提供示例页面（建议新增 `examples/text-layout` 对应演示场景）
 - [ ] 更新文档
-  - [ ] `docs/guide/components/textview.md`
+  - [ ] `docs/guide/components/text.md`
   - [ ] `docs/reference/components.md`
 
 验收标准：
@@ -111,6 +111,34 @@ MVP 范围：
 - [ ] 至少 1 个完整示例可运行
 - [ ] 状态更新、订阅释放、派生状态有测试覆盖
 
+### 4.1 新包：@piant/animation（基于 motion 的动画能力）
+
+目标：提供与 `@piant/core` 无缝协同的动画库，沉淀一套可复用的 motion 动画效果与声明式 API。
+
+MVP 范围：
+
+- [ ] 创建包目录：`packages/animation`
+- [ ] 集成 motion 核心能力（进入/离开/位移/透明度/缩放）
+- [ ] 核心 API：`createMotion`、`MotionView`、`useMotion`（命名可微调）
+- [ ] 支持与 `createState` 联动驱动动画（状态变化触发补间）
+- [ ] 提供基础预设效果集（`fade`、`slide`、`scale`）
+- [ ] 最小示例（建议新增 `examples/animation-basic`）
+
+增强项（第二阶段）：
+
+- [ ] 动画编排能力（sequence / stagger）
+- [ ] 手势与交互动画（hover / press / drag）
+- [ ] 路由切场动画（与 `@piant/router` 协同）
+- [ ] 动画调试信息（播放状态、耗时、帧统计）
+
+验收标准：
+
+- [ ] `@piant/animation` 可独立构建与类型导出
+- [ ] 至少 1 个完整示例可运行，覆盖 enter/exit + 状态驱动动画
+- [ ] 核心动画行为有测试覆盖（触发时机、结束回调、清理逻辑）
+- [ ] 在不启用动画时无额外行为回归（对现有组件渲染零影响）
+- [ ] 文档包含 API、预设效果、与 `@piant/core`/`@piant/router` 的集成方式
+
 ---
 
 ## P2 - 生态与上手效率
@@ -147,6 +175,7 @@ MVP 范围：
 
 1. 文本布局增强（补齐核心能力，提升现有体验）
 2. @piant/router MVP（打通多页面/状态切换场景）
-3. @piant/state MVP（沉淀可复用状态模型，支撑中大型应用）
-4. @piant/devtools MVP（提升开发调试效率）
-5. startup 模板（沉淀最佳实践，降低入门成本）
+3. @piant/animation MVP（补齐 motion 动效能力，提升交互表现）
+4. @piant/state MVP（沉淀可复用状态模型，支撑中大型应用）
+5. @piant/devtools MVP（提升开发调试效率）
+6. startup 模板（沉淀最佳实践，降低入门成本）

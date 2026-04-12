@@ -7,12 +7,15 @@ export function App() {
   const styles = StyleSheet.create({
     pageContainer: {
       width: '100%',
+      height: '100%',
       justifyContent: 'center',
       alignItems: 'center',
       padding: 32,
     },
     todoContainer: {
-      minWidth: 500,
+      width: 500,
+      height: '100%',
+      maxHeight: '100%',
       gap: 16,
     },
   });
@@ -54,13 +57,16 @@ export function App() {
 
   const handleToggleTodo = (id: string, completed: boolean) => {
     console.log('toggle todo:', id, completed);
-    setTodos((prev) => {
-      const todo = prev.find((t) => t.id === id);
-      if (todo) {
-        todo.completed = completed;
-      }
-      return prev;
-    });
+    setTodos((prev) =>
+      prev.map((todo) =>
+        todo.id === id
+          ? {
+              ...todo,
+              completed,
+            }
+          : todo,
+      ),
+    );
   };
 
   return (

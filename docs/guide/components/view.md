@@ -31,7 +31,7 @@ function Container() {
 | `style`         | `ViewStyles \| ViewStyles[]`         | 样式对象或样式数组                                                                                    |
 | `children`      | `any`                                | 子元素                                                                                                |
 | `ref`           | `(el: PView) => void`                | 获取底层节点实例                                                                                      |
-| `onClick`       | `(e: FederatedPointerEvent) => void` | 点击事件（映射到 `pointertap`） |
+| `onClick`       | `(e: FederatedPointerEvent) => void` | 点击事件（映射到 `pointertap`）                                                                       |
 | `onPointerDown` | `(e: FederatedPointerEvent) => void` | 指针按下事件                                                                                          |
 | `onPointerUp`   | `(e: FederatedPointerEvent) => void` | 指针抬起事件                                                                                          |
 | `onPointerMove` | `(e: FederatedPointerEvent) => void` | 指针移动事件                                                                                          |

@@ -14,16 +14,18 @@ export type ScrollViewProps = {
   style?: StyleValue<ViewStyles>;
   children?: ComponentChild;
   ref?: RefCallback<PScrollView>;
+  horizontal?: boolean;
 } & PixiEventProps;
 
 export function ScrollView(props: ScrollViewProps) {
-  const [eventProps, styleProps, childrenProps] = splitProps(
+  const [eventProps, styleProps, childrenProps, behaviorProps] = splitProps(
     props,
     EVENT_PROPS,
     ['style'],
     ['children'],
+    ['horizontal'],
   );
-  const element = new PScrollView();
+  const element = new PScrollView(behaviorProps.horizontal ?? false);
 
   props.ref?.(element);
 
@@ -33,6 +35,10 @@ export function ScrollView(props: ScrollViewProps) {
 
   effect(() => {
     element.setStyle(StyleSheet.flatten(styleProps.style) || {});
+  });
+
+  effect(() => {
+    element.setHorizontal(behaviorProps.horizontal ?? false);
   });
 
   insert(

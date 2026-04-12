@@ -1,4 +1,12 @@
-import { For, Image, Show, StyleSheet, Text, View } from '@piant/core';
+import {
+  For,
+  Image,
+  ScrollView,
+  Show,
+  StyleSheet,
+  Text,
+  View,
+} from '@piant/core';
 import { CheckIcon, TrashIcon, UncheckIcon } from './icons';
 
 export interface Todo {
@@ -13,7 +21,7 @@ export interface TodoItemProps {
   onDelete?: (id: string) => void;
 }
 
-const TodoItem = ({ item, onCompleteChange, onDelete }: TodoItemProps) => {
+const TodoItem = (props: TodoItemProps) => {
   const styles = StyleSheet.create({
     container: {
       display: 'flex',
@@ -37,39 +45,55 @@ const TodoItem = ({ item, onCompleteChange, onDelete }: TodoItemProps) => {
       width: 16,
       height: 16,
     },
+    checkBoxButton: {
+      width: 24,
+      height: 24,
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderRadius: 4,
+      backgroundColor: '#f5f5f5',
+    },
     deleteIcon: {
       width: 16,
       height: 16,
     },
+    deleteButton: {
+      width: 24,
+      height: 24,
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderRadius: 4,
+      backgroundColor: '#f5f5f5',
+    },
   });
 
   const onToggleComplete = () => {
-    onCompleteChange?.(item.id, !item.completed);
+    props.onCompleteChange?.(props.item.id, !props.item.completed);
   };
 
   const onDeleteItem = () => {
-    onDelete?.(item.id);
+    props.onDelete?.(props.item.id);
   };
 
   return (
     <View style={styles.container} onClick={onToggleComplete}>
-      <Show
-        when={item.completed}
-        fallback={<Image style={styles.checkBox} src={UncheckIcon()} />}
-      >
-        <Image style={styles.checkBox} src={CheckIcon()} />
-      </Show>
+      <View style={styles.checkBoxButton}>
+        <Show
+          when={props.item.completed}
+          fallback={<Image style={styles.checkBox} src={UncheckIcon()} />}
+        >
+          <Image style={styles.checkBox} src={CheckIcon()} />
+        </Show>
+      </View>
       <View style={styles.taskId}>
-        <Text>TASK-{item.id}</Text>
+        <Text>TASK-{props.item.id}</Text>
       </View>
       <View style={styles.taskText}>
-        <Text>{item.text}</Text>
+        <Text>{props.item.text}</Text>
       </View>
-      <Image
-        style={styles.deleteIcon}
-        src={TrashIcon('#0a0a0a')}
-        onClick={onDeleteItem}
-      />
+      <View style={styles.deleteButton} onClick={onDeleteItem}>
+        <Image style={styles.deleteIcon} src={TrashIcon('#0a0a0a')} />
+      </View>
     </View>
   );
 };
@@ -84,21 +108,34 @@ const TodoList = (props: TodoListProps) => {
   const styles = StyleSheet.create({
     container: {
       flexDirection: 'column',
+      flex: 1,
+      minHeight: 0,
+    },
+    scrollView: {
+      width: '100%',
+      height: '100%',
+    },
+    content: {
+      flexDirection: 'column',
       gap: 16,
     },
   });
 
   return (
     <View style={styles.container}>
-      <For each={props.items}>
-        {(item) => (
-          <TodoItem
-            item={item}
-            onDelete={props.onDeleteItem}
-            onCompleteChange={props.onToggleItem}
-          />
-        )}
-      </For>
+      <ScrollView style={styles.scrollView}>
+        <View style={styles.content}>
+          <For each={props.items}>
+            {(item) => (
+              <TodoItem
+                item={item}
+                onDelete={props.onDeleteItem}
+                onCompleteChange={props.onToggleItem}
+              />
+            )}
+          </For>
+        </View>
+      </ScrollView>
     </View>
   );
 };

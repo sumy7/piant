@@ -10,7 +10,7 @@ import { View } from '@piant/core';
 <View
   style={{ width: 100, height: 40, backgroundColor: '#0066cc' }}
   onClick={() => console.log('点击了！')}
-/>
+/>;
 ```
 
 当组件绑定任意事件处理器时，PixiJS 的 `interactive` 属性会自动设置为 `true`。
@@ -19,27 +19,27 @@ import { View } from '@piant/core';
 
 当前映射如下：
 
-| 属性 | PixiJS 事件 | 说明 |
-|------|-------------|------|
-| `onClick` | `pointertap` | 点击（推荐默认交互入口） |
-| `onPointerDown` | `pointerdown` | 指针按下 |
-| `onPointerUp` | `pointerup` | 指针抬起 |
-| `onPointerMove` | `pointermove` | 指针移动 |
-| `onPointerEnter` | `pointerenter` | 指针进入 |
-| `onPointerLeave` | `pointerleave` | 指针离开 |
-| `onPointerOver` | `pointerover` | 指针悬停（冒泡） |
-| `onPointerOut` | `pointerout` | 指针移出（冒泡） |
-| `onPointerCancel` | `pointercancel` | 指针取消 |
-| `onPointerUpOutside` | `pointerupoutside` | 元素外抬起 |
-| `onPointerTap` | `pointertap` | 指针点击 |
-| `onRightClick` | `rightclick` | 右键点击 |
-| `onRightDown` | `rightdown` | 右键按下 |
-| `onRightUp` | `rightup` | 右键抬起 |
-| `onRightUpOutside` | `rightupoutside` | 元素外右键抬起 |
-| `onWheel` | `wheel` | 滚轮 |
-| `onGlobalMouseMove` | `globalmousemove` | 全局鼠标移动 |
-| `onGlobalTouchMove` | `globaltouchmove` | 全局触摸移动 |
-| `onGlobalPointerMove` | `globalpointermove` | 全局指针移动 |
+| 属性                  | PixiJS 事件         | 说明                     |
+| --------------------- | ------------------- | ------------------------ |
+| `onClick`             | `pointertap`        | 点击（推荐默认交互入口） |
+| `onPointerDown`       | `pointerdown`       | 指针按下                 |
+| `onPointerUp`         | `pointerup`         | 指针抬起                 |
+| `onPointerMove`       | `pointermove`       | 指针移动                 |
+| `onPointerEnter`      | `pointerenter`      | 指针进入                 |
+| `onPointerLeave`      | `pointerleave`      | 指针离开                 |
+| `onPointerOver`       | `pointerover`       | 指针悬停（冒泡）         |
+| `onPointerOut`        | `pointerout`        | 指针移出（冒泡）         |
+| `onPointerCancel`     | `pointercancel`     | 指针取消                 |
+| `onPointerUpOutside`  | `pointerupoutside`  | 元素外抬起               |
+| `onPointerTap`        | `pointertap`        | 指针点击                 |
+| `onRightClick`        | `rightclick`        | 右键点击                 |
+| `onRightDown`         | `rightdown`         | 右键按下                 |
+| `onRightUp`           | `rightup`           | 右键抬起                 |
+| `onRightUpOutside`    | `rightupoutside`    | 元素外右键抬起           |
+| `onWheel`             | `wheel`             | 滚轮                     |
+| `onGlobalMouseMove`   | `globalmousemove`   | 全局鼠标移动             |
+| `onGlobalTouchMove`   | `globaltouchmove`   | 全局触摸移动             |
+| `onGlobalPointerMove` | `globalpointermove` | 全局指针移动             |
 
 ## 响应式事件处理器
 
@@ -52,7 +52,7 @@ const handleClick = createMemo(() =>
   mode() === 'add' ? () => addItem() : () => removeItem(),
 );
 
-<View onClick={handleClick()} style={{ width: 60, height: 60 }} />
+<View onClick={handleClick()} style={{ width: 60, height: 60 }} />;
 ```
 
 ## 示例：悬停与点击

@@ -25,7 +25,10 @@ function App() {
   fallback={(err, reset) => (
     <View>
       <Text>错误：{err.message}</Text>
-      <View onClick={reset} style={{ backgroundColor: '#0066cc', padding: 8, borderRadius: 4 }}>
+      <View
+        onClick={reset}
+        style={{ backgroundColor: '#0066cc', padding: 8, borderRadius: 4 }}
+      >
         <Text style={{ color: 'white' }}>重试</Text>
       </View>
     </View>

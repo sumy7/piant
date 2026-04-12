@@ -4,11 +4,12 @@ import { Trackpad } from './trackpad/Trackpad';
 
 export class PScrollView extends PNode {
   _trackpad: Trackpad;
+  horizontal = false;
 
   scrollContentHolder: PView;
   scrollContent: PView;
 
-  constructor() {
+  constructor(horizontal = false) {
     super();
 
     this.scrollContentHolder = new PView();
@@ -24,17 +25,41 @@ export class PScrollView extends PNode {
       position: 'absolute',
       top: 0,
       left: 0,
-      width: '100%',
     });
 
     this.appendChild(this.scrollContentHolder);
     this.scrollContentHolder.appendChild(this.scrollContent);
 
     this._trackpad = new Trackpad({});
+    this.setHorizontal(horizontal);
     this.makeScrollable();
 
     this._trackpad.xAxis.value = 0;
     this._trackpad.yAxis.value = 0;
+  }
+
+  setHorizontal(horizontal: boolean) {
+    this.horizontal = horizontal;
+
+    this.scrollContent.setStyle({
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      width: horizontal ? 'auto' : '100%',
+      height: horizontal ? '100%' : 'auto',
+    });
+
+    if (horizontal) {
+      this._trackpad.yAxis.min = 0;
+      this._trackpad.yAxis.max = 0;
+      this._trackpad.yAxis.value = 0;
+    } else {
+      this._trackpad.xAxis.min = 0;
+      this._trackpad.xAxis.max = 0;
+      this._trackpad.xAxis.value = 0;
+    }
+
+    this.markDirty();
   }
 
   private makeScrollable() {
@@ -55,34 +80,47 @@ export class PScrollView extends PNode {
       this._trackpad!.pointerUp();
     });
     this.scrollContentHolder._view.on('wheel', (e) => {
-      const targetY = this._trackpad!.yAxis.value - e.deltaY;
-      this._trackpad!.yAxis.value = Math.max(
-        this._trackpad!.yAxis.max,
-        Math.min(this._trackpad!.yAxis.min, targetY),
-      );
+      const axis = this.horizontal
+        ? this._trackpad!.xAxis
+        : this._trackpad!.yAxis;
+      const delta = this.horizontal ? e.deltaX || e.deltaY || 0 : e.deltaY;
+      const targetValue = axis.value - delta;
+
+      axis.value = Math.max(axis.max, Math.min(axis.min, targetValue));
+
+      if (this.horizontal) {
+        this._trackpad!.yAxis.value = 0;
+      } else {
+        this._trackpad!.xAxis.value = 0;
+      }
     });
   }
-
-  lastWidth = 0;
-  lastHeight = 0;
 
   applyLayout() {
     super.applyLayout();
 
-    // const width = this.scrollContentHolder.layoutNode.getComputedWidth();
+    const width = this.scrollContentHolder._layoutNode.getComputedWidth();
     const height = this.scrollContentHolder._layoutNode.getComputedHeight();
     const contentWidth = this.scrollContent._layoutNode.getComputedWidth();
     const contentHeight = this.scrollContent._layoutNode.getComputedHeight();
 
     if (this._trackpad) {
-      if (
-        this.lastWidth !== contentWidth ||
-        this.lastHeight !== contentHeight
-      ) {
-        this.lastWidth = contentWidth;
-        this.lastHeight = contentHeight;
-
+      if (this.horizontal) {
+        this._trackpad.xAxis.min = 0;
+        this._trackpad.xAxis.max = Math.min(width - contentWidth, 0);
+        this._trackpad.yAxis.min = 0;
+        this._trackpad.yAxis.max = 0;
+        if (this._trackpad.yAxis.value !== 0) {
+          this._trackpad.yAxis.value = 0;
+        }
+      } else {
+        this._trackpad.xAxis.min = 0;
+        this._trackpad.xAxis.max = 0;
+        this._trackpad.yAxis.min = 0;
         this._trackpad.yAxis.max = Math.min(height - contentHeight, 0);
+        if (this._trackpad.xAxis.value !== 0) {
+          this._trackpad.xAxis.value = 0;
+        }
       }
     }
   }
@@ -93,14 +131,24 @@ export class PScrollView extends PNode {
     }
 
     this._trackpad.update();
-    if (this.scrollContent._view.y !== this._trackpad.y) {
-      this.scrollContent._view.y = this._trackpad.y;
+    const nextX = this.horizontal ? this._trackpad.x : 0;
+    const nextY = this.horizontal ? 0 : this._trackpad.y;
+
+    if (this.scrollContent._view.x !== nextX) {
+      this.scrollContent._view.x = nextX;
+    }
+    if (this.scrollContent._view.y !== nextY) {
+      this.scrollContent._view.y = nextY;
     }
   }
 
   scrollTop() {
     if (this._trackpad) {
-      this._trackpad.yAxis.value = 0;
+      if (this.horizontal) {
+        this._trackpad.xAxis.value = 0;
+      } else {
+        this._trackpad.yAxis.value = 0;
+      }
     }
   }
 
@@ -130,6 +178,16 @@ export class PScrollView extends PNode {
   set scrollY(value: number) {
     if (this._trackpad) {
       this._trackpad.yAxis.value = value;
+    }
+  }
+
+  get scrollX(): number {
+    return this._trackpad?.xAxis.value ?? 0;
+  }
+
+  set scrollX(value: number) {
+    if (this._trackpad) {
+      this._trackpad.xAxis.value = value;
     }
   }
 }
