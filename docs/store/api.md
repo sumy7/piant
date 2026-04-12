@@ -163,7 +163,6 @@ type Subscribe<T> = (listener: (state: T, prevState: T) => void) => () => void;
 
 ```ts
 import type {
-  CreateStore,
   GetState,
   SetState,
   StateCreator,

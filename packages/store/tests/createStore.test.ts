@@ -173,6 +173,10 @@ describe('createStore – MobX reactivity', () => {
     dispose();
 
     expect(observed).toEqual([0, 1, 2]);
+
+    // After dispose, further changes must not be tracked
+    useStore.setState({ count: 99 });
+    expect(observed).toEqual([0, 1, 2]);
   });
 
   it('array property is reactive', () => {
@@ -188,6 +192,10 @@ describe('createStore – MobX reactivity', () => {
     useStore.setState({ items: ['a', 'b', 'c'] });
     dispose();
 
+    expect(lengths).toEqual([1, 2, 3]);
+
+    // After dispose, further changes must not be tracked
+    useStore.setState({ items: [] });
     expect(lengths).toEqual([1, 2, 3]);
   });
 });
