@@ -14,10 +14,25 @@ export type GetState<T> = () => T;
 /**
  * Subscribe to store state changes.
  * Returns an unsubscribe function.
+ *
+ * Two call signatures:
+ * - `subscribe(listener)` — fires for every state change with full prev/curr state.
+ * - `subscribe(selector, listener, options?)` — fires only when the selected slice
+ *   changes; avoids full deep-clone overhead by tracking only the selected observables.
  */
-export type Subscribe<T> = (
-  listener: (state: T, prevState: T) => void,
-) => () => void;
+export interface Subscribe<T> {
+  /** Whole-state subscription. Listener receives (currentState, previousState). */
+  (listener: (state: T, prevState: T) => void): () => void;
+  /**
+   * Selector-based subscription. Listener fires only when the value returned by
+   * `selector(state)` changes according to `options.equals` (defaults to structural equality).
+   */
+  <U>(
+    selector: (state: T) => U,
+    listener: (selectedState: U, prevSelectedState: U) => void,
+    options?: { equals?: (a: U, b: U) => boolean },
+  ): () => void;
+}
 
 /**
  * The store API object, available as static methods on the store hook.

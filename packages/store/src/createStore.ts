@@ -40,8 +40,10 @@ import type {
 export function createStore<T extends object>(
   creator: StateCreator<T>,
 ): UseStore<T> {
-  // `state` is assigned after creator runs; captured via closure in set/get
-  let state: T;
+  // Pre-initialize `state` to an empty observable so that `set` and `get`
+  // calls inside the creator (e.g. for derived defaults or side effects)
+  // are safe and never operate on `undefined`.
+  let state = observable({}) as unknown as T;
 
   // Build a shared mutable api object so middleware can override setState.
   // Using `as` here because subscribe is wired up after `state` is initialised.
@@ -64,17 +66,42 @@ export function createStore<T extends object>(
   api.getState = getState;
 
   // Run creator to get initial state (may contain data + action functions).
+  // Because `state` is already an observable, any `set`/`get` calls during
+  // creator execution are safe.
+  //
   // MobX's `observable()` automatically:
   //   - makes plain data properties observable
   //   - wraps functions as MobX actions (batched, no strict-mode warnings)
   //   - makes getter properties computed
   const initialState = creator(api.setState, getState, api);
-  state = observable(initialState) as T;
+  // Merge the creator's initial values into the pre-initialized observable.
+  // Properties added to an MobX observable object are automatically observed.
+  runInAction(() => {
+    Object.assign(state, initialState);
+  });
 
-  const subscribe: Subscribe<T> = (listener) => {
+  const subscribe: Subscribe<T> = <U>(
+    selectorOrListener:
+      | ((state: T) => U)
+      | ((state: T, prevState: T) => void),
+    listenerOrUndefined?: (selected: U, prev: U) => void,
+    options?: { equals?: (a: U, b: U) => boolean },
+  ): (() => void) => {
+    if (typeof listenerOrUndefined === 'function') {
+      // Selector-based form — tracks only the selected slice.
+      // Avoids the full toJS deep-clone cost of the whole-state form.
+      const selector = selectorOrListener as (state: T) => U;
+      const listener = listenerOrUndefined;
+      const equals = options?.equals ?? comparer.structural;
+      return reaction(
+        () => selector(state),
+        (curr, prev) => listener(curr, prev),
+        { equals },
+      );
+    }
+    // Whole-state form — deep snapshot via toJS for structural comparison.
+    const listener = selectorOrListener as (state: T, prevState: T) => void;
     return reaction(
-      // Access all observable properties to establish tracking.
-      // `toJS` does a deep plain-object snapshot for comparison.
       () => toJS(state) as T,
       (curr, prev) => listener(curr, prev),
       { equals: comparer.structural },

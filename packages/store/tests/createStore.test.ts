@@ -234,13 +234,27 @@ describe('createStore – subscribe', () => {
     expect(listener).not.toHaveBeenCalled();
   });
 
-  it('listener is not called when state does not change (structural equality)', async () => {
+  it('listener is not called when state does not change (structural equality – primitive)', async () => {
     const useStore = createStore(() => ({ count: 0 }));
     const listener = vi.fn();
 
     const unsub = useStore.subscribe(listener);
-    // Set same value – should not trigger listener
+    // Set same primitive value – should not trigger listener
     useStore.setState({ count: 0 });
+
+    await waitMicrotask();
+
+    expect(listener).not.toHaveBeenCalled();
+    unsub();
+  });
+
+  it('listener is not called for new reference that is deep-equal (structural equality)', async () => {
+    const useStore = createStore(() => ({ items: ['a'] as string[] }));
+    const listener = vi.fn();
+
+    const unsub = useStore.subscribe(listener);
+    // Replace array with a new reference that is structurally identical
+    useStore.setState({ items: ['a'] });
 
     await waitMicrotask();
 
@@ -290,5 +304,99 @@ describe('createStore – static API methods', () => {
     const state = useStore();
     useStore.setState({ x: 42 });
     expect(state.x).toBe(42);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Safe set/get during creator initialization
+// ---------------------------------------------------------------------------
+
+describe('createStore – safe set/get during creator', () => {
+  it('get() called during creator does not throw', () => {
+    // Creator calls get() to derive an initial value – state is pre-initialized
+    const useStore = createStore((_set, get) => {
+      // get() returns the pre-initialized empty observable; no crash
+      const _early = get();
+      return { count: 0, ready: _early !== undefined };
+    });
+    expect(useStore.getState().count).toBe(0);
+    expect(useStore.getState().ready).toBe(true);
+  });
+
+  it('set() called during creator does not throw', () => {
+    // Creator calls set() as a side-effect during initialization
+    const useStore = createStore((set) => {
+      // set() is safe even before the initial state object is returned
+      set({ count: 5 });
+      return { count: 0 };
+    });
+    // Initial state (count: 0) is merged after, so it wins over the early set
+    expect(useStore.getState().count).toBe(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Selector-based subscribe
+// ---------------------------------------------------------------------------
+
+describe('createStore – selector-based subscribe', () => {
+  it('fires listener only when selected slice changes', async () => {
+    const useStore = createStore(() => ({ a: 1, b: 10 }));
+    const listener = vi.fn();
+
+    const unsub = useStore.subscribe(
+      (s) => s.a,
+      (curr, prev) => listener(curr, prev),
+    );
+
+    // Change unselected field – listener must not fire
+    useStore.setState({ b: 99 });
+    await waitMicrotask();
+    expect(listener).not.toHaveBeenCalled();
+
+    // Change selected field – listener fires
+    useStore.setState({ a: 2 });
+    await waitMicrotask();
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(listener.mock.calls[0]).toEqual([2, 1]);
+
+    unsub();
+  });
+
+  it('does not fire after unsubscribe', async () => {
+    const useStore = createStore(() => ({ count: 0 }));
+    const listener = vi.fn();
+
+    const unsub = useStore.subscribe(
+      (s) => s.count,
+      listener,
+    );
+    unsub();
+
+    useStore.setState({ count: 5 });
+    await waitMicrotask();
+    expect(listener).not.toHaveBeenCalled();
+  });
+
+  it('accepts a custom equals function', async () => {
+    const useStore = createStore(() => ({ value: 1 }));
+    const listener = vi.fn();
+
+    // Treat any change less than 10 as equal (listener stays silent)
+    const unsub = useStore.subscribe(
+      (s) => s.value,
+      listener,
+      { equals: (a, b) => Math.abs(a - b) < 10 },
+    );
+
+    useStore.setState({ value: 5 }); // diff = 4, within threshold
+    await waitMicrotask();
+    expect(listener).not.toHaveBeenCalled();
+
+    useStore.setState({ value: 20 }); // diff = 15, above threshold
+    await waitMicrotask();
+    expect(listener).toHaveBeenCalledTimes(1);
+
+    unsub();
   });
 });

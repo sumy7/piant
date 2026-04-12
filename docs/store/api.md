@@ -138,28 +138,57 @@ useStore.setState({ count: 99 });
 useStore.setState((s) => ({ count: s.count + 1 }));
 ```
 
-### `subscribe(listener)`
+### `subscribe(listener)` / `subscribe(selector, listener, options?)`
 
-订阅 store 状态变化。当任意可观察属性发生变化时，listener 被调用，参数为新旧状态快照。
+两种调用形式：
+
+**全状态订阅**（对 store 任意属性变化均触发）：
 
 ```ts
 const unsub = useStore.subscribe((state, prevState) => {
   console.log('changed:', prevState, '→', state);
 });
+```
 
+**选择器订阅**（只跟踪 selector 返回的切片，避免整棵状态树的深度克隆开销）：
+
+```ts
+// 只在 count 变化时触发
+const unsub = useStore.subscribe(
+  (s) => s.count,
+  (count, prevCount) => console.log(count, prevCount),
+);
+
+// 自定义相等性判断
+const unsub2 = useStore.subscribe(
+  (s) => s.value,
+  (v, prev) => console.log(v, prev),
+  { equals: (a, b) => Math.abs(a - b) < 10 },
+);
+```
+
+> 两种形式均基于 MobX `reaction` + `comparer.structural` 实现：仅当状态**结构性变化**时才触发 listener。
+
+```ts
 // 取消订阅
 unsub();
 ```
-
-> 基于 MobX `reaction` + `comparer.structural` 实现：仅当状态**结构性变化**时才触发 listener，相同值重复 set 不会触发。
 
 ---
 
 ## `Subscribe<T>`
 
 ```ts
-type Subscribe<T> = (listener: (state: T, prevState: T) => void) => () => void;
-```
+interface Subscribe<T> {
+  // 全状态订阅
+  (listener: (state: T, prevState: T) => void): () => void;
+  // 选择器订阅（只跟踪选中切片）
+  <U>(
+    selector: (state: T) => U,
+    listener: (selectedState: U, prevSelectedState: U) => void,
+    options?: { equals?: (a: U, b: U) => boolean },
+  ): () => void;
+}
 
 ---
 
