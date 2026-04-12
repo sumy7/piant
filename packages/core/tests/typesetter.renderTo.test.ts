@@ -154,4 +154,33 @@ describe('Typesetter renderTo', () => {
     expect(drawCalls.length).toBeGreaterThan(0);
     expect(drawCalls[0]?.y).toBe(14);
   });
+
+  it('draws ellipsis on the last visible line when clamped', () => {
+    const items: InlineItem[] = [
+      {
+        type: 'text',
+        content:
+          'This sentence should overflow and render an ellipsis after clamping.',
+      },
+    ];
+    const typesetter = new Typesetter(items, {
+      fontSize: 16,
+      lineHeight: 20,
+      textOverflow: 'ellipsis',
+      lineClamp: 1,
+    });
+
+    const drawCalls: string[] = [];
+    const surface = createSurface();
+    surface.ctx.fillText = ((text: string) => {
+      drawCalls.push(text);
+    }) as CanvasRenderingContext2D['fillText'];
+
+    const container = new Container();
+    typesetter.flow(90);
+    typesetter.renderTo(container, surface, { width: 90, height: 20 });
+
+    expect(drawCalls.length).toBeGreaterThan(0);
+    expect(drawCalls.some((text) => text.includes('…'))).toBe(true);
+  });
 });

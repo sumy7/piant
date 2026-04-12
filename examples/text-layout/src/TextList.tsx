@@ -245,7 +245,7 @@ const TextList = () => {
 
           <View style={styles.section}>
             <Text style={styles.label}>
-              <Span>Transforms and overflow</Span>
+              <Span>Transforms</Span>
             </Text>
             <Text
               style={{
@@ -280,21 +280,64 @@ const TextList = () => {
             >
               <Span>Text Transform test: this text should be Capitalized.</Span>
             </Text>
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.label}>
+              <Span>Text overflow</Span>
+            </Text>
+
             <Text
               style={{
-                width: 320,
-                fontSize: 20,
-                color: 'white',
-                textOverflow: 'ellipsis',
+                fontSize: 18,
+                color: '#0f172a',
+                lineHeight: 28,
+                textOverflow: 'clip',
                 lineClamp: 2,
+                backgroundColor: '#f1f5f9',
+                padding: 8,
+                borderRadius: 8,
               }}
             >
               <Span>
-                Text Overflow test: This is a long text that is supposed to
-                demonstrate the text overflow behavior when the content exceeds
-                the specified width of the Text component. It should be
-                truncated with an ellipsis if it does not fit within the given
-                space.
+                Clip (2 lines): This paragraph is intentionally long and will be
+                clamped after two lines without showing an ellipsis marker.
+              </Span>
+            </Text>
+
+            <Text
+              style={{
+                fontSize: 18,
+                color: '#0f172a',
+                lineHeight: 28,
+                textOverflow: 'ellipsis',
+                lineClamp: 2,
+                backgroundColor: '#f1f5f9',
+                padding: 8,
+                borderRadius: 8,
+              }}
+            >
+              <Span>
+                Ellipsis (2 lines): This paragraph should end with an ellipsis
+                once the visible area reaches the configured line clamp.
+              </Span>
+            </Text>
+
+            <Text
+              style={{
+                fontSize: 18,
+                color: '#0f172a',
+                lineHeight: 28,
+                textOverflow: 'ellipsis',
+                lineClamp: 1,
+                backgroundColor: '#f1f5f9',
+                padding: 8,
+                borderRadius: 8,
+              }}
+            >
+              <Span>
+                Ellipsis (1 line): Single line clamp for quick title-style
+                truncation in narrow containers.
               </Span>
             </Text>
           </View>

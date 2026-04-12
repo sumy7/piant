@@ -1,8 +1,8 @@
 import {
   materializeRichInlineLineRange,
-  measureRichInlineStats,
   type PreparedRichInline,
   prepareRichInline,
+  type RichInlineFragment,
   type RichInlineItem,
   type RichInlineLine,
   type RichInlineLineRange,
@@ -38,6 +38,8 @@ const DEFAULT_TEXT_STYLE: TextLayoutStyle = {
   whiteSpace: 'normal',
   wordBreak: 'break-word',
   textAlign: 'left',
+  textOverflow: 'clip',
+  lineClamp: 0,
 };
 
 const IMAGE_PLACEHOLDER = '\uFFFC';
@@ -234,15 +236,191 @@ export class Typesetter {
     if (this._cachedWidth === width && this._cachedStats) return;
 
     const prepared = this.ensurePrepared();
-    const lines: RichInlineLine[] = [];
+    let lines: RichInlineLine[] = [];
     walkRichInlineLineRanges(prepared, width, (range: RichInlineLineRange) => {
       lines.push(materializeRichInlineLineRange(prepared, range));
     });
 
+    const lineClamp = this.resolveLineClamp();
+    const isLineClamped = lineClamp > 0 && lines.length > lineClamp;
+    if (isLineClamped) {
+      lines = lines.slice(0, lineClamp);
+      if (this._styles.textOverflow === 'ellipsis') {
+        const clampWidth = Number.isFinite(width)
+          ? width
+          : (lines[lines.length - 1]?.width ?? Number.POSITIVE_INFINITY);
+        const lastLineIndex = lines.length - 1;
+        if (lastLineIndex >= 0) {
+          lines[lastLineIndex] = this.applyEllipsisToLine(
+            lines[lastLineIndex]!,
+            clampWidth,
+          );
+        }
+      }
+    }
+
+    const maxLineWidth = lines.reduce(
+      (max, line) => Math.max(max, line.width),
+      0,
+    );
+
     this._cachedWidth = width;
     this._cachedLines = lines;
-    this._cachedStats = measureRichInlineStats(prepared, width);
+    this._cachedStats = {
+      lineCount: lines.length,
+      maxLineWidth,
+    };
     this._cachedLineBoxes = this.buildLineBoxes(lines);
+  }
+
+  private resolveLineClamp(): number {
+    const clamp = this._styles.lineClamp;
+    if (typeof clamp !== 'number' || !Number.isFinite(clamp) || clamp <= 0) {
+      return 0;
+    }
+
+    return Math.floor(clamp);
+  }
+
+  private applyEllipsisToLine(
+    line: RichInlineLine,
+    maxWidth: number,
+  ): RichInlineLine {
+    if (!Number.isFinite(maxWidth) || maxWidth <= 0) {
+      return line;
+    }
+
+    const ellipsisItemIndex = this.getEllipsisItemIndex(line);
+    const ellipsisStyle = this.resolveItemStyle(
+      this._contents[ellipsisItemIndex],
+    );
+    const ellipsisText = '…';
+    const ellipsisWidth = this.getTextMetrics(
+      ellipsisText,
+      ellipsisStyle,
+    ).width;
+    if (ellipsisWidth > maxWidth) {
+      return line;
+    }
+
+    const targetWidth = Math.max(0, maxWidth - ellipsisWidth);
+    const trimmedFragments = this.trimLineToWidth(line, targetWidth);
+    const keptWidth = this.measureLineFragmentsWidth(trimmedFragments);
+
+    const fragments = [...trimmedFragments];
+    fragments.push({
+      itemIndex: ellipsisItemIndex,
+      text: ellipsisText,
+      gapBefore: 0,
+      occupiedWidth: ellipsisWidth,
+      start: line.end,
+      end: line.end,
+    });
+
+    return {
+      ...line,
+      fragments,
+      width: Math.min(maxWidth, keptWidth + ellipsisWidth),
+    };
+  }
+
+  private getEllipsisItemIndex(line: RichInlineLine): number {
+    for (let i = line.fragments.length - 1; i >= 0; i--) {
+      const fragment = line.fragments[i]!;
+      const sourceItem = this._contents[fragment.itemIndex];
+      if (sourceItem?.type === 'text') {
+        return fragment.itemIndex;
+      }
+    }
+
+    return 0;
+  }
+
+  private trimLineToWidth(
+    line: RichInlineLine,
+    maxWidth: number,
+  ): RichInlineFragment[] {
+    const result: RichInlineFragment[] = [];
+    let consumedWidth = 0;
+
+    for (const fragment of line.fragments) {
+      const fragmentTotalWidth = fragment.gapBefore + fragment.occupiedWidth;
+      if (consumedWidth + fragmentTotalWidth <= maxWidth) {
+        result.push(fragment);
+        consumedWidth += fragmentTotalWidth;
+        continue;
+      }
+
+      const remaining = maxWidth - consumedWidth;
+      if (remaining <= fragment.gapBefore) {
+        break;
+      }
+
+      const sourceItem = this._contents[fragment.itemIndex];
+      if (sourceItem?.type !== 'text') {
+        break;
+      }
+
+      const visibleText = fragment.text.replace(/\u200B/g, '');
+      const allowedTextWidth = remaining - fragment.gapBefore;
+      const clippedText = this.clipTextToWidth(
+        visibleText,
+        this.resolveItemStyle(sourceItem),
+        allowedTextWidth,
+      );
+
+      if (clippedText.length > 0) {
+        const clippedWidth = this.getTextMetrics(
+          clippedText,
+          this.resolveItemStyle(sourceItem),
+        ).width;
+        result.push({
+          ...fragment,
+          text: clippedText,
+          occupiedWidth: clippedWidth,
+        });
+      }
+
+      break;
+    }
+
+    return result;
+  }
+
+  private clipTextToWidth(
+    text: string,
+    style: TextLayoutStyle,
+    maxWidth: number,
+  ): string {
+    if (text.length === 0 || maxWidth <= 0) {
+      return '';
+    }
+
+    if (this.getTextMetrics(text, style).width <= maxWidth) {
+      return text;
+    }
+
+    let low = 0;
+    let high = text.length;
+    while (low < high) {
+      const mid = Math.ceil((low + high) / 2);
+      const slice = text.slice(0, mid);
+      const width = this.getTextMetrics(slice, style).width;
+      if (width <= maxWidth) {
+        low = mid;
+      } else {
+        high = mid - 1;
+      }
+    }
+
+    return text.slice(0, low);
+  }
+
+  private measureLineFragmentsWidth(fragments: RichInlineFragment[]): number {
+    return fragments.reduce(
+      (total, fragment) => total + fragment.gapBefore + fragment.occupiedWidth,
+      0,
+    );
   }
 
   private resolveItemStyle(item?: InlineBaseStyle): TextLayoutStyle {
@@ -405,12 +583,16 @@ export class Typesetter {
         if (!sourceItem) continue;
 
         const style = this.resolveItemStyle(sourceItem);
-        const resolvedStyleLineHeight = this.getResolvedLineHeightForStyle(style);
+        const resolvedStyleLineHeight =
+          this.getResolvedLineHeightForStyle(style);
 
         if (sourceItem.type === 'image') {
           const imageSource = this.resolveImageSource(sourceItem);
           const imageHeight = this.resolveImageHeight(sourceItem, imageSource);
-          const inlineBoxHeight = Math.max(resolvedStyleLineHeight, imageHeight);
+          const inlineBoxHeight = Math.max(
+            resolvedStyleLineHeight,
+            imageHeight,
+          );
           const topLeading = Math.max(0, inlineBoxHeight - imageHeight) / 2;
 
           maxLineHeight = Math.max(maxLineHeight, inlineBoxHeight);
@@ -424,7 +606,10 @@ export class Typesetter {
           const text = fragment.text.replace(/\u200B/g, '');
           if (text.length === 0) continue;
           const metrics = this.getTextMetrics(text, style);
-          const inlineBoxHeight = Math.max(resolvedStyleLineHeight, metrics.height);
+          const inlineBoxHeight = Math.max(
+            resolvedStyleLineHeight,
+            metrics.height,
+          );
           const topLeading = Math.max(0, inlineBoxHeight - metrics.height) / 2;
 
           maxLineHeight = Math.max(maxLineHeight, inlineBoxHeight);

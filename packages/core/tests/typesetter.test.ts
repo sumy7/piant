@@ -106,4 +106,32 @@ describe('Typesetter', () => {
     const result = typesetter.flow(500);
     expect(result.height).toBeGreaterThanOrEqual(40);
   });
+
+  it('limits visible lines when lineClamp is set', () => {
+    const items: InlineItem[] = [
+      {
+        type: 'text',
+        content:
+          'line one line two line three line four line five line six line seven',
+      },
+    ];
+
+    const noClamp = new Typesetter(items, {
+      fontSize: 16,
+      lineHeight: 20,
+      textOverflow: 'clip',
+    });
+    const clamped = new Typesetter(items, {
+      fontSize: 16,
+      lineHeight: 20,
+      lineClamp: 2,
+      textOverflow: 'clip',
+    });
+
+    const noClampResult = noClamp.flow(80);
+    const clampedResult = clamped.flow(80);
+
+    expect(clampedResult.height).toBe(40);
+    expect(noClampResult.height).toBeGreaterThan(clampedResult.height);
+  });
 });

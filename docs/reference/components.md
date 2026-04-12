@@ -42,6 +42,11 @@ interface TextProps {
 }
 ```
 
+常用文本截断样式（通过 `style` 传入）：
+
+- `textOverflow: 'clip' | 'ellipsis'`
+- `lineClamp: number`
+
 详见：[Text 组件文档](/guide/components/text)
 
 ---

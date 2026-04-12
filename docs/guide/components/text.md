@@ -7,7 +7,7 @@
 ```tsx
 import { Text } from '@piant/core';
 
-<Text>Hello, Piant!</Text>
+<Text>Hello, Piant!</Text>;
 ```
 
 ```tsx
@@ -26,7 +26,7 @@ import { Text, Span } from '@piant/core';
 
 <Text style={{ fontSize: 16, color: '#333' }}>
   这是<Span style={{ color: 'red', fontWeight: 'bold' }}>红色粗体</Span>文字
-</Text>
+</Text>;
 ```
 
 ## 图文混排
@@ -43,51 +43,74 @@ const icon = new Graphics().svg(iconSvg);
   <Span>点击</Span>
   <Img src={icon} style={{ width: 16, height: 16 }} />
   <Span>图标</Span>
-</Text>
+</Text>;
 ```
 
 ## Props
 
 ### Text Props
 
-| 属性 | 类型 | 说明 |
-|------|------|------|
-| `style` | `TextStyles \| TextStyles[]` | 文本样式（同时支持布局样式和文本样式） |
-| `children` | `JSX.Element` | 子内容，可以是字符串、`Span`、`Img` |
-| `ref` | `(el: PText) => void` | 获取底层节点实例 |
+| 属性       | 类型                         | 说明                                   |
+| ---------- | ---------------------------- | -------------------------------------- |
+| `style`    | `TextStyles \| TextStyles[]` | 文本样式（同时支持布局样式和文本样式） |
+| `children` | `JSX.Element`                | 子内容，可以是字符串、`Span`、`Img`    |
+| `ref`      | `(el: PText) => void`        | 获取底层节点实例                       |
 
 ### Span Props
 
-| 属性 | 类型 | 说明 |
-|------|------|------|
-| `style` | `TextStyles` | 内联文本样式 |
-| `bold` | `boolean` | 快捷设置 `fontWeight: 'bold'` |
-| `italic` | `boolean` | 快捷设置 `fontStyle: 'italic'` |
-| `children` | `string \| Span \| Img` | 子内容 |
+| 属性       | 类型                    | 说明                           |
+| ---------- | ----------------------- | ------------------------------ |
+| `style`    | `TextStyles`            | 内联文本样式                   |
+| `bold`     | `boolean`               | 快捷设置 `fontWeight: 'bold'`  |
+| `italic`   | `boolean`               | 快捷设置 `fontStyle: 'italic'` |
+| `children` | `string \| Span \| Img` | 子内容                         |
 
 ### Img Props
 
-| 属性 | 类型 | 说明 |
-|------|------|------|
-| `src` | `Sprite \| Graphics` | 图片源 |
-| `style` | `TextStyles` | 内联样式（宽高等） |
+| 属性    | 类型                 | 说明               |
+| ------- | -------------------- | ------------------ |
+| `src`   | `Sprite \| Graphics` | 图片源             |
+| `style` | `TextStyles`         | 内联样式（宽高等） |
 
 ## 文本样式属性
 
-| 属性 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| `fontSize` | `number` | `16` | 字体大小（像素） |
-| `fontFamily` | `string` | `'Arial'` | 字体族 |
-| `fontWeight` | `'normal' \| 'bold' \| string` | `'normal'` | 字体粗细 |
-| `fontStyle` | `'normal' \| 'italic'` | `'normal'` | 字体风格 |
-| `color` | `ColorSource` | `'#000000'` | 文字颜色 |
-| `lineHeight` | `number \| string` | `20` | 行高（像素或倍数字符串如 `'1.5x'`） |
-| `letterSpacing` | `number` | `0` | 字间距（像素） |
-| `textAlign` | `'left' \| 'center' \| 'right'` | `'left'` | 文本对齐 |
-| `textTransform` | `'none' \| 'uppercase' \| 'lowercase' \| 'capitalize'` | `'none'` | 文本变换 |
-| `whiteSpace` | `'normal' \| 'nowrap'` | `'normal'` | 空白字符处理 |
-| `wordBreak` | `'normal' \| 'break-all' \| 'break-word'` | `'break-word'` | 换行规则 |
-| `verticalAlign` | `'baseline' \| 'middle' \| 'top' \| 'bottom'` | `'baseline'` | 垂直对齐（用于 Img） |
+| 属性            | 类型                                                   | 默认值         | 说明                                 |
+| --------------- | ------------------------------------------------------ | -------------- | ------------------------------------ |
+| `fontSize`      | `number`                                               | `16`           | 字体大小（像素）                     |
+| `fontFamily`    | `string`                                               | `'Arial'`      | 字体族                               |
+| `fontWeight`    | `'normal' \| 'bold' \| string`                         | `'normal'`     | 字体粗细                             |
+| `fontStyle`     | `'normal' \| 'italic'`                                 | `'normal'`     | 字体风格                             |
+| `color`         | `ColorSource`                                          | `'#000000'`    | 文字颜色                             |
+| `lineHeight`    | `number \| string`                                     | `20`           | 行高（像素或倍数字符串如 `'1.5x'`）  |
+| `letterSpacing` | `number`                                               | `0`            | 字间距（像素）                       |
+| `textAlign`     | `'left' \| 'center' \| 'right'`                        | `'left'`       | 文本对齐                             |
+| `textTransform` | `'none' \| 'uppercase' \| 'lowercase' \| 'capitalize'` | `'none'`       | 文本变换                             |
+| `whiteSpace`    | `'normal' \| 'nowrap'`                                 | `'normal'`     | 空白字符处理                         |
+| `wordBreak`     | `'normal' \| 'break-all' \| 'break-word'`              | `'break-word'` | 换行规则                             |
+| `textOverflow`  | `'clip' \| 'ellipsis'`                                 | `'clip'`       | 超出可见行时的截断策略               |
+| `lineClamp`     | `number`                                               | `0`            | 最大可见行数；`0` 或未设置表示不限制 |
+| `verticalAlign` | `'baseline' \| 'middle' \| 'top' \| 'bottom'`          | `'baseline'`   | 垂直对齐（用于 Img）                 |
+
+### textOverflow + lineClamp
+
+`textOverflow` 需要与 `lineClamp` 搭配使用，才会在超出行数时生效：
+
+- `lineClamp`：控制最多显示多少行。
+- `textOverflow: 'clip'`：直接裁切，不显示省略符。
+- `textOverflow: 'ellipsis'`：在最后一行尾部追加省略符。
+
+```tsx
+<Text
+  style={{
+    width: 280,
+    lineHeight: 24,
+    lineClamp: 2,
+    textOverflow: 'ellipsis',
+  }}
+>
+  这是一段较长文本，用于演示在限定行数后自动追加省略号的效果。
+</Text>
+```
 
 ## 完整示例
 
@@ -114,7 +137,7 @@ const styles = StyleSheet.create({
 <Text style={styles.body}>
   使用 <Span style={styles.highlight}>Piant</Span> 构建
   <Span style={styles.code}> Canvas </Span> 应用。
-</Text>
+</Text>;
 ```
 
 ## 注意事项

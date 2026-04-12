@@ -44,6 +44,8 @@ export class PText extends PNode {
       whiteSpace: 'normal',
       wordBreak: 'break-word',
       textAlign: 'left',
+      textOverflow: 'clip',
+      lineClamp: 0,
     };
 
     this._textTypesetter = new Typesetter(
@@ -67,6 +69,8 @@ export class PText extends PNode {
       'whiteSpace',
       'wordBreak',
       'textAlign',
+      'textOverflow',
+      'lineClamp',
     ];
     textStyleKeys.forEach((key) => {
       if (style[key] !== undefined) {

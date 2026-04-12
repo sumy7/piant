@@ -11,11 +11,11 @@
 - [ ] 补齐 README 中已列出的文本能力
   - [ ] letter spacing
   - [ ] break words
-  - [ ] ellipsis
+  - [x] ellipsis
   - [ ] decoration (underline / strikethrough)
 - [ ] 为 Text 增加对应 style/API（仅在必要时新增）
-- [ ] 增加回归测试（覆盖中英文、换行、极窄容器、长文本）
-- [ ] 提供示例页面（建议新增 `examples/text-layout` 对应演示场景）
+- [x] 增加回归测试（覆盖中英文、换行、极窄容器、长文本）
+- [x] 提供示例页面（建议新增 `examples/text-layout` 对应演示场景）
 - [ ] 更新文档
   - [ ] `docs/guide/components/textview.md`
   - [ ] `docs/reference/components.md`
@@ -25,6 +25,12 @@
 - [ ] `pnpm --filter @piant/core exec vitest run` 通过
 - [ ] 新增能力在示例中可视化验证通过
 - [ ] 文档与 API 行为一致
+
+进展备注（2026-04-12）：
+
+- 已支持 `textOverflow` + `lineClamp`（含 `ellipsis` 截断逻辑）
+- 已补充 `Typesetter` 相关回归测试并通过 core 全量测试
+- 已更新 `examples/text-layout` 增加独立 Text overflow 演示
 
 ---
 
