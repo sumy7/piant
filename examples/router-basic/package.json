@@ -1,0 +1,22 @@
+{
+  "name": "@piant/examples-router-basic",
+  "description": "路由示例：演示 @piant/router 的基础匹配、参数与 query。",
+  "private": true,
+  "scripts": {
+    "dev": "rsbuild dev --open",
+    "build": "rsbuild build",
+    "preview": "rsbuild preview"
+  },
+  "dependencies": {
+    "@piant/core": "workspace:*",
+    "@piant/router": "workspace:*",
+    "@pixi/devtools": "^2.0.1",
+    "pixi.js": "^8.17.1"
+  },
+  "devDependencies": {
+    "@rsbuild/core": "1.7.5",
+    "@rsbuild/plugin-babel": "1.0.6",
+    "@piant/babel-preset-piant": "workspace:*",
+    "typescript": "^5.9.2"
+  }
+}

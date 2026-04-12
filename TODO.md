@@ -40,24 +40,32 @@
 
 MVP 范围：
 
-- [ ] 创建包目录：`packages/router`
-- [ ] 路由状态模型（path / params / query）
-- [ ] 核心 API：`createRouter`、`RouterProvider`、`useRoute`、`Link`
-- [ ] 基础匹配能力（静态路径 + 动态参数）
-- [ ] 最小示例（建议新增 `examples/router-basic`）
+- [x] 创建包目录：`packages/router`
+- [x] 路由状态模型（path / params / query）
+- [x] 核心 API：`createRouter`、`RouterProvider`、`useRoute`、`useNavigate`、`RouteView`
+- [x] 基础匹配能力（静态路径 + 动态参数）
+- [x] 最小示例（已新增 `examples/router-basic`）
 
 增强项（第二阶段）：
 
-- [ ] 嵌套路由与 layout route
-- [ ] 路由守卫与重定向
-- [ ] 懒加载页面组件
-- [ ] 错误边界联动
+- [x] 嵌套路由与 layout route
+- [x] 路由守卫与重定向
+- [x] 懒加载页面组件
+- [x] 错误边界联动
 
 验收标准：
 
 - [ ] 新包可独立构建与类型导出
 - [ ] 至少 1 个完整示例可运行
 - [ ] 路由匹配/跳转/参数解析有测试覆盖
+
+进展备注（2026-04-12）：
+
+- 已新增 `packages/router`（含 `rslib` 构建配置、`vitest` 配置、类型导出）
+- 已实现 `createRouter`、`RouterProvider`、`useRoute`、`useRouter`、`useNavigate`、`RouteView`、`RouterErrorBoundary`
+- 已完成路由匹配与导航相关单测（`tests/router.matching.test.ts`、`tests/router.navigation.test.ts`）并通过
+- 已实现二期增强能力：嵌套/布局路由、守卫重定向、懒加载组件、Router 错误边界联动
+- 新增二期回归测试：`tests/router.features.test.ts`（覆盖匹配链、重定向、lazy 缓存、lazy 错误态）
 
 ### 3. 新包：@piant/devtools（调试插件）
 

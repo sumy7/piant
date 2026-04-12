@@ -30,7 +30,11 @@ const Board = (props: BoardProps) => {
           <View style={styles.row}>
             <For each={row}>
               {(index) => (
-                <Cell value={props.cells[index]} index={index} onClick={props.onCellClick} />
+                <Cell
+                  value={props.cells[index]}
+                  index={index}
+                  onClick={props.onCellClick}
+                />
               )}
             </For>
           </View>

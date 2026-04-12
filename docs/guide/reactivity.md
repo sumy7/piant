@@ -25,7 +25,10 @@ setCount((prev) => prev + 1);
 
 ```ts
 function createState<T>(initialValue: T): readonly [Getter<T>, Setter<T>];
-function createState<T = undefined>(): readonly [Getter<T | undefined>, Setter<T | undefined>];
+function createState<T = undefined>(): readonly [
+  Getter<T | undefined>,
+  Setter<T | undefined>,
+];
 ```
 
 ## createEffect
@@ -66,11 +69,9 @@ console.log(fullName()); // "李三"（重新计算）
 ### 自定义相等比较
 
 ```ts
-const value = createMemo(
-  () => expensiveCalculation(),
-  undefined,
-  { equals: (prev, next) => prev.id === next.id }
-);
+const value = createMemo(() => expensiveCalculation(), undefined, {
+  equals: (prev, next) => prev.id === next.id,
+});
 ```
 
 ## createContext / useContext

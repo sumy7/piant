@@ -23,7 +23,15 @@ export { ErrorBoundary } from './components/ErrorBoundary';
 export { PRoot } from './elements/PRoot';
 
 // 响应式 API
-export { createState, createEffect, createMemo, onMount, onCleanup, onError, createSelector } from './reactivity/hooks';
+export {
+  createState,
+  createEffect,
+  createMemo,
+  onMount,
+  onCleanup,
+  onError,
+  createSelector,
+} from './reactivity/hooks';
 export { createContext, useContext } from './reactivity/context';
 export { memo } from './reactivity/effects';
 
@@ -43,3 +51,4 @@ export { onTick } from './hooks/onTick';
 - [响应式 API](/reference/reactivity) — createState、createEffect 等响应式原语
 - [渲染 API](/reference/renderer) — render、PRoot
 - [样式 API](/reference/stylesheet) — StyleSheet、ViewStyles 类型
+- [Router 文档](/router/introduction) — @piant/router 的接入方式与 API

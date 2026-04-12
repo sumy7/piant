@@ -9,9 +9,7 @@ import { ErrorBoundary, Text } from '@piant/core';
 
 function App() {
   return (
-    <ErrorBoundary
-      fallback={<Text>发生了错误，请刷新重试</Text>}
-    >
+    <ErrorBoundary fallback={<Text>发生了错误，请刷新重试</Text>}>
       <RiskyComponent />
     </ErrorBoundary>
   );
@@ -41,10 +39,10 @@ function App() {
 
 ## Props
 
-| 属性 | 类型 | 说明 |
-|------|------|------|
+| 属性       | 类型                                                              | 说明                |
+| ---------- | ----------------------------------------------------------------- | ------------------- |
 | `fallback` | `JSX.Element \| ((err: Error, reset: () => void) => JSX.Element)` | 错误时显示的降级 UI |
-| `children` | `JSX.Element` | 需要保护的子组件树 |
+| `children` | `JSX.Element`                                                     | 需要保护的子组件树  |
 
 ## 工作原理
 

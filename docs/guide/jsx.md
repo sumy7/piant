@@ -38,7 +38,7 @@ function Hello() {
 ```tsx
 const name = 'Piant';
 
-<Text>{`Hello, ${name}!`}</Text>
+<Text>{`Hello, ${name}!`}</Text>;
 ```
 
 ## 响应式值
@@ -68,7 +68,7 @@ import { Show, View } from '@piant/core';
 
 <Show when={isVisible()} fallback={<View />}>
   <Content />
-</Show>
+</Show>;
 ```
 
 ## 列表渲染
@@ -84,12 +84,12 @@ import { For, View, Text } from '@piant/core';
       <Text>{item.name}</Text>
     </View>
   )}
-</For>
+</For>;
 ```
 
 ## 事件处理
 
-事件属性使用驼峰式命名，如 `onClick`、`onMouseDown`：
+事件属性使用驼峰式命名，如 `onClick`、`onPointerDown`：
 
 ```tsx
 <View onClick={() => console.log('clicked!')} />
@@ -102,7 +102,7 @@ import { For, View, Text } from '@piant/core';
 ```tsx
 let viewRef: PView;
 
-<View ref={(el) => (viewRef = el)} style={{ width: 100, height: 100 }} />
+<View ref={(el) => (viewRef = el)} style={{ width: 100, height: 100 }} />;
 ```
 
 ## 注意事项

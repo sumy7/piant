@@ -39,6 +39,34 @@ importers:
         specifier: ^1.6.3
         version: 1.6.4(@algolia/client-search@5.50.1)(@types/node@22.18.9)(axios@1.12.2)(lightningcss@1.32.0)(postcss@8.5.8)(search-insights@2.17.3)(typescript@5.9.3)
 
+  examples/router-basic:
+    dependencies:
+      '@piant/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@piant/router':
+        specifier: workspace:*
+        version: link:../../packages/router
+      '@pixi/devtools':
+        specifier: ^2.0.1
+        version: 2.0.1(pixi.js@8.17.1)
+      pixi.js:
+        specifier: ^8.17.1
+        version: 8.17.1
+    devDependencies:
+      '@piant/babel-preset-piant':
+        specifier: workspace:*
+        version: link:../../packages/babel-preset-piant
+      '@rsbuild/core':
+        specifier: 1.7.5
+        version: 1.7.5
+      '@rsbuild/plugin-babel':
+        specifier: 1.0.6
+        version: 1.0.6(@rsbuild/core@1.7.5)
+      typescript:
+        specifier: ^5.9.2
+        version: 5.9.3
+
   examples/text-layout:
     dependencies:
       '@piant/core':
@@ -153,6 +181,28 @@ importers:
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.1.2
+        version: 4.1.2(@types/node@22.18.9)(@vitest/ui@4.1.2)(happy-dom@20.8.9)(vite@8.0.3(@emnapi/core@1.5.0)(@emnapi/runtime@1.5.0)(@types/node@22.18.9)(jiti@2.6.1)(yaml@2.8.1))
+
+  packages/router:
+    dependencies:
+      '@piant/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      '@rslib/core':
+        specifier: 0.20.3
+        version: 0.20.3(@emnapi/core@1.5.0)(@emnapi/runtime@1.5.0)(@microsoft/api-extractor@7.53.1(@types/node@22.18.9))(core-js@3.47.0)(typescript@5.9.3)
+      '@vitest/ui':
+        specifier: ^4.1.2
+        version: 4.1.2(vitest@4.1.2)
+      happy-dom:
+        specifier: ^20.8.9
+        version: 20.8.9
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -3226,7 +3276,7 @@ snapshots:
 
   '@babel/helper-annotate-as-pure@7.27.3':
     dependencies:
-      '@babel/types': 7.28.4
+      '@babel/types': 7.29.0
 
   '@babel/helper-compilation-targets@7.27.2':
     dependencies:
@@ -3254,7 +3304,7 @@ snapshots:
   '@babel/helper-member-expression-to-functions@7.27.1':
     dependencies:
       '@babel/traverse': 7.28.4
-      '@babel/types': 7.28.4
+      '@babel/types': 7.29.0
     transitivePeerDependencies:
       - supports-color
 
@@ -3280,7 +3330,7 @@ snapshots:
 
   '@babel/helper-optimise-call-expression@7.27.1':
     dependencies:
-      '@babel/types': 7.28.4
+      '@babel/types': 7.29.0
 
   '@babel/helper-plugin-utils@7.27.1': {}
 
@@ -3296,7 +3346,7 @@ snapshots:
   '@babel/helper-skip-transparent-expression-wrappers@7.27.1':
     dependencies:
       '@babel/traverse': 7.28.4
-      '@babel/types': 7.28.4
+      '@babel/types': 7.29.0
     transitivePeerDependencies:
       - supports-color
 
@@ -4293,24 +4343,24 @@ snapshots:
 
   '@types/babel__core@7.20.5':
     dependencies:
-      '@babel/parser': 7.28.4
-      '@babel/types': 7.28.4
+      '@babel/parser': 7.29.2
+      '@babel/types': 7.29.0
       '@types/babel__generator': 7.27.0
       '@types/babel__template': 7.4.4
       '@types/babel__traverse': 7.28.0
 
   '@types/babel__generator@7.27.0':
     dependencies:
-      '@babel/types': 7.28.4
+      '@babel/types': 7.29.0
 
   '@types/babel__template@7.4.4':
     dependencies:
-      '@babel/parser': 7.28.4
-      '@babel/types': 7.28.4
+      '@babel/parser': 7.29.2
+      '@babel/types': 7.29.0
 
   '@types/babel__traverse@7.28.0':
     dependencies:
-      '@babel/types': 7.28.4
+      '@babel/types': 7.29.0
 
   '@types/chai@5.2.3':
     dependencies:

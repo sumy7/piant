@@ -1,4 +1,4 @@
-import { cleanup, effect, memo } from '../reactivity/effects';
+import { cleanup, effect } from '../reactivity/effects';
 
 type EventCallback = (...args: object[]) => void;
 
@@ -14,30 +14,7 @@ export type PixiEventHandler = (event: object) => void;
  * React 风格事件属性到 PIXI.js 事件名称的映射
  */
 export const eventMap = {
-  // 鼠标事件
-  onClick: 'click',
-  onMouseDown: 'mousedown',
-  onMouseUp: 'mouseup',
-  onMouseMove: 'mousemove',
-  onMouseEnter: 'mouseenter',
-  onMouseLeave: 'mouseleave',
-  onMouseOver: 'mouseover',
-  onMouseOut: 'mouseout',
-  onRightClick: 'rightclick',
-  onRightDown: 'rightdown',
-  onRightUp: 'rightup',
-  onRightUpOutside: 'rightupoutside',
-  onWheel: 'wheel',
-
-  // 触摸事件
-  onTouchStart: 'touchstart',
-  onTouchEnd: 'touchend',
-  onTouchMove: 'touchmove',
-  onTouchCancel: 'touchcancel',
-  onTouchEndOutside: 'touchendoutside',
-  onTap: 'tap',
-
-  // 指针事件
+  onClick: 'pointertap',
   onPointerDown: 'pointerdown',
   onPointerUp: 'pointerup',
   onPointerMove: 'pointermove',
@@ -48,8 +25,11 @@ export const eventMap = {
   onPointerCancel: 'pointercancel',
   onPointerUpOutside: 'pointerupoutside',
   onPointerTap: 'pointertap',
-
-  // 全局事件
+  onRightClick: 'rightclick',
+  onRightDown: 'rightdown',
+  onRightUp: 'rightup',
+  onRightUpOutside: 'rightupoutside',
+  onWheel: 'wheel',
   onGlobalMouseMove: 'globalmousemove',
   onGlobalTouchMove: 'globaltouchmove',
   onGlobalPointerMove: 'globalpointermove',

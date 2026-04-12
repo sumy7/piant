@@ -9,6 +9,7 @@ export default defineConfig({
   themeConfig: {
     nav: [
       { text: '指南', link: '/guide/introduction' },
+      { text: 'Router', link: '/router/introduction' },
       { text: '参考', link: '/reference/overview' },
     ],
 
@@ -80,6 +81,16 @@ export default defineConfig({
             { text: '响应式 API', link: '/reference/reactivity' },
             { text: '渲染 API', link: '/reference/renderer' },
             { text: '样式 API', link: '/reference/stylesheet' },
+          ],
+        },
+      ],
+      '/router/': [
+        {
+          text: 'Router 指南',
+          items: [
+            { text: '简介', link: '/router/introduction' },
+            { text: '快速开始', link: '/router/quick-start' },
+            { text: 'API 参考', link: '/router/api' },
           ],
         },
       ],

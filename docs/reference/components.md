@@ -213,19 +213,24 @@ function ErrorBoundary(props: {
 ```ts
 type EventProps = {
   onClick?: (event: FederatedPointerEvent) => void;
-  onMouseDown?: (event: FederatedPointerEvent) => void;
-  onMouseUp?: (event: FederatedPointerEvent) => void;
-  onMouseMove?: (event: FederatedPointerEvent) => void;
-  onMouseEnter?: (event: FederatedPointerEvent) => void;
-  onMouseLeave?: (event: FederatedPointerEvent) => void;
   onPointerDown?: (event: FederatedPointerEvent) => void;
   onPointerUp?: (event: FederatedPointerEvent) => void;
   onPointerMove?: (event: FederatedPointerEvent) => void;
   onPointerEnter?: (event: FederatedPointerEvent) => void;
   onPointerLeave?: (event: FederatedPointerEvent) => void;
-  onTouchStart?: (event: FederatedPointerEvent) => void;
-  onTouchEnd?: (event: FederatedPointerEvent) => void;
-  onTouchMove?: (event: FederatedPointerEvent) => void;
+  onPointerOver?: (event: FederatedPointerEvent) => void;
+  onPointerOut?: (event: FederatedPointerEvent) => void;
+  onPointerCancel?: (event: FederatedPointerEvent) => void;
+  onPointerUpOutside?: (event: FederatedPointerEvent) => void;
+  onPointerTap?: (event: FederatedPointerEvent) => void;
+  onRightClick?: (event: FederatedPointerEvent) => void;
+  onRightDown?: (event: FederatedPointerEvent) => void;
+  onRightUp?: (event: FederatedPointerEvent) => void;
+  onRightUpOutside?: (event: FederatedPointerEvent) => void;
+  onWheel?: (event: FederatedWheelEvent) => void;
+  onGlobalMouseMove?: (event: FederatedPointerEvent) => void;
+  onGlobalTouchMove?: (event: FederatedPointerEvent) => void;
+  onGlobalPointerMove?: (event: FederatedPointerEvent) => void;
   // ... 完整列表详见事件处理文档
 };
 ```
