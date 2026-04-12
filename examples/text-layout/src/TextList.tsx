@@ -151,9 +151,7 @@ const TextList = () => {
                 layout.
               </Span>
             </Text>
-            <Text
-              style={{ fontSize: 20, color: 'brown', letterSpacing: 5 }}
-            >
+            <Text style={{ fontSize: 20, color: 'brown', letterSpacing: 5 }}>
               <Span>
                 Letter spacing test: The letters in this text should be spaced
                 out by 5 pixels, making it easier to read and visually
@@ -167,9 +165,7 @@ const TextList = () => {
               <Span>Vertical align</Span>
             </Text>
             <Show when={image()}>
-              <Text
-                style={{ fontSize: 18, lineHeight: 72, color: '#0f172a' }}
-              >
+              <Text style={{ fontSize: 18, lineHeight: 72, color: '#0f172a' }}>
                 <Span style={{ verticalAlign: 'top', color: '#ef4444' }}>
                   [top]
                 </Span>
@@ -188,9 +184,7 @@ const TextList = () => {
                 </Span>
               </Text>
 
-              <Text
-                style={{ fontSize: 18, lineHeight: 72, color: '#0f172a' }}
-              >
+              <Text style={{ fontSize: 18, lineHeight: 72, color: '#0f172a' }}>
                 <Span style={{ verticalAlign: 'middle', color: '#f59e0b' }}>
                   [middle]
                 </Span>
@@ -209,9 +203,7 @@ const TextList = () => {
                 </Span>
               </Text>
 
-              <Text
-                style={{ fontSize: 18, lineHeight: 72, color: '#0f172a' }}
-              >
+              <Text style={{ fontSize: 18, lineHeight: 72, color: '#0f172a' }}>
                 <Span style={{ verticalAlign: 'bottom', color: '#16a34a' }}>
                   [bottom]
                 </Span>
@@ -230,9 +222,7 @@ const TextList = () => {
                 </Span>
               </Text>
 
-              <Text
-                style={{ fontSize: 18, lineHeight: 72, color: '#0f172a' }}
-              >
+              <Text style={{ fontSize: 18, lineHeight: 72, color: '#0f172a' }}>
                 <Span style={{ verticalAlign: 'baseline', color: '#6b7280' }}>
                   [baseline]
                 </Span>

@@ -10,7 +10,7 @@
     "moduleResolution": "bundler",
     "useDefineForClassFields": true,
     "jsx": "preserve",
-    "jsxImportSource": "piant"
+    "jsxImportSource": "@paint/core"
   },
   "include": ["src"]
 }

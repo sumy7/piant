@@ -1,23 +1,27 @@
 import type { Graphics } from 'pixi.js';
 import type { ViewStyles } from '../elements/layout/viewStyles';
 import { PCustomView } from '../elements/PCustomView';
-import { bindEventEffects } from '../events';
+import type { PixiEventProps } from '../events';
+import { bindEventEffects, EVENT_PROPS } from '../events';
 import { createState } from '../reactivity';
 import { effect } from '../reactivity/effects';
 import { splitProps } from '../reactivity/props';
 import { StyleSheet } from '../styleSheet';
+import type { StyleValue } from '../styleSheet';
+import type { RefCallback } from './types';
 
 export type CustomViewProps = {
-  style?: ViewStyles | ViewStyles[];
+  style?: StyleValue<ViewStyles>;
   onDraw?: (graphics: Graphics, width: number, height: number) => void;
-  ref?: any;
-};
+  ref?: RefCallback<PCustomView>;
+} & PixiEventProps;
 
 export function CustomView(props: CustomViewProps) {
-  const [styleProps, onDrawProps, otherProps] = splitProps(
+  const [styleProps, onDrawProps, eventProps] = splitProps(
     props,
     ['style'],
     ['onDraw'],
+    EVENT_PROPS,
   );
   const [size, setSize] = createState<{ width: number; height: number }>({
     width: 0,
@@ -25,7 +29,7 @@ export function CustomView(props: CustomViewProps) {
   });
 
   const element = new PCustomView();
-  props.ref && (props as any).ref(element);
+  props.ref?.(element);
 
   element._view.on('sizeChange', (event) => {
     setSize({
@@ -41,7 +45,7 @@ export function CustomView(props: CustomViewProps) {
     const { width, height } = size();
     onDrawProps.onDraw?.(element._graphic, width, height);
   });
-  bindEventEffects(element._view, otherProps);
+  bindEventEffects(element._view, eventProps);
 
   return element;
 }

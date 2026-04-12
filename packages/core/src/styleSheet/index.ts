@@ -1,4 +1,5 @@
-import type { ViewStyles } from '../elements/layout/viewStyles';
+import type { ImageStyles, ViewStyles } from '../elements/layout/viewStyles';
+import type { TextStyles } from '../elements/text/textStyles';
 import composeStyles from './composeStyles';
 import flatten from './flattenStyle';
 import type {
@@ -18,7 +19,11 @@ export type {
 } from './types';
 
 function isStyleRef<T extends object>(x: unknown): x is StyleReference<T> {
-  return x != null && typeof x === 'object' && (x as StyleReference<T>).__isStyleRef === true;
+  return (
+    x != null &&
+    typeof x === 'object' &&
+    (x as StyleReference<T>).__isStyleRef === true
+  );
 }
 
 function resolveEntry<T extends object>(
@@ -43,13 +48,50 @@ function resolveEntry<T extends object>(
       if (parentEntry) {
         const inner = new Set(visited);
         inner.add(parent);
-        merged = { ...merged, ...resolveEntry(parentEntry, definition, inner, [...chain, parent]) };
+        merged = {
+          ...merged,
+          ...resolveEntry(parentEntry, definition, inner, [...chain, parent]),
+        };
       }
     } else {
       merged = { ...merged, ...parent };
     }
   }
   return { ...merged, ...entry.style };
+}
+
+function createStyleSheet<
+  T extends Record<string, StyleEntry<ViewStyles | ImageStyles | TextStyles>>,
+>(obj: T): ResolvedStyleSheet<T>;
+function createStyleSheet<
+  TStyle extends object = object,
+  T extends Record<string, StyleEntry<TStyle>> = Record<
+    string,
+    StyleEntry<TStyle>
+  >,
+>(obj: T): ResolvedStyleSheet<T>;
+function createStyleSheet<
+  TStyle extends object = object,
+  T extends Record<string, StyleEntry<TStyle>> = Record<
+    string,
+    StyleEntry<TStyle>
+  >,
+>(obj: T): ResolvedStyleSheet<T> {
+  const result = {} as ResolvedStyleSheet<T>;
+  for (const key in obj) {
+    const entry = obj[key]!;
+    if (isStyleRef(entry)) {
+      (result as Record<string, unknown>)[key] = resolveEntry(
+        entry,
+        obj,
+        new Set([key]),
+        [key],
+      );
+    } else {
+      (result as Record<string, unknown>)[key] = entry;
+    }
+  }
+  return result;
 }
 
 /**
@@ -133,25 +175,7 @@ export const StyleSheet = {
    * // styles.primary => { padding: 12, borderRadius: 8, backgroundColor: '#0055ff' }
    * ```
    */
-  create<TStyle extends object = ViewStyles, T extends Record<string, StyleEntry<TStyle>> = Record<string, StyleEntry<TStyle>>>(
-    obj: T,
-  ): ResolvedStyleSheet<T> {
-    const result = {} as ResolvedStyleSheet<T>;
-    for (const key in obj) {
-      const entry = obj[key]!;
-      if (isStyleRef(entry)) {
-        (result as Record<string, unknown>)[key] = resolveEntry(
-          entry,
-          obj,
-          new Set([key]),
-          [key],
-        );
-      } else {
-        (result as Record<string, unknown>)[key] = entry;
-      }
-    }
-    return result;
-  },
+  create: createStyleSheet,
 
   /**
    * Creates a style inheritance reference for use inside `StyleSheet.create`.
@@ -217,4 +241,3 @@ export const StyleSheet = {
     return flatten(style) as Partial<T> | undefined;
   },
 };
-

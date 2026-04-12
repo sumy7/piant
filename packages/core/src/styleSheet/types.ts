@@ -57,12 +57,22 @@ export type StyleObject<T extends object> = Partial<T>;
  * };
  * ```
  */
-export type StyleSheetDefinition<T extends object> = Record<string, StyleEntry<T>>;
+export type StyleSheetDefinition<T extends object> = Record<
+  string,
+  StyleEntry<T>
+>;
 
 /**
  * Computes the resolved output type of `StyleSheet.create`.
  * Each `StyleReference<S>` entry maps to `Partial<S>`; plain style object entries keep their type.
  */
+type ResolveStyleEntry<E> =
+  E extends StyleReference<infer S>
+    ? Partial<S>
+    : E extends Partial<infer S>
+      ? Partial<S>
+      : never;
+
 export type ResolvedStyleSheet<T extends Record<string, StyleEntry<any>>> = {
-  [K in keyof T]: T[K] extends StyleReference<infer S> ? Partial<S> : T[K];
+  [K in keyof T]: ResolveStyleEntry<T[K]>;
 };

@@ -8,21 +8,50 @@ import type { Getter } from '../reactivity';
 import { memo } from '../reactivity';
 import { children as $children, effect } from '../reactivity/effects';
 import { splitProps } from '../reactivity/props';
+import type { StyleValue } from '../styleSheet';
 import { StyleSheet } from '../styleSheet';
+import type { ComponentChild, ComponentValue, RefCallback } from './types';
+import type { ImageSource } from '../elements/text';
+
+type TextElementLike = {
+  type: string | { name?: string; displayName?: string };
+  props?: {
+    style?: StyleValue<TextStyles>;
+    bold?: boolean;
+    italic?: boolean;
+    src?: string;
+    children?: ComponentChild;
+  } & Record<string, ComponentValue | ComponentValue[]>;
+};
+
+type TextViewNode =
+  | { type: 'span'; content: string; style: TextStyles }
+  | { type: 'imageSpan'; src: string; style: TextStyles };
+
+const isZeroArgGetter = (
+  value: ComponentChild,
+): value is Getter<ComponentChild> =>
+  typeof value === 'function' && !value.length;
+
+const isTextElementLike = (value: ComponentChild): value is TextElementLike =>
+  !!value && typeof value === 'object' && 'type' in value && 'props' in value;
 
 export function collectTextViewNodes(
-  childrenRoot: unknown,
+  childrenRoot: ComponentChild,
   rootStyles: TextStyles,
-): any[] {
+): TextViewNode[] {
   // helper: resolve any "children" input to a flattened array of items (primitives or elements),
   // resolving zero-arg getters and arrays.
-  const resolveToArray = (input: unknown): any[] => {
-    const out: any[] = [];
-    const stack: any[] = [input];
+  const resolveToArray = (input: ComponentChild): ComponentChild[] => {
+    const out: ComponentChild[] = [];
+    const stack: ComponentChild[] = [input];
     while (stack.length) {
       const node = stack.pop();
-      if (typeof node === 'function' && !(node as Getter<any>).length) {
-        stack.push((node as Getter<any>)());
+      if (node === undefined) {
+        continue;
+      }
+      if (isZeroArgGetter(node)) {
+        stack.push(node());
         continue;
       }
       if (Array.isArray(node)) {
@@ -35,23 +64,22 @@ export function collectTextViewNodes(
     return out;
   };
 
-  const nodes: any[] = [];
+  const nodes: TextViewNode[] = [];
 
   // Detect element type name (works for function components and string types)
-  const getTypeName = (el: any): string | undefined => {
+  const getTypeName = (el: TextElementLike): string | undefined => {
     if (!el || typeof el !== 'object') return undefined;
     const t = el.type;
     if (typeof t === 'string') return t;
-    if (typeof t === 'function')
-      return (t as any).name || (t as any).displayName;
+    if (typeof t === 'object') return t.name || t.displayName;
     return undefined;
   };
 
-  const process = (item: any, inheritedStyle: any = {}) => {
+  const process = (item: ComponentChild, inheritedStyle: TextStyles = {}) => {
     if (item == null || item === false) return;
     // resolve zero-arg getters inline
-    if (typeof item === 'function' && !(item as Getter<any>).length) {
-      process((item as Getter<any>)(), inheritedStyle);
+    if (isZeroArgGetter(item)) {
+      process(item(), inheritedStyle);
       return;
     }
     if (Array.isArray(item)) {
@@ -71,11 +99,11 @@ export function collectTextViewNodes(
     }
 
     // JSX element-like object: { type, props }
-    if (typeof item === 'object' && 'type' in item && 'props' in item) {
+    if (isTextElementLike(item)) {
       const typeName = getTypeName(item);
-      const props: any = item.props || {};
+      const props = item.props || {};
 
-      let currentStyle = { ...inheritedStyle };
+      let currentStyle: TextStyles = { ...inheritedStyle };
       if (props.style) {
         Object.assign(currentStyle, StyleSheet.flatten(props.style));
       }
@@ -83,7 +111,11 @@ export function collectTextViewNodes(
       if (props.italic) currentStyle.fontStyle = 'italic';
 
       if (typeName === 'Img' || typeName === 'img') {
-        nodes.push({ type: 'imageSpan', src: props.src, style: currentStyle });
+        nodes.push({
+          type: 'imageSpan',
+          src: typeof props.src === 'string' ? props.src : '',
+          style: currentStyle,
+        });
         return;
       }
 
@@ -116,13 +148,25 @@ export function collectTextViewNodes(
 }
 
 export interface TextProps {
-  style?: TextStyles | TextStyles[];
-  children?: JSX.Element;
-  ref?: (ref: PText) => void;
+  style?: StyleValue<TextStyles>;
+  children?: ComponentChild;
+  ref?: RefCallback<PText>;
+}
+
+export interface SpanProps {
+  style?: StyleValue<TextStyles>;
+  bold?: boolean;
+  italic?: boolean;
+  children?: ComponentChild;
+}
+
+export interface ImgProps {
+  src?: ImageSource | null;
+  style?: StyleValue<TextStyles>;
 }
 
 export function Text(props: TextProps) {
-  const [styleProps, childrenProps, otherProps] = splitProps(
+  const [styleProps, childrenProps] = splitProps(
     props,
     ['style'],
     ['children'],
@@ -141,7 +185,7 @@ export function Text(props: TextProps) {
   return () => {
     const element = new PText();
 
-    props.ref && (props as any).ref(element);
+    props.ref?.(element);
 
     effect(() => {
       element.setStyle(getTextViewStyles());
@@ -172,14 +216,14 @@ export function Text(props: TextProps) {
   };
 }
 
-export function Span(props: any) {
+export function Span(props: SpanProps) {
   return memo(() => ({
     type: 'span',
     props: props,
   }));
 }
 
-export function Img(props: any) {
+export function Img(props: ImgProps) {
   return memo(() => ({
     type: 'imageSpan',
     props: props,

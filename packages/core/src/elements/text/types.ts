@@ -18,6 +18,8 @@ export type TextLayoutStyle = {
   whiteSpace: 'normal' | 'nowrap' | string;
   wordBreak: 'break-word' | 'normal' | string;
   textAlign: TextAlign;
+  textOverflow?: 'clip' | 'ellipsis' | string;
+  lineClamp?: number;
 };
 
 export type InlineBaseStyle = Partial<TextLayoutStyle> & {

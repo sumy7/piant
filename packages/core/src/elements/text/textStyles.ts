@@ -39,4 +39,6 @@ export const DEFAULT_INLINE_PROPS: TextStyles = {
   whiteSpace: 'normal',
   wordBreak: 'break-word',
   textAlign: 'left',
+  textOverflow: 'clip',
+  lineClamp: 0,
 };

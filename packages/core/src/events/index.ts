@@ -1,9 +1,19 @@
 import { cleanup, effect, memo } from '../reactivity/effects';
 
+type EventCallback = (...args: object[]) => void;
+
+type EventTargetLike = {
+  on: (eventName: string, handler: EventCallback) => void;
+  off: (eventName: string, handler: EventCallback) => void;
+  interactive?: boolean;
+};
+
+export type PixiEventHandler = (event: object) => void;
+
 /**
  * React 风格事件属性到 PIXI.js 事件名称的映射
  */
-export const eventMap: Record<string, string> = {
+export const eventMap = {
   // 鼠标事件
   onClick: 'click',
   onMouseDown: 'mousedown',
@@ -43,16 +53,20 @@ export const eventMap: Record<string, string> = {
   onGlobalMouseMove: 'globalmousemove',
   onGlobalTouchMove: 'globaltouchmove',
   onGlobalPointerMove: 'globalpointermove',
-};
+} as const;
 
-export const EVENT_PROPS = Object.keys(eventMap);
+export type PixiEventProp = keyof typeof eventMap;
+
+export type PixiEventProps = Partial<Record<PixiEventProp, PixiEventHandler>>;
+
+export const EVENT_PROPS = Object.keys(eventMap) as PixiEventProp[];
 /**
  * 获取 PIXI.js 事件名称
  * @param reactEventName React 风格的事件属性名
  * @returns PIXI.js 事件名称
  */
 export function getPixiEventName(reactEventName: string): string | undefined {
-  return eventMap[reactEventName];
+  return eventMap[reactEventName as PixiEventProp];
 }
 
 /**
@@ -70,9 +84,9 @@ export function isEventProp(propName: string): boolean {
  * @returns 事件处理器映射
  */
 export function extractEventHandlers(
-  props: Record<string, any>,
-): Record<string, Function> {
-  const eventHandlers: Record<string, Function> = {};
+  props: PixiEventProps,
+): Partial<Record<string, PixiEventHandler>> {
+  const eventHandlers: Partial<Record<string, PixiEventHandler>> = {};
   for (const [propName, handler] of Object.entries(props)) {
     if (isEventProp(propName) && typeof handler === 'function') {
       const pixiEventName = getPixiEventName(propName);
@@ -86,16 +100,16 @@ export function extractEventHandlers(
 }
 
 export function bindEventEffects(
-  element: any,
-  eventProps: Record<string, any>,
+  element: EventTargetLike,
+  eventProps: PixiEventProps,
 ) {
   effect(() => {
     const keys = Object.keys(eventProps);
 
-    const eventHandlers: Record<string, () => void> = {};
+    const eventHandlers: Partial<Record<string, EventCallback>> = {};
     let hasPixiEvent = false;
     keys.forEach((key) => {
-      const newFn = eventProps[key];
+      const newFn = eventProps[key as PixiEventProp];
       const pixiEventName = getPixiEventName(key);
       if (!pixiEventName) {
         console.warn('bindEventEffects', key, 'is not a valid event property');
@@ -113,7 +127,10 @@ export function bindEventEffects(
 
     cleanup(() => {
       Object.keys(eventHandlers).forEach((pixiEventName) => {
-        element.off(pixiEventName, eventHandlers[pixiEventName]);
+        const handler = eventHandlers[pixiEventName];
+        if (handler) {
+          element.off(pixiEventName, handler);
+        }
       });
     });
   });

@@ -1,73 +1,71 @@
-// PIXI.js 事件处理器类型
-type PixiEventHandler = (event: any) => void;
+import type { CustomViewProps } from './components/CustomView';
+import type { DynamicProps } from './components/Dynamic';
+import type { ErrorBoundaryProps } from './components/ErrorBoundary';
+import type { ForProps, IndexProps } from './components/For';
+import type { ImageProps } from './components/Image';
+import type { ScrollViewProps } from './components/ScrollView';
+import type { ShowProps } from './components/Show';
+import type { MatchProps, SwitchProps } from './components/Switch';
+import type { ImgProps, SpanProps, TextProps } from './components/Text';
+import type { ComponentChild, ComponentValue } from './components/types';
+import type { ViewProps } from './components/View';
+import type { PixiEventProps } from './events';
 
-// 事件属性接口 - 基于 eventMap 定义
-interface PixiEventHandlers {
-  // 鼠标事件
-  onClick?: PixiEventHandler;
-  onMouseDown?: PixiEventHandler;
-  onMouseUp?: PixiEventHandler;
-  onMouseMove?: PixiEventHandler;
-  onMouseEnter?: PixiEventHandler;
-  onMouseLeave?: PixiEventHandler;
-  onMouseOver?: PixiEventHandler;
-  onMouseOut?: PixiEventHandler;
-  onRightClick?: PixiEventHandler;
-  onRightDown?: PixiEventHandler;
-  onRightUp?: PixiEventHandler;
-  onRightUpOutside?: PixiEventHandler;
-  onWheel?: PixiEventHandler;
+type Eventful<T> = T & PixiEventProps;
 
-  // 触摸事件
-  onTouchStart?: PixiEventHandler;
-  onTouchEnd?: PixiEventHandler;
-  onTouchMove?: PixiEventHandler;
-  onTouchCancel?: PixiEventHandler;
-  onTouchEndOutside?: PixiEventHandler;
-  onTap?: PixiEventHandler;
+interface PiantIntrinsicElements {
+  view: Eventful<ViewProps>;
+  text: Eventful<TextProps>;
+  image: Eventful<ImageProps>;
+  customview: Eventful<CustomViewProps>;
+  scrollview: Eventful<ScrollViewProps>;
+  show: ShowProps<ComponentValue>;
+  for: ForProps<ComponentValue>;
+  index: IndexProps<ComponentValue>;
+  switch: SwitchProps;
+  match: MatchProps<ComponentValue>;
+  dynamic: DynamicProps<Record<string, ComponentValue>>;
+  errorboundary: ErrorBoundaryProps;
+  span: SpanProps;
+  img: ImgProps;
+}
 
-  // 指针事件
-  onPointerDown?: PixiEventHandler;
-  onPointerUp?: PixiEventHandler;
-  onPointerMove?: PixiEventHandler;
-  onPointerEnter?: PixiEventHandler;
-  onPointerLeave?: PixiEventHandler;
-  onPointerOver?: PixiEventHandler;
-  onPointerOut?: PixiEventHandler;
-  onPointerCancel?: PixiEventHandler;
-  onPointerUpOutside?: PixiEventHandler;
-  onPointerTap?: PixiEventHandler;
+interface PiantIntrinsicAttributes {
+  key?: string | number;
+}
 
-  // 全局事件
-  onGlobalMouseMove?: PixiEventHandler;
-  onGlobalTouchMove?: PixiEventHandler;
-  onGlobalPointerMove?: PixiEventHandler;
+export namespace JSX {
+  type Element = ComponentChild;
+
+  interface ElementClass {}
+
+  interface ElementAttributesProperty {}
+
+  interface ElementChildrenAttribute {
+    children: ComponentChild;
+  }
+
+  interface IntrinsicAttributes extends PiantIntrinsicAttributes {}
+
+  interface IntrinsicElements extends PiantIntrinsicElements {}
 }
 
 declare global {
   namespace JSX {
-    type Element = any;
-    interface ArrayElement extends Array<Element> {}
-    interface FunctionElement {
-      (): Element;
-    }
-    interface ElementClass {
-      // empty, libs can define requirements downstream
-    }
-    interface ElementAttributesProperty {
-      // empty, libs can define requirements downstream
-    }
+    type Element = ComponentChild;
+
+    interface ElementClass {}
+
+    interface ElementAttributesProperty {}
+
     interface ElementChildrenAttribute {
-      children: unknown;
+      children: ComponentChild;
     }
 
-    // 为所有 JSX 元素添加事件属性
-    interface IntrinsicElements {
-      [elemName: string]: PixiEventHandlers & {
-        [key: string]: any;
-      };
-    }
+    interface IntrinsicAttributes extends PiantIntrinsicAttributes {}
+
+    interface IntrinsicElements extends PiantIntrinsicElements {}
   }
 }
 
-export { JSX };
+export {};
