@@ -10,6 +10,7 @@ export default defineConfig({
     nav: [
       { text: '指南', link: '/guide/introduction' },
       { text: 'Router', link: '/router/introduction' },
+      { text: 'Store', link: '/store/introduction' },
       { text: '参考', link: '/reference/overview' },
     ],
 
@@ -91,6 +92,16 @@ export default defineConfig({
             { text: '简介', link: '/router/introduction' },
             { text: '快速开始', link: '/router/quick-start' },
             { text: 'API 参考', link: '/router/api' },
+          ],
+        },
+      ],
+      '/store/': [
+        {
+          text: 'Store 指南',
+          items: [
+            { text: '简介', link: '/store/introduction' },
+            { text: '快速开始', link: '/store/quick-start' },
+            { text: 'API 参考', link: '/store/api' },
           ],
         },
       ],

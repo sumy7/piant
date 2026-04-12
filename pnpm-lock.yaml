@@ -122,6 +122,9 @@ importers:
       '@piant/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@piant/store':
+        specifier: workspace:*
+        version: link:../../packages/store
       '@pixi/devtools':
         specifier: ^2.0.1
         version: 2.0.1(pixi.js@8.17.1)
@@ -203,6 +206,27 @@ importers:
       happy-dom:
         specifier: ^20.8.9
         version: 20.8.9
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.1.2
+        version: 4.1.2(@types/node@22.18.9)(@vitest/ui@4.1.2)(happy-dom@20.8.9)(vite@8.0.3(@emnapi/core@1.5.0)(@emnapi/runtime@1.5.0)(@types/node@22.18.9)(jiti@2.6.1)(yaml@2.8.1))
+
+  packages/store:
+    devDependencies:
+      '@rslib/core':
+        specifier: 0.20.3
+        version: 0.20.3(@emnapi/core@1.5.0)(@emnapi/runtime@1.5.0)(@microsoft/api-extractor@7.53.1(@types/node@22.18.9))(core-js@3.47.0)(typescript@5.9.3)
+      '@vitest/ui':
+        specifier: ^4.1.2
+        version: 4.1.2(vitest@4.1.2)
+      happy-dom:
+        specifier: ^20.8.9
+        version: 20.8.9
+      mobx:
+        specifier: ^6.15.0
+        version: 6.15.0
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -4908,9 +4932,9 @@ snapshots:
     dependencies:
       reusify: 1.1.0
 
-  fdir@6.5.0(picomatch@4.0.3):
+  fdir@6.5.0(picomatch@4.0.4):
     optionalDependencies:
-      picomatch: 4.0.3
+      picomatch: 4.0.4
 
   fflate@0.8.2: {}
 
@@ -5723,8 +5747,8 @@ snapshots:
 
   tinyglobby@0.2.15:
     dependencies:
-      fdir: 6.5.0(picomatch@4.0.3)
-      picomatch: 4.0.3
+      fdir: 6.5.0(picomatch@4.0.4)
+      picomatch: 4.0.4
 
   tinyrainbow@3.1.0: {}
 
@@ -5894,7 +5918,7 @@ snapshots:
       magic-string: 0.30.21
       obug: 2.1.1
       pathe: 2.0.3
-      picomatch: 4.0.3
+      picomatch: 4.0.4
       std-env: 4.0.0
       tinybench: 2.9.0
       tinyexec: 1.0.4
