@@ -51,7 +51,6 @@ describe('useKeyPress', () => {
   });
 
   it('stops tracking after the reactive owner is disposed', () => {
-    const handler = vi.fn();
     let pressedGetter: () => boolean;
     root((dispose) => {
       const [pressed] = useKeyPress('a');
