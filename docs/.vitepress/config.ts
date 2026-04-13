@@ -104,6 +104,13 @@ export default defineConfig({
             { text: 'API 参考', link: '/store/api' },
           ],
         },
+        {
+          text: 'Middleware',
+          items: [
+            { text: 'combine', link: '/store/middleware/combine' },
+            { text: 'persist', link: '/store/middleware/persist' },
+          ],
+        },
       ],
     },
 
