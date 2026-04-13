@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@piant/core": "workspace:*",
+    "@piant/store": "workspace:*",
     "@pixi/devtools": "^2.0.1",
     "pixi.js": "^8.17.1"
   },

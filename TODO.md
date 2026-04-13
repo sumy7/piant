@@ -93,23 +93,31 @@ MVP 范围：
 
 MVP 范围：
 
-- [ ] 创建包目录：`packages/state`
-- [ ] 核心 API：`createStore`、`useStore`、`Provider`
-- [ ] 支持细粒度订阅与派生状态（避免整树无效更新）
-- [ ] 与 `@piant/core` 组件生命周期对齐（挂载/卸载清理）
-- [ ] 最小示例（建议新增 `examples/state-basic`）
+- [x] 创建包目录：`packages/store`（以 `@piant/store` 发布）
+- [x] 核心 API：`createStore`（含 `getState`、`setState`、`subscribe`）
+- [x] 与 `@piant/core` MobX 响应式无缝集成（observable state + 自动 action）
+- [x] 最小示例（`examples/todos` 已迁移为使用 store）
 
 增强项（第二阶段）：
 
-- [ ] middleware / plugin 机制（日志、持久化、调试）
+- [x] middleware 机制（`combine`、`persist`）
 - [ ] devtools 集成（状态快照与时间旅行基础能力）
 - [ ] async action 与错误恢复模式
 
 验收标准：
 
-- [ ] 新包可独立构建与类型导出
-- [ ] 至少 1 个完整示例可运行
-- [ ] 状态更新、订阅释放、派生状态有测试覆盖
+- [x] 新包可独立构建与类型导出
+- [x] 至少 1 个完整示例可运行（`examples/todos`）
+- [x] 状态更新、订阅释放、派生状态有测试覆盖（42 个用例）
+
+进展备注（2026-04-12）：
+
+- 已新增 `packages/store`（含 rslib 构建配置、vitest 配置、完整类型导出）
+- 已实现 `createStore`：MobX observable state，zustand 风格 `set`/`get` API
+- 已实现 `combine` middleware：将纯数据状态与 actions creator 合并为单一 store
+- 已实现 `persist` middleware：基于 `api.setState` 拦截机制，所有状态更新（含外部调用）均同步至 storage；支持 `partialize`、自定义 `serialize`/`deserialize`、`skipHydration`、`onRehydrateStorage` 回调
+- 已完成 42 个测试（`createStore`、`combine`、`persist` 及组合场景）并全部通过
+- `examples/todos` 已迁移为使用 `@piant/store` 管理 todo 列表
 
 ### 4.1 新包：@piant/animation（基于 motion 的动画能力）
 

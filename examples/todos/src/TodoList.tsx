@@ -8,12 +8,9 @@ import {
   View,
 } from '@piant/core';
 import { CheckIcon, TrashIcon, UncheckIcon } from './icons';
+import type { Todo } from './todoStore';
 
-export interface Todo {
-  id: string;
-  text: string;
-  completed: boolean;
-}
+export type { Todo };
 
 export interface TodoItemProps {
   item: Todo;
