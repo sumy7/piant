@@ -1,4 +1,4 @@
 export * from './context';
-export { memo } from './effects';
+export { memo, root } from './effects';
 export * from './hooks';
 export * from './types';
