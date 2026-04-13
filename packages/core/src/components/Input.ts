@@ -1,6 +1,6 @@
 import type { ViewStyles } from '../elements/layout/viewStyles';
 import { PInput } from '../elements/PInput';
-import { effect } from '../reactivity/effects';
+import { cleanup, effect } from '../reactivity/effects';
 import { splitProps } from '../reactivity/props';
 import type { StyleValue } from '../styleSheet';
 import { StyleSheet } from '../styleSheet';
@@ -41,7 +41,7 @@ export function Input(props: InputProps): JSX.Element {
     element.setStyle(StyleSheet.flatten(styleProps.style) || {});
   });
 
-  // Set initial defaultValue
+  // defaultValue is initialization-only (mirrors HTML semantics)
   if (inputProps.defaultValue !== undefined) {
     element._inputElement.value = inputProps.defaultValue;
   }
@@ -65,6 +65,9 @@ export function Input(props: InputProps): JSX.Element {
     element._inputElement.disabled = inputProps.disabled ?? false;
   });
 
+  // Use stable handler wrappers that always delegate to the latest prop callbacks.
+  // splitProps preserves property descriptors, so inputProps.onXxx always reads
+  // the current value (reactive if the parent passes a signal).
   const handleInput = (event: Event) => {
     inputProps.onInput?.(element._inputElement.value, event);
   };
@@ -85,6 +88,19 @@ export function Input(props: InputProps): JSX.Element {
   element._inputElement.addEventListener('change', handleChange);
   element._inputElement.addEventListener('focus', handleFocus as EventListener);
   element._inputElement.addEventListener('blur', handleBlur as EventListener);
+
+  cleanup(() => {
+    element._inputElement.removeEventListener('input', handleInput);
+    element._inputElement.removeEventListener('change', handleChange);
+    element._inputElement.removeEventListener(
+      'focus',
+      handleFocus as EventListener,
+    );
+    element._inputElement.removeEventListener(
+      'blur',
+      handleBlur as EventListener,
+    );
+  });
 
   return element as JSX.Element;
 }

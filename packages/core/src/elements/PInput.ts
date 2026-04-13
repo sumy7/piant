@@ -39,7 +39,7 @@ export class PInput extends PNode {
   }
 
   destroy() {
-    super.destroy();
     this._domContainer.destroy();
+    super.destroy();
   }
 }
