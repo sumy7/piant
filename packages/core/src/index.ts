@@ -1,4 +1,5 @@
 export { CustomView } from './components/CustomView';
+export { Input, type InputProps } from './components/Input';
 export { Dynamic } from './components/Dynamic';
 export { ErrorBoundary } from './components/ErrorBoundary';
 export { For, Index } from './components/For';
