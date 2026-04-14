@@ -12,7 +12,6 @@ export interface UseKeyOptions {
 function createKeyPredicate(keyFilter: KeyFilter): (event: KeyboardEvent) => boolean {
   if (typeof keyFilter === 'function') return keyFilter;
   if (typeof keyFilter === 'string') return (event: KeyboardEvent) => event.key === keyFilter;
-  if (keyFilter) return () => true;
   return () => false;
 }
 
@@ -25,6 +24,8 @@ function createKeyPredicate(keyFilter: KeyFilter): (event: KeyboardEvent) => boo
  * @param opts - Optional event type ('keydown' | 'keypress' | 'keyup') and target element.
  */
 export function useKey(key: KeyFilter, handler: Handler, opts: UseKeyOptions = {}): void {
+  if (key === null || key === undefined) return;
+
   const { event = 'keydown', target } = opts;
   const t: EventTarget =
     target ?? (typeof window !== 'undefined' ? window : (null as unknown as EventTarget));

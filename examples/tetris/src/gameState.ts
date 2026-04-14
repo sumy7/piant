@@ -97,7 +97,7 @@ export function useGameState() {
     const next = s.next ?? randomTetromino();
     const newCurrent = next;
     if (!isValidPosition(board, newCurrent)) {
-      return { ...s, board: locked, current: null, status: 'over', score, lines, level };
+      return { ...s, board, current: null, status: 'over', score, lines, level };
     }
     const nextPiece = randomTetromino();
     return {

@@ -82,18 +82,27 @@ const styles = StyleSheet.create({
 export function App() {
   const game = useGameState();
 
+  // ── useKeyPress: track whether Shift is held (used for faster drop) ──────
+  const [shiftHeld] = useKeyPress('Shift');
+
   // ── useKey: ArrowLeft / ArrowRight / ArrowDown ───────────────────────────
   useKey('ArrowLeft', () => game.moveLeft());
   useKey('ArrowRight', () => game.moveRight());
-  useKey('ArrowDown', () => game.moveDown());
+  // Shift+↓ drops an extra row per keypress for faster soft-drop
+  useKey('ArrowDown', () => {
+    game.moveDown();
+    if (shiftHeld()) game.moveDown();
+  });
 
-  // ── useKey: Hard drop (Space) and rotate (ArrowUp / z / x) ──────────────
+  // ── useKey: Hard drop (Space) and rotate (ArrowUp / z) ───────────────────
   useKey('ArrowUp', () => game.rotate());
   useKey('z', () => game.rotate());
-  useKey(' ', () => game.hardDrop());
-
-  // ── useKeyPress: track whether Shift is held (used for faster drop) ──────
-  const [shiftHeld] = useKeyPress('Shift');
+  // Space starts the game when idle/over, or hard-drops while playing
+  useKey(' ', () => {
+    const status = game.state().status;
+    if (status === 'idle' || status === 'over') game.startGame();
+    else game.hardDrop();
+  });
 
   // ── useKeystroke: pause/unpause with "p" key ─────────────────────────────
   useKeystroke('p', {
@@ -106,11 +115,6 @@ export function App() {
       const s = game.state();
       if (s.status === 'over' || s.status === 'idle') game.startGame();
     },
-  });
-
-  // When Shift is held, extra key presses trigger faster drops
-  useKey('ArrowDown', () => {
-    if (shiftHeld()) game.moveDown();
   });
 
   const s = () => game.state();
@@ -157,7 +161,7 @@ export function App() {
       <Show when={s().status === 'idle'}>
         <View style={styles.overlay}>
           <Text style={styles.overlayTitle}>TETRIS</Text>
-          <Text style={styles.overlayHint}>Press Space or click to start</Text>
+          <Text style={styles.overlayHint}>Press Space or click Start to begin</Text>
           <View style={styles.startButton} onClick={() => game.startGame()}>
             <Text style={styles.startButtonText}>Start Game</Text>
           </View>
