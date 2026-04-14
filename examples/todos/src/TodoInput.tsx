@@ -31,15 +31,19 @@ const styles = StyleSheet.create({
   },
 });
 
-const TodoInput = ({ onAddTodo }: TodoInputProps) => {
+const TodoInput = (props: TodoInputProps) => {
   const [inputValue, setInputValue] = createState('');
 
   const onClick = () => {
     if (inputValue()) {
-      onAddTodo?.(inputValue());
+      props.onAddTodo?.(inputValue());
       setInputValue('');
     }
   };
+
+  const onInput = (value: string) => {
+    setInputValue(value);
+  }
 
   return (
     <View style={styles.container}>
@@ -47,7 +51,7 @@ const TodoInput = ({ onAddTodo }: TodoInputProps) => {
         style={styles.input}
         value={inputValue()}
         placeholder="Enter todo item..."
-        onInput={(value: string) => setInputValue(value)}
+        onInput={onInput}
       />
       <View style={styles.button} onClick={onClick}>
         <Text style={styles.buttonText}>Add</Text>

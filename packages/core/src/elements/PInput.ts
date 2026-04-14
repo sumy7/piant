@@ -24,18 +24,24 @@ export class PInput extends PNode {
     this._domContainer = new DOMContainer({
       element: this._inputElement,
     });
-
-    this._viewContent.addChild(this._domContainer);
   }
 
-  applyLayout() {
-    super.applyLayout();
+  applyInputElement() {
+    if (this._viewContent.children.indexOf(this._domContainer) < 0) {
+      this._viewContent.removeChildren();
+      this._viewContent.addChild(this._domContainer);
+    }
 
     const width = this._layoutNode.getComputedWidth();
     const height = this._layoutNode.getComputedHeight();
 
-    this._domContainer.width = width;
-    this._domContainer.height = height;
+    this._inputElement.style.width = `${width}px`;
+    this._inputElement.style.height = `${height}px`;
+  }
+
+  applyLayout() {
+    super.applyLayout();
+    this.applyInputElement();
   }
 
   destroy() {

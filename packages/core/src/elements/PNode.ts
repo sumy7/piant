@@ -14,6 +14,8 @@ const getNextId = () => {
 export class PNode {
   _id = getNextId();
 
+  displayName = 'PNode';
+
   // 所属的根节点
   _root: PRoot | null = null;
   // 父节点
@@ -39,6 +41,8 @@ export class PNode {
 
   constructor() {
     console.log('PNode created with id:', this._id, this);
+    this.displayName = this.constructor.name;
+    this._view.label = this.displayName;
     this._view.addChild(this._viewBg);
     this._view.addChild(this._viewContent);
     this._view.addChild(this._viewMask);
