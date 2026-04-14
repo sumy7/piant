@@ -25,7 +25,7 @@ export class PInput extends PNode {
       element: this._inputElement,
     });
 
-    this._view.addChild(this._domContainer);
+    this._viewContent.addChild(this._domContainer);
   }
 
   applyLayout() {
