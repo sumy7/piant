@@ -1,4 +1,4 @@
-import { createState, StyleSheet, Text, View } from '@piant/core';
+import { createState, Input, StyleSheet, Text, View } from '@piant/core';
 
 interface TodoInputProps {
   onAddTodo?: (text: string) => void;
@@ -16,8 +16,7 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 6,
     backgroundColor: 'rgb(245, 245, 245)',
-    justifyContent: 'center',
-    padding: 16,
+    padding: 8,
   },
   button: {
     width: 60,
@@ -33,17 +32,23 @@ const styles = StyleSheet.create({
 });
 
 const TodoInput = ({ onAddTodo }: TodoInputProps) => {
-  const [inputValue, setInputValue] = createState('todo item');
+  const [inputValue, setInputValue] = createState('');
 
   const onClick = () => {
-    onAddTodo?.(inputValue());
+    if (inputValue()) {
+      onAddTodo?.(inputValue());
+      setInputValue('');
+    }
   };
 
   return (
     <View style={styles.container}>
-      <View style={styles.input}>
-        <Text>{inputValue()}</Text>
-      </View>
+      <Input
+        style={styles.input}
+        value={inputValue()}
+        placeholder="Enter todo item..."
+        onInput={(value: string) => setInputValue(value)}
+      />
       <View style={styles.button} onClick={onClick}>
         <Text style={styles.buttonText}>Add</Text>
       </View>
