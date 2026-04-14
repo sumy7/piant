@@ -191,6 +191,31 @@ importers:
         specifier: ^4.1.2
         version: 4.1.2(@types/node@22.18.9)(@vitest/ui@4.1.2)(happy-dom@20.8.9)(vite@8.0.3(@emnapi/core@1.5.0)(@emnapi/runtime@1.5.0)(@types/node@22.18.9)(jiti@2.6.1)(yaml@2.8.1))
 
+  packages/hooks:
+    dependencies:
+      '@rwh/keystrokes':
+        specifier: ^1.5.6
+        version: 1.5.6
+    devDependencies:
+      '@piant/core':
+        specifier: workspace:*
+        version: link:../core
+      '@rslib/core':
+        specifier: 0.20.3
+        version: 0.20.3(@emnapi/core@1.5.0)(@emnapi/runtime@1.5.0)(@microsoft/api-extractor@7.53.1(@types/node@22.18.9))(core-js@3.47.0)(typescript@5.9.3)
+      '@vitest/ui':
+        specifier: ^4.1.2
+        version: 4.1.2(vitest@4.1.2)
+      happy-dom:
+        specifier: ^20.8.9
+        version: 20.8.9
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.1.2
+        version: 4.1.2(@types/node@22.18.9)(@vitest/ui@4.1.2)(happy-dom@20.8.9)(vite@8.0.3(@emnapi/core@1.5.0)(@emnapi/runtime@1.5.0)(@types/node@22.18.9)(jiti@2.6.1)(yaml@2.8.1))
+
   packages/router:
     dependencies:
       '@piant/core':
@@ -1413,6 +1438,9 @@ packages:
   '@rushstack/ts-command-line@5.1.1':
     resolution: {integrity: sha512-HPzFsUcr+wZ3oQI08Ec/E6cuiAVHKzrXZGHhwiwIGygAFiqN5QzX+ff30n70NU2WyE26CykgMwBZZSSyHCJrzA==}
 
+  '@rwh/keystrokes@1.5.6':
+    resolution: {integrity: sha512-w2r2ElGyxYKK0x3SdsYk+mkNBpZcpY+vYNiYqfpGDiatOxEnJFeGoag8OuYjA5quK0aJqQ+aZJzHenaxjIT4cQ==}
+
   '@shikijs/core@2.5.0':
     resolution: {integrity: sha512-uu/8RExTKtavlpH7XqnVYBrfBkUc20ngXiX9NSrBhOVZYv/7XQRKUyhtkeflY5QsxC0GbJThCerruZfsUaSldg==}
 
@@ -2540,10 +2568,6 @@ packages:
   picomatch@2.3.1:
     resolution: {integrity: sha512-JU3teHTNjmE2VCGFzuY8EXzCDVwEqB2a8fsIvwaStHhAWJEeVd1o1QD80CU6+ZdEXXSLbSsuLwJjkCBWqRQUVA==}
     engines: {node: '>=8.6'}
-
-  picomatch@4.0.3:
-    resolution: {integrity: sha512-5gTmgEY/sqK6gFXLIsQNH19lWb4ebPDLA4SdLP7dsWkIXHWlG66oPuVvXSGFPppYZz8ZDZq0dYYrbHfBCVUb1Q==}
-    engines: {node: '>=12'}
 
   picomatch@4.0.4:
     resolution: {integrity: sha512-QP88BAKvMam/3NxH6vj2o21R6MjxZUAd6nlwAS/pnGvN9IVLocLHxGYIzFhg6fUQ+5th6P4dv4eW9jX3DSIj7A==}
@@ -4035,7 +4059,7 @@ snapshots:
     dependencies:
       '@types/estree': 1.0.8
       estree-walker: 2.0.2
-      picomatch: 4.0.3
+      picomatch: 4.0.4
     optionalDependencies:
       rollup: 4.52.4
 
@@ -4305,6 +4329,8 @@ snapshots:
       string-argv: 0.3.2
     transitivePeerDependencies:
       - '@types/node'
+
+  '@rwh/keystrokes@1.5.6': {}
 
   '@shikijs/core@2.5.0':
     dependencies:
@@ -5460,8 +5486,6 @@ snapshots:
   picocolors@1.1.1: {}
 
   picomatch@2.3.1: {}
-
-  picomatch@4.0.3: {}
 
   picomatch@4.0.4: {}
 

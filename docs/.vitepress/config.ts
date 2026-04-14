@@ -11,6 +11,7 @@ export default defineConfig({
       { text: '指南', link: '/guide/introduction' },
       { text: 'Router', link: '/router/introduction' },
       { text: 'Store', link: '/store/introduction' },
+      { text: 'Hooks', link: '/hooks/introduction' },
       { text: '参考', link: '/reference/overview' },
     ],
 
@@ -109,6 +110,23 @@ export default defineConfig({
           items: [
             { text: 'combine', link: '/store/middleware/combine' },
             { text: 'persist', link: '/store/middleware/persist' },
+          ],
+        },
+      ],
+      '/hooks/': [
+        {
+          text: 'Hooks 指南',
+          items: [
+            { text: '简介', link: '/hooks/introduction' },
+          ],
+        },
+        {
+          text: 'Hooks',
+          items: [
+            { text: 'useKey', link: '/hooks/use-key' },
+            { text: 'useKeyPress', link: '/hooks/use-key-press' },
+            { text: 'useKeyPressEvent', link: '/hooks/use-key-press-event' },
+            { text: 'useKeystroke', link: '/hooks/use-keystroke' },
           ],
         },
       ],
