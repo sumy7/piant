@@ -1,13 +1,18 @@
 export { CustomView } from './components/CustomView';
-export { Input, type InputProps } from './components/Input';
 export { Dynamic } from './components/Dynamic';
 export { ErrorBoundary } from './components/ErrorBoundary';
 export { For, Index } from './components/For';
 export { Image } from './components/Image';
+export { Input, type InputProps } from './components/Input';
 export { ScrollView } from './components/ScrollView';
 export { Show } from './components/Show';
 export { Match, Switch } from './components/Switch';
 export { Img, Span, Text, type TextProps } from './components/Text';
+export {
+  Transition,
+  type TransitionEvents,
+  type TransitionProps,
+} from './components/Transition';
 export { View } from './components/View';
 export type { ImageStyles, LayoutStyles, ViewStyles, VisualStyles } from './elements/layout/viewStyles';
 export { PRoot } from './elements/PRoot';
