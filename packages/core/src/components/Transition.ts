@@ -66,6 +66,8 @@ export function Transition(props: TransitionProps): JSX.Element {
         return;
       }
 
+      // Use Object.is for referential identity: the same JSX element reference
+      // means the child has not changed, so no transition should occur.
       if (Object.is(child, mainEl)) return;
 
       const prev = mainEl;
