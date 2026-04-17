@@ -222,6 +222,122 @@ describe('Transition', () => {
     });
   });
 
+  it('calls onAfterEnter only after done() is called', async () => {
+    await root(async () => {
+      const [child, setChild] = createState<string | null>('A');
+      const onAfterEnter = vi.fn();
+      let enterDone: (() => void) | undefined;
+      Transition({
+        get children() {
+          return child() as any;
+        },
+        onEnter: (_el, done) => {
+          enterDone = done;
+        },
+        onAfterEnter,
+      });
+
+      setChild('B');
+      // Flush the queueMicrotask so onEnter is invoked
+      await new Promise<void>((resolve) => queueMicrotask(resolve));
+
+      expect(onAfterEnter).not.toHaveBeenCalled();
+      enterDone!();
+      expect(onAfterEnter).toHaveBeenCalledWith('B');
+    });
+  });
+
+  it('calling enter done() twice does not invoke onAfterEnter twice', async () => {
+    await root(async () => {
+      const [child, setChild] = createState<string | null>('A');
+      const onAfterEnter = vi.fn();
+      let enterDone: (() => void) | undefined;
+      Transition({
+        get children() {
+          return child() as any;
+        },
+        onEnter: (_el, done) => {
+          enterDone = done;
+        },
+        onAfterEnter,
+      });
+
+      setChild('B');
+      await new Promise<void>((resolve) => queueMicrotask(resolve));
+
+      enterDone!();
+      enterDone!(); // second call should be a no-op
+      expect(onAfterEnter).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('calling exit done() twice does not invoke onAfterExit twice', () => {
+    root(() => {
+      const [child, setChild] = createState<string | null>('A');
+      const onAfterExit = vi.fn();
+      let exitDone: (() => void) | undefined;
+      Transition({
+        get children() {
+          return child() as any;
+        },
+        onExit: (_el, done) => {
+          exitDone = done;
+        },
+        onAfterExit,
+      });
+
+      setChild('B');
+      exitDone!();
+      exitDone!(); // second call should be a no-op
+      expect(onAfterExit).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('out-in mode: stale exit callback is ignored when transition is interrupted', () => {
+    root(() => {
+      const [child, setChild] = createState<string | null>('A');
+      const exitDones: Array<() => void> = [];
+      const result = Transition({
+        get children() {
+          return child() as any;
+        },
+        mode: 'out-in',
+        onExit: (_el, done) => {
+          exitDones.push(done);
+        },
+      });
+
+      // A → B: A starts exiting
+      setChild('B');
+      expect((result as any)()).toBe('A');
+
+      // B → C before A finishes: B starts exiting
+      setChild('C');
+
+      // Stale callback (A's exit) should be ignored
+      exitDones[0]();
+      expect((result as any)()).not.toBe('A');
+
+      // B's exit completes: C should be shown
+      exitDones[1]();
+      expect((result as any)()).toBe('C');
+    });
+  });
+
+  it('resolves 0-arg function children reactively', () => {
+    root(() => {
+      const [child, setChild] = createState<string>('A');
+      // Pass children as a plain 0-arg function (not a getter property)
+      const result = Transition({
+        children: (() => child()) as any,
+      });
+
+      expect((result as any)()).toBe('A');
+      setChild('B');
+      expect((result as any)()).toBe('B');
+    });
+  });
+
   it('renders null after child is set to null in out-in mode', () => {
     root(() => {
       const [child, setChild] = createState<string | null>('A');

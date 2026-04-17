@@ -21,11 +21,18 @@ export function Transition(props: TransitionProps): JSX.Element {
   const [items, setItems] = createState<JSX.Element[]>([]);
   let initialized = false;
   let mainEl: JSX.Element | null = null;
+  // Monotonically increasing token; incremented on every new transition so that
+  // async completion callbacks can detect they have been superseded.
+  let token = 0;
 
   const doEnter = (el: JSX.Element, onComplete?: () => void) => {
     props.onBeforeEnter?.(el);
     queueMicrotask(() => {
+      // Guard against double-invocation by the consumer.
+      let called = false;
       const done = () => {
+        if (called) return;
+        called = true;
         props.onAfterEnter?.(el);
         onComplete?.();
       };
@@ -39,7 +46,11 @@ export function Transition(props: TransitionProps): JSX.Element {
 
   const doExit = (el: JSX.Element, onDone: () => void) => {
     props.onBeforeExit?.(el);
+    // Guard against double-invocation by the consumer.
+    let called = false;
     const done = () => {
+      if (called) return;
+      called = true;
       props.onAfterExit?.(el);
       onDone();
     };
@@ -51,7 +62,15 @@ export function Transition(props: TransitionProps): JSX.Element {
   };
 
   effect(() => {
-    const child = (props.children ?? null) as JSX.Element | null;
+    // Unwrap 0-arg getter functions so that reactive accessors passed as plain
+    // function children (e.g. `children: () => signal()`) are both called and
+    // tracked by MobX, just like getter-based props.
+    const raw = props.children ?? null;
+    const child = (
+      typeof raw === 'function' && (raw as (...args: unknown[]) => unknown).length === 0
+        ? (raw as () => unknown)()
+        : raw
+    ) as JSX.Element | null;
 
     untracked(() => {
       if (!initialized) {
@@ -73,13 +92,19 @@ export function Transition(props: TransitionProps): JSX.Element {
       const prev = mainEl;
       mainEl = child;
       const mode = props.mode ?? 'parallel';
+      // Capture current token before async ops; callbacks compare against it
+      // to detect whether a newer transition has superseded this one.
+      const currentToken = ++token;
 
       if (mode === 'out-in') {
         if (prev != null) {
           setItems([prev]);
           doExit(prev, () => {
-            setItems(child != null ? [child] : []);
-            if (child != null) doEnter(child);
+            // Skip if a newer transition started while we were waiting.
+            if (token !== currentToken) return;
+            const next = mainEl;
+            setItems(next != null ? [next] : []);
+            if (next != null) doEnter(next);
           });
         } else {
           setItems(child != null ? [child] : []);
@@ -88,10 +113,13 @@ export function Transition(props: TransitionProps): JSX.Element {
       } else if (mode === 'in-out') {
         if (child != null) {
           const snapshot = prev;
+          const enterToken = currentToken;
           const combined: JSX.Element[] = [child];
           if (snapshot != null) combined.push(snapshot);
           setItems(combined);
           doEnter(child, () => {
+            // Skip exit phase if a newer transition superseded this one.
+            if (token !== enterToken) return;
             if (snapshot != null) {
               doExit(snapshot, () => {
                 setItems((cur) => cur.filter((i) => i !== snapshot));
