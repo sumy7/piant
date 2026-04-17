@@ -1,21 +1,30 @@
 import { untracked } from 'mobx';
+import type { Getter } from '../reactivity';
 import { effect, memo } from '../reactivity/effects';
 import { createState } from '../reactivity/hooks';
 import type { TransitionEvents } from './Transition';
 
 export interface TransitionGroupProps<T> extends TransitionEvents {
-  each: T[];
-  children: (item: T) => JSX.Element;
   appear?: boolean;
+  /**
+   * A reactive getter returning the current list of items.
+   * Pass a getter from `createState` directly (`each: mySignal`) or wrap an
+   * expression (`each: () => list()`). TransitionGroup tracks additions and
+   * removals through this getter, keeping removed items in the display list
+   * until their exit completes.
+   * Use `For` to render the returned display list.
+   */
+  each: Getter<T[]>;
 }
 
 /**
- * TransitionGroup manages enter/exit lifecycle hooks for a list of items.
- * Each item is rendered once via `children` and kept alive until its exit
- * animation completes. Items are tracked by referential identity.
+ * Manages enter/exit lifecycle hooks for a list of items.
+ * Returns a reactive `Getter<T[]>` of items currently on screen
+ * (active items + items whose exit animations are still running).
+ * Compose with `For` to render the display list.
  */
-export function TransitionGroup<T>(props: TransitionGroupProps<T>): JSX.Element {
-  type Entry = { item: T; el: JSX.Element; id: number };
+export function TransitionGroup<T>(props: TransitionGroupProps<T>): Getter<T[]> {
+  type Entry = { item: T; id: number };
 
   let nextId = 0;
   // Reactive list of all currently-displayed entries (active + exiting).
@@ -25,55 +34,56 @@ export function TransitionGroup<T>(props: TransitionGroupProps<T>): JSX.Element 
   let prevItems: T[] = [];
   let initialized = false;
 
-  const doEnter = (el: JSX.Element, onComplete?: () => void) => {
-    props.onBeforeEnter?.(el);
+  const doEnter = (item: T, onComplete?: () => void) => {
+    props.onBeforeEnter?.(item);
     queueMicrotask(() => {
       let called = false;
       const done = () => {
         if (called) return;
         called = true;
-        props.onAfterEnter?.(el);
+        props.onAfterEnter?.(item);
         onComplete?.();
       };
       if (props.onEnter) {
-        props.onEnter(el, done);
+        props.onEnter(item, done);
       } else {
         done();
       }
     });
   };
 
-  const doExit = (el: JSX.Element, onDone: () => void) => {
-    props.onBeforeExit?.(el);
+  const doExit = (item: T, onDone: () => void) => {
+    props.onBeforeExit?.(item);
     let called = false;
     const done = () => {
       if (called) return;
       called = true;
-      props.onAfterExit?.(el);
+      props.onAfterExit?.(item);
       onDone();
     };
     if (props.onExit) {
-      props.onExit(el, done);
+      props.onExit(item, done);
     } else {
       done();
     }
   };
 
   effect(() => {
-    const current = props.each ?? [];
+    // props.each() is a reactive getter — MobX tracks the dependency here.
+    const current = props.each() ?? [];
 
     untracked(() => {
       if (!initialized) {
         initialized = true;
         const entries: Entry[] = current.map((item) => {
-          const entry: Entry = { item, el: props.children(item), id: nextId++ };
+          const entry: Entry = { item, id: nextId++ };
           activeMap.set(item, entry);
           return entry;
         });
         setDisplayList(entries);
         if (props.appear) {
           for (const entry of entries) {
-            doEnter(entry.el);
+            doEnter(entry.item);
           }
         }
         prevItems = [...current];
@@ -95,7 +105,7 @@ export function TransitionGroup<T>(props: TransitionGroupProps<T>): JSX.Element 
 
       // Create entries for newly added items.
       const addedEntries: Entry[] = added.map((item) => {
-        const entry: Entry = { item, el: props.children(item), id: nextId++ };
+        const entry: Entry = { item, id: nextId++ };
         activeMap.set(item, entry);
         return entry;
       });
@@ -112,13 +122,13 @@ export function TransitionGroup<T>(props: TransitionGroupProps<T>): JSX.Element 
 
       // Trigger enter animations for new items.
       for (const entry of addedEntries) {
-        doEnter(entry.el);
+        doEnter(entry.item);
       }
 
       // Trigger exit animations for removed items; remove from display when done.
       for (const entry of removedEntries) {
         const exitId = entry.id;
-        doExit(entry.el, () => {
+        doExit(entry.item, () => {
           setDisplayList((prev) => prev.filter((e) => e.id !== exitId));
         });
       }
@@ -127,10 +137,7 @@ export function TransitionGroup<T>(props: TransitionGroupProps<T>): JSX.Element 
     });
   });
 
-  return memo(() => {
-    const list = displayList();
-    if (list.length === 0) return null;
-    if (list.length === 1) return list[0].el;
-    return list.map((e) => e.el);
-  }) as JSX.Element;
+  // Derive T[] from internal Entry[] — items only, no internal bookkeeping IDs.
+  // Use For to render this list in your component.
+  return memo(() => displayList().map((e) => e.item));
 }

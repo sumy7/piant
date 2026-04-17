@@ -4,35 +4,17 @@ import { root } from '../src/reactivity/effects';
 import { createState } from '../src/reactivity/hooks';
 
 describe('TransitionGroup', () => {
-  it('renders null when each is empty', () => {
+  it('returns empty array when each is empty', () => {
     root(() => {
-      const result = TransitionGroup({
-        each: [],
-        children: (item: string) => item as any,
-      });
-      expect((result as any)()).toBeNull();
+      const result = TransitionGroup({ each: () => [] });
+      expect(result()).toEqual([]);
     });
   });
 
-  it('renders a single item directly (not wrapped in array)', () => {
+  it('returns all initial items', () => {
     root(() => {
-      const result = TransitionGroup({
-        each: ['A'],
-        children: (item: string) => item as any,
-      });
-      expect((result as any)()).toBe('A');
-    });
-  });
-
-  it('renders multiple items as an array', () => {
-    root(() => {
-      const result = TransitionGroup({
-        each: ['A', 'B', 'C'],
-        children: (item: string) => item as any,
-      });
-      const rendered = (result as any)();
-      expect(Array.isArray(rendered)).toBe(true);
-      expect(rendered).toEqual(['A', 'B', 'C']);
+      const result = TransitionGroup({ each: () => ['A', 'B', 'C'] });
+      expect(result()).toEqual(['A', 'B', 'C']);
     });
   });
 
@@ -41,8 +23,7 @@ describe('TransitionGroup', () => {
       const onBeforeEnter = vi.fn();
       const onEnter = vi.fn();
       TransitionGroup({
-        each: ['A', 'B'],
-        children: (item: string) => item as any,
+        each: () => ['A', 'B'],
         onBeforeEnter,
         onEnter,
       });
@@ -55,8 +36,7 @@ describe('TransitionGroup', () => {
     root(() => {
       const onBeforeEnter = vi.fn();
       TransitionGroup({
-        each: ['A', 'B'],
-        children: (item: string) => item as any,
+        each: () => ['A', 'B'],
         appear: true,
         onBeforeEnter,
       });
@@ -71,10 +51,7 @@ describe('TransitionGroup', () => {
       const [items, setItems] = createState<string[]>(['A', 'B']);
       const onBeforeEnter = vi.fn();
       TransitionGroup({
-        get each() {
-          return items();
-        },
-        children: (item: string) => item as any,
+        each: items,
         onBeforeEnter,
       });
 
@@ -89,10 +66,7 @@ describe('TransitionGroup', () => {
       const [items, setItems] = createState<string[]>(['A', 'B', 'C']);
       const onBeforeExit = vi.fn();
       TransitionGroup({
-        get each() {
-          return items();
-        },
-        children: (item: string) => item as any,
+        each: items,
         onBeforeExit,
       });
 
@@ -102,30 +76,25 @@ describe('TransitionGroup', () => {
     });
   });
 
-  it('keeps exiting item visible until done() is called', () => {
+  it('keeps exiting item in display list until done() is called', () => {
     root(() => {
       const [items, setItems] = createState<string[]>(['A', 'B']);
       let exitDone: (() => void) | undefined;
       const result = TransitionGroup({
-        get each() {
-          return items();
-        },
-        children: (item: string) => item as any,
+        each: items,
         onExit: (_el, done) => {
           exitDone = done;
         },
       });
 
       setItems(['A']);
-      // B should still be visible while exiting
-      const rendered = (result as any)();
-      expect(Array.isArray(rendered)).toBe(true);
-      expect(rendered).toContain('A');
-      expect(rendered).toContain('B');
+      // B should still be in the display list while exiting
+      expect(result()).toContain('A');
+      expect(result()).toContain('B');
 
       // Complete exit
       exitDone!();
-      expect((result as any)()).toBe('A');
+      expect(result()).toEqual(['A']);
     });
   });
 
@@ -135,10 +104,7 @@ describe('TransitionGroup', () => {
       const onAfterExit = vi.fn();
       let exitDone: (() => void) | undefined;
       TransitionGroup({
-        get each() {
-          return items();
-        },
-        children: (item: string) => item as any,
+        each: items,
         onExit: (_el, done) => {
           exitDone = done;
         },
@@ -158,10 +124,7 @@ describe('TransitionGroup', () => {
       const onAfterEnter = vi.fn();
       let enterDone: (() => void) | undefined;
       TransitionGroup({
-        get each() {
-          return items();
-        },
-        children: (item: string) => item as any,
+        each: items,
         onEnter: (_el, done) => {
           enterDone = done;
         },
@@ -183,10 +146,7 @@ describe('TransitionGroup', () => {
       const onAfterExit = vi.fn();
       let exitDone: (() => void) | undefined;
       TransitionGroup({
-        get each() {
-          return items();
-        },
-        children: (item: string) => item as any,
+        each: items,
         onExit: (_el, done) => {
           exitDone = done;
         },
@@ -200,16 +160,13 @@ describe('TransitionGroup', () => {
     });
   });
 
-  it('stale exit does not remove a re-added item and onAfterExit fires for the exited element', () => {
+  it('stale exit does not remove a re-added item and onAfterExit fires for the exited item', () => {
     root(() => {
       const [items, setItems] = createState<string[]>(['A', 'B']);
       const exitDones: Array<() => void> = [];
       const onAfterExit = vi.fn();
       const result = TransitionGroup({
-        get each() {
-          return items();
-        },
-        children: (item: string) => item as any,
+        each: items,
         onExit: (_el, done) => {
           exitDones.push(done);
         },
@@ -224,10 +181,9 @@ describe('TransitionGroup', () => {
       // Call old exit done — should not remove the new B
       exitDones[0]();
 
-      const rendered = (result as any)();
       // New B should still be present (re-entered)
-      expect(rendered).toContain('B');
-      // onAfterExit fires for the old B element (it did exit), but the new B stays visible
+      expect(result()).toContain('B');
+      // onAfterExit fires for the old B item (it did exit), new B stays visible
       expect(onAfterExit).toHaveBeenCalledTimes(1);
       expect(onAfterExit).toHaveBeenCalledWith('B');
     });
@@ -238,94 +194,68 @@ describe('TransitionGroup', () => {
       const [items, setItems] = createState<string[]>(['A', 'B', 'C']);
       const exitDones: Array<() => void> = [];
       const result = TransitionGroup({
-        get each() {
-          return items();
-        },
-        children: (item: string) => item as any,
+        each: items,
         onExit: (_el, done) => {
           exitDones.push(done);
         },
       });
 
       setItems([]);
-      // All three should still be visible while exiting
-      const rendered = (result as any)();
-      expect(Array.isArray(rendered)).toBe(true);
-      expect(rendered).toContain('A');
-      expect(rendered).toContain('B');
-      expect(rendered).toContain('C');
+      // All three should still be in the display list while exiting
+      expect(result()).toContain('A');
+      expect(result()).toContain('B');
+      expect(result()).toContain('C');
 
       // Complete exits one by one
       exitDones[0]();
       exitDones[1]();
       exitDones[2]();
-      expect((result as any)()).toBeNull();
+      expect(result()).toEqual([]);
     });
   });
 
-  it('renders each item with a stable element reference', () => {
+  it('does not re-process items that remain in the list', () => {
     root(() => {
       const [items, setItems] = createState<string[]>(['A', 'B']);
-      const createdEls: string[] = [];
+      const enterItems: string[] = [];
       const result = TransitionGroup({
-        get each() {
-          return items();
-        },
-        children: (item: string) => {
-          const el = `el-${item}`;
-          createdEls.push(el);
-          return el as any;
-        },
+        each: items,
+        onBeforeEnter: (item) => enterItems.push(item),
       });
 
-      expect((result as any)()).toEqual(['el-A', 'el-B']);
-      expect(createdEls).toEqual(['el-A', 'el-B']);
+      expect(result()).toEqual(['A', 'B']);
+      expect(enterItems).toEqual([]); // no appear
 
-      // Update: add C, keep A and B
+      // Add C — only C should trigger onBeforeEnter
       setItems(['A', 'B', 'C']);
-      // children should only have been called for C
-      expect(createdEls).toEqual(['el-A', 'el-B', 'el-C']);
+      expect(enterItems).toEqual(['C']);
+      // A and B unchanged
+      expect(result()).toEqual(['A', 'B', 'C']);
     });
   });
 
-  it('element references remain stable after removing an item and updating remaining items', () => {
+  it('maintains item order matching the each getter', () => {
     root(() => {
       const [items, setItems] = createState<string[]>(['A', 'B', 'C']);
-      const createdEls: string[] = [];
       let exitDone: (() => void) | undefined;
       const result = TransitionGroup({
-        get each() {
-          return items();
-        },
-        children: (item: string) => {
-          const el = `el-${item}`;
-          createdEls.push(el);
-          return el as any;
-        },
+        each: items,
         onExit: (_el, done) => {
           exitDone = done;
         },
       });
 
-      expect((result as any)()).toEqual(['el-A', 'el-B', 'el-C']);
-
-      // Remove B — B stays visible while exiting
+      // Remove B — B stays in display list while exiting (appended after active items)
       setItems(['A', 'C']);
-      const during = (result as any)();
-      expect(during).toContain('el-A');
-      expect(during).toContain('el-B'); // still exiting
-      expect(during).toContain('el-C');
-      // children should NOT have been called again for A or C
-      expect(createdEls).toEqual(['el-A', 'el-B', 'el-C']);
+      expect(result()).toEqual(['A', 'C', 'B']);
 
-      // Reorder remaining items
+      // Reorder remaining active items
       setItems(['C', 'A']);
-      // Still no new elements created
-      expect(createdEls).toEqual(['el-A', 'el-B', 'el-C']);
+      expect(result()).toEqual(['C', 'A', 'B']); // B still exiting
 
       // Finish exit
       exitDone!();
-      expect((result as any)()).toEqual(['el-C', 'el-A']);
+      expect(result()).toEqual(['C', 'A']);
     });
   });
 });

@@ -4,17 +4,17 @@ import { root } from '../src/reactivity/effects';
 import { createState } from '../src/reactivity/hooks';
 
 describe('Transition', () => {
-  it('renders null when no children provided', () => {
+  it('returns empty array when each returns null', () => {
     root(() => {
-      const result = Transition({});
-      expect((result as any)()).toBeNull();
+      const result = Transition({ each: () => null });
+      expect(result()).toEqual([]);
     });
   });
 
-  it('renders the child element on initial mount without appear', () => {
+  it('returns single-element array on initial mount without appear', () => {
     root(() => {
-      const result = Transition({ children: 'hello' as any });
-      expect((result as any)()).toBe('hello');
+      const result = Transition({ each: () => 'hello' as any });
+      expect(result()).toEqual(['hello']);
     });
   });
 
@@ -24,7 +24,7 @@ describe('Transition', () => {
       const onEnter = vi.fn();
       const onAfterEnter = vi.fn();
       Transition({
-        children: 'hello' as any,
+        each: () => 'hello' as any,
         onBeforeEnter,
         onEnter,
         onAfterEnter,
@@ -39,7 +39,7 @@ describe('Transition', () => {
     root(() => {
       const onBeforeEnter = vi.fn();
       Transition({
-        children: 'hello' as any,
+        each: () => 'hello' as any,
         appear: true,
         onBeforeEnter,
       });
@@ -47,27 +47,24 @@ describe('Transition', () => {
     });
   });
 
-  it('switches child in parallel mode: shows both during transition', () => {
+  it('switches item in parallel mode: shows both during transition', () => {
     root(() => {
       const [child, setChild] = createState<string | null>('A');
       let exitDone: (() => void) | undefined;
       const result = Transition({
-        get children() {
-          return child() as any;
-        },
+        each: child,
         mode: 'parallel',
         onExit: (_el, done) => {
           exitDone = done;
         },
       });
 
-      expect((result as any)()).toBe('A');
+      expect(result()).toEqual(['A']);
 
       setChild('B');
       // parallel: both A (exiting) and B (entering) visible simultaneously
       // B is the first item (entering), A is the second item (exiting)
-      const rendered = (result as any)();
-      expect(Array.isArray(rendered)).toBe(true);
+      const rendered = result();
       expect(rendered).toContain('A');
       expect(rendered).toContain('B');
 
@@ -76,14 +73,12 @@ describe('Transition', () => {
     });
   });
 
-  it('calls onBeforeExit synchronously when child changes', () => {
+  it('calls onBeforeExit synchronously when item changes', () => {
     root(() => {
       const [child, setChild] = createState<string | null>('A');
       const onBeforeExit = vi.fn();
       Transition({
-        get children() {
-          return child() as any;
-        },
+        each: child,
         onBeforeExit,
       });
 
@@ -92,14 +87,12 @@ describe('Transition', () => {
     });
   });
 
-  it('calls onBeforeEnter synchronously when child changes', () => {
+  it('calls onBeforeEnter synchronously when item changes', () => {
     root(() => {
       const [child, setChild] = createState<string | null>('A');
       const onBeforeEnter = vi.fn();
       Transition({
-        get children() {
-          return child() as any;
-        },
+        each: child,
         onBeforeEnter,
       });
 
@@ -108,14 +101,12 @@ describe('Transition', () => {
     });
   });
 
-  it('removes exiting element after onExit calls done', () => {
+  it('removes exiting item after onExit calls done', () => {
     root(() => {
       const [child, setChild] = createState<string | null>('A');
       let exitDone: (() => void) | undefined;
       const result = Transition({
-        get children() {
-          return child() as any;
-        },
+        each: child,
         mode: 'parallel',
         onExit: (_el, done) => {
           exitDone = done;
@@ -124,13 +115,13 @@ describe('Transition', () => {
 
       setChild('B');
       // Both A and B visible while A exits
-      expect((result as any)()).toContain('A');
-      expect((result as any)()).toContain('B');
+      expect(result()).toContain('A');
+      expect(result()).toContain('B');
 
       // User finishes the exit animation
       exitDone!();
-      // Now only B should be visible
-      expect((result as any)()).toBe('B');
+      // Now only B should be in the list
+      expect(result()).toEqual(['B']);
     });
   });
 
@@ -140,9 +131,7 @@ describe('Transition', () => {
       const onAfterExit = vi.fn();
       let exitDone: (() => void) | undefined;
       Transition({
-        get children() {
-          return child() as any;
-        },
+        each: child,
         onExit: (_el, done) => {
           exitDone = done;
         },
@@ -156,14 +145,12 @@ describe('Transition', () => {
     });
   });
 
-  it('out-in mode: shows old element until exit done, then shows new', () => {
+  it('out-in mode: shows old item until exit done, then shows new', () => {
     root(() => {
       const [child, setChild] = createState<string | null>('A');
       let exitDone: (() => void) | undefined;
       const result = Transition({
-        get children() {
-          return child() as any;
-        },
+        each: child,
         mode: 'out-in',
         onExit: (_el, done) => {
           exitDone = done;
@@ -171,25 +158,23 @@ describe('Transition', () => {
       });
 
       setChild('B');
-      // Only old element shown while exiting
-      expect((result as any)()).toBe('A');
+      // Only old item shown while exiting
+      expect(result()).toEqual(['A']);
 
       // Complete exit
       exitDone!();
-      // Now only new element shown
-      expect((result as any)()).toBe('B');
+      // Now only new item shown
+      expect(result()).toEqual(['B']);
     });
   });
 
-  it('in-out mode: shows new element first, then exits old after enter done', async () => {
+  it('in-out mode: shows new item first, then exits old after enter done', async () => {
     await root(async () => {
       const [child, setChild] = createState<string | null>('A');
       let enterDone: (() => void) | undefined;
       let exitDone: (() => void) | undefined;
       const result = Transition({
-        get children() {
-          return child() as any;
-        },
+        each: child,
         mode: 'in-out',
         onEnter: (_el, done) => {
           enterDone = done;
@@ -204,21 +189,20 @@ describe('Transition', () => {
       await new Promise<void>((resolve) => queueMicrotask(resolve));
 
       // Both visible, B entering
-      const rendered = (result as any)();
-      expect(Array.isArray(rendered)).toBe(true);
+      const rendered = result();
       expect(rendered).toContain('A');
       expect(rendered).toContain('B');
 
       // Complete enter of B - exit of A should start
       enterDone!();
       // A still visible while exiting
-      expect((result as any)()).toContain('A');
-      expect((result as any)()).toContain('B');
+      expect(result()).toContain('A');
+      expect(result()).toContain('B');
 
       // Complete exit of A
       exitDone!();
       // Only B remains
-      expect((result as any)()).toBe('B');
+      expect(result()).toEqual(['B']);
     });
   });
 
@@ -228,9 +212,7 @@ describe('Transition', () => {
       const onAfterEnter = vi.fn();
       let enterDone: (() => void) | undefined;
       Transition({
-        get children() {
-          return child() as any;
-        },
+        each: child,
         onEnter: (_el, done) => {
           enterDone = done;
         },
@@ -253,9 +235,7 @@ describe('Transition', () => {
       const onAfterEnter = vi.fn();
       let enterDone: (() => void) | undefined;
       Transition({
-        get children() {
-          return child() as any;
-        },
+        each: child,
         onEnter: (_el, done) => {
           enterDone = done;
         },
@@ -277,9 +257,7 @@ describe('Transition', () => {
       const onAfterExit = vi.fn();
       let exitDone: (() => void) | undefined;
       Transition({
-        get children() {
-          return child() as any;
-        },
+        each: child,
         onExit: (_el, done) => {
           exitDone = done;
         },
@@ -298,9 +276,7 @@ describe('Transition', () => {
       const [child, setChild] = createState<string | null>('A');
       const exitDones: Array<() => void> = [];
       const result = Transition({
-        get children() {
-          return child() as any;
-        },
+        each: child,
         mode: 'out-in',
         onExit: (_el, done) => {
           exitDones.push(done);
@@ -309,43 +285,27 @@ describe('Transition', () => {
 
       // A → B: A starts exiting
       setChild('B');
-      expect((result as any)()).toBe('A');
+      expect(result()).toEqual(['A']);
 
       // B → C before A finishes: B starts exiting
       setChild('C');
 
       // Stale callback (A's exit) should be ignored
       exitDones[0]();
-      expect((result as any)()).not.toBe('A');
+      expect(result()).not.toContain('A');
 
       // B's exit completes: C should be shown
       exitDones[1]();
-      expect((result as any)()).toBe('C');
+      expect(result()).toEqual(['C']);
     });
   });
 
-  it('resolves 0-arg function children reactively', () => {
-    root(() => {
-      const [child, setChild] = createState<string>('A');
-      // Pass children as a plain 0-arg function (not a getter property)
-      const result = Transition({
-        children: (() => child()) as any,
-      });
-
-      expect((result as any)()).toBe('A');
-      setChild('B');
-      expect((result as any)()).toBe('B');
-    });
-  });
-
-  it('renders null after child is set to null in out-in mode', () => {
+  it('returns empty array after item is set to null in out-in mode', () => {
     root(() => {
       const [child, setChild] = createState<string | null>('A');
       let exitDone: (() => void) | undefined;
       const result = Transition({
-        get children() {
-          return child() as any;
-        },
+        each: child,
         mode: 'out-in',
         onExit: (_el, done) => {
           exitDone = done;
@@ -354,7 +314,19 @@ describe('Transition', () => {
 
       setChild(null);
       exitDone!();
-      expect((result as any)()).toBeNull();
+      expect(result()).toEqual([]);
+    });
+  });
+
+  it('tracks reactive changes through the each getter', () => {
+    root(() => {
+      const [child, setChild] = createState<string>('A');
+      // Pass the getter directly (same as `each: () => child()`)
+      const result = Transition({ each: child });
+
+      expect(result()).toEqual(['A']);
+      setChild('B');
+      expect(result()).toEqual(['B']);
     });
   });
 });
