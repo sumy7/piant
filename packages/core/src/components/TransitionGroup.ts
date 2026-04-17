@@ -3,58 +3,74 @@ import { effect, memo } from '../reactivity/effects';
 import { createState } from '../reactivity/hooks';
 import type { TransitionEvents } from './Transition';
 
-export interface TransitionGroupProps<T> extends TransitionEvents {
-  /**
-   * The reactive list of items. Use the getter pattern (`get each() { return list(); }`)
-   * or pass a `createState` signal directly so MobX tracks changes.
-   * Mirrors `For`'s `each` prop — use `TransitionGroup` in place of `For` when
-   * per-item enter/exit lifecycle hooks are needed.
-   */
-  each: T[];
-  /**
-   * Render function called **once per item** when it first enters the list.
-   * The returned element is reused until the item's exit animation completes.
-   * Lifecycle hooks (`onEnter`, `onExit`, etc.) receive this rendered element,
-   * enabling direct canvas animation (e.g. `gsap.to(el, { alpha: 1 })`).
-   *
-   * Same signature as `For`'s `children` prop (without the index parameter).
-   */
-  children: (item: T) => JSX.Element;
+export interface TransitionGroupProps extends TransitionEvents {
   appear?: boolean;
+  /**
+   * Must be the output of a `For` or `Index` component.
+   * `TransitionGroup` tracks element additions and removals from the
+   * `For`/`Index` reactive output, fires lifecycle hooks, and keeps exiting
+   * elements rendered until their animation (`done()`) completes.
+   *
+   * @example
+   * ```ts
+   * TransitionGroup({
+   *   onBeforeEnter: (el) => { el.alpha = 0; },
+   *   onEnter: (el, done) => gsap.to(el, { alpha: 1, onComplete: done }),
+   *   onExit:  (el, done) => gsap.to(el, { alpha: 0, onComplete: done }),
+   *   children: For({
+   *     get each() { return items(); },
+   *     children: (item) => ItemView({ item }),
+   *   }),
+   * });
+   * ```
+   */
+  children?: JSX.Element;
+}
+
+/** Flatten a raw JSX value into a concrete element array. */
+function resolveElements(raw: unknown): JSX.Element[] {
+  if (raw == null || typeof raw === 'boolean') return [];
+  if (
+    typeof raw === 'function' &&
+    (raw as (...args: unknown[]) => unknown).length === 0
+  ) {
+    return resolveElements((raw as () => unknown)());
+  }
+  if (Array.isArray(raw)) {
+    return (raw as unknown[]).flatMap(resolveElements);
+  }
+  return [raw as JSX.Element];
 }
 
 /**
- * Coordinates enter/exit lifecycle hooks for a list of items.
+ * Wraps a `For` or `Index` component and manages enter/exit lifecycle hooks
+ * for each item's rendered element.
  *
- * Use in place of `For` when per-item transition animations are needed.
- * Items are tracked by referential identity; each item's element is created
- * once (via `children(item)`) and reused until its exit animation completes.
- * Lifecycle hooks receive the **rendered element**, enabling direct canvas
- * animation without additional mapping.
- *
- * Returns a `JSX.Element` (reactive array) of currently-displayed elements
- * (active items + items whose exit animations are still running).
+ * Pass the output of `For` (or `Index`) as `children`. `TransitionGroup`
+ * intercepts element additions and removals from that reactive list, fires
+ * enter/exit hooks on the actual rendered elements (e.g. Pixi containers),
+ * and keeps exiting elements rendered until their `done()` is called.
  *
  * @example
  * ```ts
  * return TransitionGroup({
- *   get each() { return cards(); },
- *   children: (card) => CardView({ card }),
  *   onBeforeEnter: (el) => { el.alpha = 0; },
  *   onEnter: (el, done) => gsap.to(el, { alpha: 1, onComplete: done }),
  *   onExit:  (el, done) => gsap.to(el, { alpha: 0, onComplete: done }),
+ *   children: For({
+ *     get each() { return cards(); },
+ *     children: (card) => CardView({ card }),
+ *   }),
  * });
  * ```
  */
-export function TransitionGroup<T>(props: TransitionGroupProps<T>): JSX.Element {
-  type Entry = { item: T; el: JSX.Element; id: number };
+export function TransitionGroup(props: TransitionGroupProps): JSX.Element {
+  type ExitEntry = { el: JSX.Element; id: number };
 
   let nextId = 0;
-  // Reactive list of all currently-displayed entries (active + exiting).
-  const [displayList, setDisplayList] = createState<Entry[]>([]);
-  // Maps each currently-active item to its entry (exiting items are removed here).
-  const activeMap = new Map<T, Entry>();
-  let prevItems: T[] = [];
+  // Still-exiting elements — removed from For's list but kept for animation.
+  const [exitingEntries, setExitingEntries] = createState<ExitEntry[]>([]);
+  let prevElements: JSX.Element[] = [];
   let initialized = false;
 
   const doEnter = (el: JSX.Element, onComplete?: () => void) => {
@@ -92,78 +108,63 @@ export function TransitionGroup<T>(props: TransitionGroupProps<T>): JSX.Element 
   };
 
   effect(() => {
-    // props.each is accessed here so MobX tracks the reactive dependency when
-    // callers use the getter pattern: `get each() { return list(); }`.
-    const current = props.each ?? [];
+    // Read For/Index output — MobX tracks the reactive dependency here.
+    // For/Index return a 0-arg memo function; resolveElements unwraps it.
+    const currentElements = resolveElements(props.children ?? null);
 
     untracked(() => {
       if (!initialized) {
         initialized = true;
-        const entries: Entry[] = current.map((item) => {
-          const el = props.children(item);
-          const entry: Entry = { item, el, id: nextId++ };
-          activeMap.set(item, entry);
-          return entry;
-        });
-        setDisplayList(entries);
         if (props.appear) {
-          for (const entry of entries) {
-            doEnter(entry.el);
-          }
+          for (const el of currentElements) doEnter(el);
         }
-        prevItems = [...current];
+        prevElements = [...currentElements];
         return;
       }
 
-      const prevSet = new Set(prevItems);
-      const currentSet = new Set(current);
+      const prevSet = new Set(prevElements);
+      const currentSet = new Set(currentElements);
 
-      const added = current.filter((item) => !prevSet.has(item));
-      const removed = prevItems.filter((item) => !currentSet.has(item));
+      const added = currentElements.filter((el) => !prevSet.has(el));
+      const removed = prevElements.filter((el) => !currentSet.has(el));
 
-      // Capture entries for removed items before modifying activeMap.
-      const removedEntries = removed.map((item) => activeMap.get(item)).filter(Boolean) as Entry[];
+      // Find elements already being exited so we don't start a duplicate exit.
+      const exitingEls = new Set(exitingEntries().map((e) => e.el));
 
-      for (const item of removed) {
-        activeMap.delete(item);
+      const newExiting: ExitEntry[] = removed
+        .filter((el) => !exitingEls.has(el))
+        .map((el) => ({ el, id: nextId++ }));
+
+      if (newExiting.length > 0) {
+        setExitingEntries((cur) => [...cur, ...newExiting]);
+        for (const entry of newExiting) {
+          const exitId = entry.id;
+          doExit(entry.el, () => {
+            // Remove by id so that a re-added element with the same reference
+            // is not accidentally removed from the display.
+            setExitingEntries((cur) => cur.filter((e) => e.id !== exitId));
+          });
+        }
       }
 
-      // Create entries for newly added items.
-      const addedEntries: Entry[] = added.map((item) => {
-        const el = props.children(item);
-        const entry: Entry = { item, el, id: nextId++ };
-        activeMap.set(item, entry);
-        return entry;
-      });
-
-      // Rebuild display list:
-      //   • active items in their current order
-      //   • still-exiting entries from previous transitions appended at the end
-      setDisplayList((prev) => {
-        const activeIds = new Set([...activeMap.values()].map((e) => e.id));
-        const stillExiting = prev.filter((e) => !activeIds.has(e.id));
-        const activeEntries = current.map((item) => activeMap.get(item)!);
-        return [...activeEntries, ...stillExiting];
-      });
-
-      // Trigger enter animations for new items.
-      for (const entry of addedEntries) {
-        doEnter(entry.el);
+      // Trigger enter hooks for newly added elements.
+      for (const el of added) {
+        doEnter(el);
       }
 
-      // Trigger exit animations for removed items; remove from display when done.
-      for (const entry of removedEntries) {
-        const exitId = entry.id;
-        doExit(entry.el, () => {
-          setDisplayList((prev) => prev.filter((e) => e.id !== exitId));
-        });
-      }
-
-      prevItems = [...current];
+      prevElements = [...currentElements];
     });
   });
 
-  // Derive JSX.Element[] from internal Entry[] — elements only, no internal
-  // bookkeeping IDs. The renderer handles arrays natively.
-  return memo(() => displayList().map((e) => e.el)) as unknown as JSX.Element;
+  // Return merged output: For/Index current elements + still-exiting elements.
+  // Elements that have been re-added to For's list are not duplicated.
+  return memo(() => {
+    const current = resolveElements(props.children ?? null);
+    const currentSet = new Set(current);
+    const exiting = exitingEntries()
+      .map((e) => e.el)
+      .filter((el) => !currentSet.has(el));
+    return [...current, ...exiting];
+  }) as unknown as JSX.Element;
 }
+

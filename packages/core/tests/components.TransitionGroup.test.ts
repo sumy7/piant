@@ -1,24 +1,34 @@
 import { describe, expect, it, vi } from 'vitest';
 import { TransitionGroup } from '../src/components/TransitionGroup';
-import { root } from '../src/reactivity/effects';
+import { memo, root } from '../src/reactivity/effects';
 import { createState } from '../src/reactivity/hooks';
 
-// Helper: identity render function — element IS the item (convenient for tests)
-const render = (item: string) => item as any;
+/**
+ * Simulate `For`'s reactive output: a 0-arg memo that returns the current items.
+ * In real usage `For` uses mapArray (stable element refs per item). Here we use
+ * string values as stand-in elements; distinct strings have distinct identities,
+ * which is sufficient for testing TransitionGroup's diffing logic.
+ */
+function simFor(itemsGetter: () => string[]): () => string[] {
+  return memo(() => itemsGetter()) as unknown as () => string[];
+}
 
 describe('TransitionGroup', () => {
-  it('returns empty array when each is empty', () => {
+  it('returns empty array when For output is empty', () => {
     root(() => {
-      const result = TransitionGroup({ each: [], children: render }) as unknown as () => JSX.Element[];
+      const forOutput = simFor(() => []);
+      const result = TransitionGroup({
+        children: forOutput as any,
+      }) as unknown as () => JSX.Element[];
       expect(result()).toEqual([]);
     });
   });
 
-  it('returns all initial items', () => {
+  it('returns all initial elements from For output', () => {
     root(() => {
+      const forOutput = simFor(() => ['A', 'B', 'C']);
       const result = TransitionGroup({
-        each: ['A', 'B', 'C'],
-        children: render,
+        children: forOutput as any,
       }) as unknown as () => JSX.Element[];
       expect(result()).toEqual(['A', 'B', 'C']);
     });
@@ -28,9 +38,9 @@ describe('TransitionGroup', () => {
     root(() => {
       const onBeforeEnter = vi.fn();
       const onEnter = vi.fn();
+      const forOutput = simFor(() => ['A', 'B']);
       TransitionGroup({
-        each: ['A', 'B'],
-        children: render,
+        children: forOutput as any,
         onBeforeEnter,
         onEnter,
       });
@@ -42,53 +52,46 @@ describe('TransitionGroup', () => {
   it('calls onBeforeEnter for each element on initial mount when appear is true', () => {
     root(() => {
       const onBeforeEnter = vi.fn();
+      const forOutput = simFor(() => ['A', 'B']);
       TransitionGroup({
-        each: ['A', 'B'],
-        children: render,
+        children: forOutput as any,
         appear: true,
         onBeforeEnter,
       });
       expect(onBeforeEnter).toHaveBeenCalledTimes(2);
-      // hooks receive the rendered element — with identity render, el === item
       expect(onBeforeEnter).toHaveBeenCalledWith('A');
       expect(onBeforeEnter).toHaveBeenCalledWith('B');
     });
   });
 
-  it('calls onBeforeEnter with the rendered element when a new item is added', () => {
+  it('calls onBeforeEnter when a new element appears in For output', () => {
     root(() => {
       const [items, setItems] = createState<string[]>(['A', 'B']);
+      const forOutput = simFor(() => items());
       const onBeforeEnter = vi.fn();
       TransitionGroup({
-        get each() {
-          return items();
-        },
-        children: render,
+        children: forOutput as any,
         onBeforeEnter,
       });
 
       setItems(['A', 'B', 'C']);
       expect(onBeforeEnter).toHaveBeenCalledTimes(1);
-      // el = render('C') = 'C'
       expect(onBeforeEnter).toHaveBeenCalledWith('C');
     });
   });
 
-  it('calls onBeforeExit with the rendered element when an item is removed', () => {
+  it('calls onBeforeExit when an element disappears from For output', () => {
     root(() => {
       const [items, setItems] = createState<string[]>(['A', 'B', 'C']);
+      const forOutput = simFor(() => items());
       const onBeforeExit = vi.fn();
       TransitionGroup({
-        get each() {
-          return items();
-        },
-        children: render,
+        children: forOutput as any,
         onBeforeExit,
       });
 
       setItems(['A', 'C']);
       expect(onBeforeExit).toHaveBeenCalledTimes(1);
-      // el = render('B') = 'B'
       expect(onBeforeExit).toHaveBeenCalledWith('B');
     });
   });
@@ -96,12 +99,10 @@ describe('TransitionGroup', () => {
   it('keeps exiting element in display list until done() is called', () => {
     root(() => {
       const [items, setItems] = createState<string[]>(['A', 'B']);
+      const forOutput = simFor(() => items());
       let exitDone: (() => void) | undefined;
       const result = TransitionGroup({
-        get each() {
-          return items();
-        },
-        children: render,
+        children: forOutput as any,
         onExit: (_el, done) => {
           exitDone = done;
         },
@@ -121,13 +122,11 @@ describe('TransitionGroup', () => {
   it('calls onAfterExit after done() is called', () => {
     root(() => {
       const [items, setItems] = createState<string[]>(['A', 'B']);
+      const forOutput = simFor(() => items());
       const onAfterExit = vi.fn();
       let exitDone: (() => void) | undefined;
       TransitionGroup({
-        get each() {
-          return items();
-        },
-        children: render,
+        children: forOutput as any,
         onExit: (_el, done) => {
           exitDone = done;
         },
@@ -144,13 +143,11 @@ describe('TransitionGroup', () => {
   it('calls onAfterEnter only after done() is called', async () => {
     await root(async () => {
       const [items, setItems] = createState<string[]>(['A']);
+      const forOutput = simFor(() => items());
       const onAfterEnter = vi.fn();
       let enterDone: (() => void) | undefined;
       TransitionGroup({
-        get each() {
-          return items();
-        },
-        children: render,
+        children: forOutput as any,
         onEnter: (_el, done) => {
           enterDone = done;
         },
@@ -169,13 +166,11 @@ describe('TransitionGroup', () => {
   it('calling exit done() twice fires onAfterExit only once', () => {
     root(() => {
       const [items, setItems] = createState<string[]>(['A', 'B']);
+      const forOutput = simFor(() => items());
       const onAfterExit = vi.fn();
       let exitDone: (() => void) | undefined;
       TransitionGroup({
-        get each() {
-          return items();
-        },
-        children: render,
+        children: forOutput as any,
         onExit: (_el, done) => {
           exitDone = done;
         },
@@ -189,16 +184,14 @@ describe('TransitionGroup', () => {
     });
   });
 
-  it('stale exit does not remove a re-added item and onAfterExit fires for the exited element', () => {
+  it('stale exit does not duplicate a re-added element', () => {
     root(() => {
       const [items, setItems] = createState<string[]>(['A', 'B']);
+      const forOutput = simFor(() => items());
       const exitDones: Array<() => void> = [];
       const onAfterExit = vi.fn();
       const result = TransitionGroup({
-        get each() {
-          return items();
-        },
-        children: render,
+        children: forOutput as any,
         onExit: (_el, done) => {
           exitDones.push(done);
         },
@@ -207,41 +200,40 @@ describe('TransitionGroup', () => {
 
       // Remove B — starts exit
       setItems(['A']);
-      // Re-add B before exit completes
+      // Re-add B before exit completes — B appears in For output again
       setItems(['A', 'B']);
 
-      // Call old exit done — should not remove the new B
-      exitDones[0]();
+      // Display should show B once (from current For output, not duplicated by exiting)
+      const rendered = result();
+      expect(rendered.filter((el) => el === 'B').length).toBe(1);
 
-      // New B should still be present (re-entered)
-      expect(result()).toContain('B');
-      // onAfterExit fires for the old B element; new B stays visible
+      // Old exit done — fires onAfterExit but does not remove B from display
+      exitDones[0]();
       expect(onAfterExit).toHaveBeenCalledTimes(1);
       expect(onAfterExit).toHaveBeenCalledWith('B');
+      // B still visible
+      expect(result()).toContain('B');
     });
   });
 
-  it('multiple items can exit simultaneously', () => {
+  it('multiple elements can exit simultaneously', () => {
     root(() => {
       const [items, setItems] = createState<string[]>(['A', 'B', 'C']);
+      const forOutput = simFor(() => items());
       const exitDones: Array<() => void> = [];
       const result = TransitionGroup({
-        get each() {
-          return items();
-        },
-        children: render,
+        children: forOutput as any,
         onExit: (_el, done) => {
           exitDones.push(done);
         },
       }) as unknown as () => JSX.Element[];
 
       setItems([]);
-      // All three should still be in the display list while exiting
+      // All three still in display while exiting
       expect(result()).toContain('A');
       expect(result()).toContain('B');
       expect(result()).toContain('C');
 
-      // Complete exits one by one
       exitDones[0]();
       exitDones[1]();
       exitDones[2]();
@@ -249,83 +241,57 @@ describe('TransitionGroup', () => {
     });
   });
 
-  it('does not re-process items that remain in the list', () => {
-    root(() => {
-      const [items, setItems] = createState<string[]>(['A', 'B']);
-      const enterItems: string[] = [];
-      const result = TransitionGroup({
-        get each() {
-          return items();
-        },
-        children: render,
-        onBeforeEnter: (el) => enterItems.push(el as string),
-      }) as unknown as () => JSX.Element[];
-
-      expect(result()).toEqual(['A', 'B']);
-      expect(enterItems).toEqual([]); // no appear
-
-      // Add C — only C should trigger onBeforeEnter
-      setItems(['A', 'B', 'C']);
-      expect(enterItems).toEqual(['C']);
-      // A and B unchanged
-      expect(result()).toEqual(['A', 'B', 'C']);
-    });
-  });
-
-  it('maintains element order matching the each getter', () => {
+  it('maintains element order: active first, still-exiting appended', () => {
     root(() => {
       const [items, setItems] = createState<string[]>(['A', 'B', 'C']);
+      const forOutput = simFor(() => items());
       let exitDone: (() => void) | undefined;
       const result = TransitionGroup({
-        get each() {
-          return items();
-        },
-        children: render,
+        children: forOutput as any,
         onExit: (_el, done) => {
           exitDone = done;
         },
       }) as unknown as () => JSX.Element[];
 
-      // Remove B — B stays in display list while exiting (appended after active items)
+      // Remove B — B appended after active items [A, C]
       setItems(['A', 'C']);
       expect(result()).toEqual(['A', 'C', 'B']);
 
-      // Reorder remaining active items
+      // Reorder active items
       setItems(['C', 'A']);
       expect(result()).toEqual(['C', 'A', 'B']); // B still exiting
 
-      // Finish exit
       exitDone!();
       expect(result()).toEqual(['C', 'A']);
     });
   });
 
-  it('children render function creates distinct elements per item', () => {
+  it('passes actual For-rendered element objects to lifecycle hooks', () => {
     root(() => {
-      // Use a render function that wraps items — verifies children() is called
-      const created: string[] = [];
-      const renderWrapped = (item: string) => {
-        const el = { el: item };
-        created.push(item);
-        return el as any;
-      };
+      // Simulate For creating distinct element objects per item
+      const elA = { tag: 'A' };
+      const elB = { tag: 'B' };
+      const [elems, setElems] = createState<object[]>([elA, elB]);
+      const forOutput = memo(() => elems()) as unknown as JSX.Element;
+
       const onBeforeEnter = vi.fn();
-      const [items, setItems] = createState<string[]>(['A']);
+      const onBeforeExit = vi.fn();
       TransitionGroup({
-        get each() {
-          return items();
-        },
-        children: renderWrapped,
-        onBeforeEnter,
+        children: forOutput,
         appear: true,
+        onBeforeEnter,
+        onBeforeExit,
       });
 
-      expect(created).toEqual(['A']);
-      // onBeforeEnter receives the rendered element (object), not the raw item string
-      expect(onBeforeEnter).toHaveBeenCalledWith({ el: 'A' });
+      // appear: hooks receive the element objects
+      expect(onBeforeEnter).toHaveBeenCalledWith(elA);
+      expect(onBeforeEnter).toHaveBeenCalledWith(elB);
 
-      setItems(['A', 'B']);
-      expect(created).toEqual(['A', 'B']); // B's element created on add
+      const elC = { tag: 'C' };
+      setElems([elA, elC]);
+      expect(onBeforeExit).toHaveBeenCalledWith(elB);
+      expect(onBeforeEnter).toHaveBeenCalledWith(elC);
     });
   });
 });
+

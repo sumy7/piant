@@ -129,14 +129,18 @@ return Transition({
 
 ## TransitionGroup
 
-`TransitionGroup` 管理**列表**中元素的增删过渡，用法与 `For` 相同——**直接替换 `For` 使用**，无需额外组合。
+`TransitionGroup` 管理**列表**中元素的增删过渡，配合 `For` 或 `Index` 使用。
 
-每个条目的 JSX 元素通过 `children(item)` 创建一次并复用，直到其离开动画结束。生命周期钩子接收**渲染出的 JSX 元素**（Pixi 容器），可直接动画。
+将 `For`（或 `Index`）的输出传入 `children`，`TransitionGroup` 检测元素的出现与消失：
+- 新出现的元素触发进入钩子；
+- 消失的元素保留在输出中，触发离开钩子，直到 `done()` 调用后才从渲染树中移除。
+
+生命周期钩子接收 `For`/`Index` 渲染出的**实际 JSX 元素**（即 `children` 函数的返回值），可直接动画。
 
 ### 基本用法
 
 ```tsx
-import { TransitionGroup, createState } from '@piant/core';
+import { TransitionGroup, For, createState } from '@piant/core';
 
 function CardList() {
   const [cards, setCards] = createState([
@@ -144,35 +148,41 @@ function CardList() {
     { id: 2, label: '卡片 B' },
   ]);
 
-  // 直接替换 For 使用，加上动画钩子即可
+  // For 负责列表渲染，TransitionGroup 负责动画生命周期
   return TransitionGroup({
-    get each() { return cards(); },
-    children: (card) => CardView({ card }),   // 同 For 的 children
     onBeforeEnter: (el) => { el.alpha = 0; },
     onEnter: (el, done) => animate(el, { alpha: 1 }, { onComplete: done }),
     onExit:  (el, done) => animate(el, { alpha: 0 }, { onComplete: done }),
+    children: For({
+      get each() { return cards(); },
+      children: (card) => CardView({ card }),
+    }),
   });
 }
 ```
 
 ### 工作原理
 
-- `each` 中**新增**的条目：调用 `children(item)` 创建元素，触发进入钩子；
-- `each` 中**移除**的条目：保留在输出中，触发离开钩子，`done()` 调用后才从渲染树中移除；
-- 多个条目可同时处于离开状态（并发动画）；
-- 条目以**引用相等**为 key，同一引用不会重复处理。
+`TransitionGroup` 追踪 `For`/`Index` 产生的元素数组变化：
+
+- **新增元素**（出现在 `For` 输出中）：触发进入钩子；
+- **移除元素**（从 `For` 输出中消失）：保留在 `TransitionGroup` 输出中，触发离开钩子，`done()` 调用后移除；
+- 多个元素可同时处于离开状态（并发动画）；
+- 已移除元素若在 `done()` 调用前被重新添加回 `For`，不会重复显示。
 
 ### appear
 
-与 `Transition` 相同，设置 `appear={true}` 时，初始挂载的所有条目都会触发进入钩子：
+设置 `appear={true}` 时，初始挂载的所有元素都会触发进入钩子：
 
 ```tsx
 TransitionGroup({
-  get each() { return items(); },
-  children: (item) => ItemView({ item }),
   appear: true,
   onBeforeEnter: (el) => { el.alpha = 0; },
   onEnter: (el, done) => animate(el, { alpha: 1 }, { onComplete: done }),
+  children: For({
+    get each() { return items(); },
+    children: (item) => ItemView({ item }),
+  }),
 });
 ```
 
@@ -180,19 +190,18 @@ TransitionGroup({
 
 | 属性 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
-| `each` | `T[]` | — | 响应式列表；使用 getter 模式（`get each() { return list(); }`）令 MobX 追踪变化，与 `For` 一致 |
-| `children` | `(item: T) => JSX.Element` | — | 每个条目的渲染函数，创建后复用直到离开完成 |
+| `children` | `JSX.Element` | — | `For` 或 `Index` 的输出（响应式 memo/数组）；`TransitionGroup` 追踪其变化 |
 | `appear` | `boolean` | `false` | 初始挂载时是否触发进入钩子 |
-| `onBeforeEnter` | `(el) => void` | — | 同 `Transition`，`el` 为 `children(item)` 返回的渲染元素 |
-| `onEnter` | `(el, done) => void` | — | 同 `Transition` |
-| `onAfterEnter` | `(el) => void` | — | 同 `Transition` |
-| `onBeforeExit` | `(el) => void` | — | 同 `Transition` |
-| `onExit` | `(el, done) => void` | — | 同 `Transition` |
-| `onAfterExit` | `(el) => void` | — | 同 `Transition` |
+| `onBeforeEnter` | `(el) => void` | — | `el` 为 `For`/`Index` 渲染出的 JSX 元素 |
+| `onEnter` | `(el, done) => void` | — | 进入动画回调，调用 `done()` 完成 |
+| `onAfterEnter` | `(el) => void` | — | 进入完成后回调 |
+| `onBeforeExit` | `(el) => void` | — | 离开前同步回调 |
+| `onExit` | `(el, done) => void` | — | 离开动画回调，调用 `done()` 完成 |
+| `onAfterExit` | `(el) => void` | — | 离开完成后回调 |
 
 ### 返回值
 
-`JSX.Element`（响应式数组）——包含当前活跃的元素以及正在执行离开动画的元素。
+`JSX.Element`（响应式数组）——包含当前 `For`/`Index` 活跃元素以及正在执行离开动画的元素。
 
 ---
 
@@ -201,9 +210,9 @@ TransitionGroup({
 | | `Transition` | `TransitionGroup` |
 |-|--------------|-------------------|
 | 适用场景 | 单个元素切换 | 列表增删 |
-| 配合组件 | `Show` | `For`（直接替换） |
-| `children` 含义 | `Show` 的输出（响应式 memo） | 每条 item 的渲染函数 |
+| 配合组件 | `Show` | `For` / `Index` |
+| `children` 含义 | `Show` 的输出（响应式 memo） | `For`/`Index` 的输出（响应式数组 memo） |
 | mode 支持 | `out-in` / `in-out` / `parallel` | 无（进入/离开并发执行） |
-| 钩子中 `el` 的类型 | Show 返回的 JSX 元素 | `children(item)` 返回的 JSX 元素 |
+| 钩子中 `el` 的类型 | `Show` 返回的 JSX 元素 | `For`/`Index` 的 `children` 函数返回的 JSX 元素 |
 | 返回值 | `JSX.Element`（0–2 个元素） | `JSX.Element`（活跃 + 正在离开的元素） |
 
