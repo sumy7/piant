@@ -1,19 +1,20 @@
 import { describe, expect, it, vi } from 'vitest';
+import { Show } from '../src/components/Show';
 import { Transition } from '../src/components/Transition';
 import { root } from '../src/reactivity/effects';
 import { createState } from '../src/reactivity/hooks';
 
 describe('Transition', () => {
-  it('returns empty array when each returns null', () => {
+  it('returns empty array when no children are provided', () => {
     root(() => {
-      const result = Transition({ each: () => null });
+      const result = Transition({}) as unknown as () => JSX.Element[];
       expect(result()).toEqual([]);
     });
   });
 
   it('returns single-element array on initial mount without appear', () => {
     root(() => {
-      const result = Transition({ each: () => 'hello' as any });
+      const result = Transition({ children: 'hello' as any }) as unknown as () => JSX.Element[];
       expect(result()).toEqual(['hello']);
     });
   });
@@ -24,7 +25,7 @@ describe('Transition', () => {
       const onEnter = vi.fn();
       const onAfterEnter = vi.fn();
       Transition({
-        each: () => 'hello' as any,
+        children: 'hello' as any,
         onBeforeEnter,
         onEnter,
         onAfterEnter,
@@ -39,7 +40,7 @@ describe('Transition', () => {
     root(() => {
       const onBeforeEnter = vi.fn();
       Transition({
-        each: () => 'hello' as any,
+        children: 'hello' as any,
         appear: true,
         onBeforeEnter,
       });
@@ -47,17 +48,19 @@ describe('Transition', () => {
     });
   });
 
-  it('switches item in parallel mode: shows both during transition', () => {
+  it('switches element in parallel mode: shows both during transition', () => {
     root(() => {
       const [child, setChild] = createState<string | null>('A');
       let exitDone: (() => void) | undefined;
       const result = Transition({
-        each: child,
+        get children() {
+          return child() as any;
+        },
         mode: 'parallel',
         onExit: (_el, done) => {
           exitDone = done;
         },
-      });
+      }) as unknown as () => JSX.Element[];
 
       expect(result()).toEqual(['A']);
 
@@ -73,12 +76,14 @@ describe('Transition', () => {
     });
   });
 
-  it('calls onBeforeExit synchronously when item changes', () => {
+  it('calls onBeforeExit synchronously when element changes', () => {
     root(() => {
       const [child, setChild] = createState<string | null>('A');
       const onBeforeExit = vi.fn();
       Transition({
-        each: child,
+        get children() {
+          return child() as any;
+        },
         onBeforeExit,
       });
 
@@ -87,12 +92,14 @@ describe('Transition', () => {
     });
   });
 
-  it('calls onBeforeEnter synchronously when item changes', () => {
+  it('calls onBeforeEnter synchronously when element changes', () => {
     root(() => {
       const [child, setChild] = createState<string | null>('A');
       const onBeforeEnter = vi.fn();
       Transition({
-        each: child,
+        get children() {
+          return child() as any;
+        },
         onBeforeEnter,
       });
 
@@ -101,17 +108,19 @@ describe('Transition', () => {
     });
   });
 
-  it('removes exiting item after onExit calls done', () => {
+  it('removes exiting element after onExit calls done', () => {
     root(() => {
       const [child, setChild] = createState<string | null>('A');
       let exitDone: (() => void) | undefined;
       const result = Transition({
-        each: child,
+        get children() {
+          return child() as any;
+        },
         mode: 'parallel',
         onExit: (_el, done) => {
           exitDone = done;
         },
-      });
+      }) as unknown as () => JSX.Element[];
 
       setChild('B');
       // Both A and B visible while A exits
@@ -131,7 +140,9 @@ describe('Transition', () => {
       const onAfterExit = vi.fn();
       let exitDone: (() => void) | undefined;
       Transition({
-        each: child,
+        get children() {
+          return child() as any;
+        },
         onExit: (_el, done) => {
           exitDone = done;
         },
@@ -145,36 +156,40 @@ describe('Transition', () => {
     });
   });
 
-  it('out-in mode: shows old item until exit done, then shows new', () => {
+  it('out-in mode: shows old element until exit done, then shows new', () => {
     root(() => {
       const [child, setChild] = createState<string | null>('A');
       let exitDone: (() => void) | undefined;
       const result = Transition({
-        each: child,
+        get children() {
+          return child() as any;
+        },
         mode: 'out-in',
         onExit: (_el, done) => {
           exitDone = done;
         },
-      });
+      }) as unknown as () => JSX.Element[];
 
       setChild('B');
-      // Only old item shown while exiting
+      // Only old element shown while exiting
       expect(result()).toEqual(['A']);
 
       // Complete exit
       exitDone!();
-      // Now only new item shown
+      // Now only new element shown
       expect(result()).toEqual(['B']);
     });
   });
 
-  it('in-out mode: shows new item first, then exits old after enter done', async () => {
+  it('in-out mode: shows new element first, then exits old after enter done', async () => {
     await root(async () => {
       const [child, setChild] = createState<string | null>('A');
       let enterDone: (() => void) | undefined;
       let exitDone: (() => void) | undefined;
       const result = Transition({
-        each: child,
+        get children() {
+          return child() as any;
+        },
         mode: 'in-out',
         onEnter: (_el, done) => {
           enterDone = done;
@@ -182,7 +197,7 @@ describe('Transition', () => {
         onExit: (_el, done) => {
           exitDone = done;
         },
-      });
+      }) as unknown as () => JSX.Element[];
 
       setChild('B');
       // Microtask to let onEnter be called via queueMicrotask
@@ -212,7 +227,9 @@ describe('Transition', () => {
       const onAfterEnter = vi.fn();
       let enterDone: (() => void) | undefined;
       Transition({
-        each: child,
+        get children() {
+          return child() as any;
+        },
         onEnter: (_el, done) => {
           enterDone = done;
         },
@@ -235,7 +252,9 @@ describe('Transition', () => {
       const onAfterEnter = vi.fn();
       let enterDone: (() => void) | undefined;
       Transition({
-        each: child,
+        get children() {
+          return child() as any;
+        },
         onEnter: (_el, done) => {
           enterDone = done;
         },
@@ -257,7 +276,9 @@ describe('Transition', () => {
       const onAfterExit = vi.fn();
       let exitDone: (() => void) | undefined;
       Transition({
-        each: child,
+        get children() {
+          return child() as any;
+        },
         onExit: (_el, done) => {
           exitDone = done;
         },
@@ -276,12 +297,14 @@ describe('Transition', () => {
       const [child, setChild] = createState<string | null>('A');
       const exitDones: Array<() => void> = [];
       const result = Transition({
-        each: child,
+        get children() {
+          return child() as any;
+        },
         mode: 'out-in',
         onExit: (_el, done) => {
           exitDones.push(done);
         },
-      });
+      }) as unknown as () => JSX.Element[];
 
       // A → B: A starts exiting
       setChild('B');
@@ -300,17 +323,19 @@ describe('Transition', () => {
     });
   });
 
-  it('returns empty array after item is set to null in out-in mode', () => {
+  it('returns empty array after element is set to null in out-in mode', () => {
     root(() => {
       const [child, setChild] = createState<string | null>('A');
       let exitDone: (() => void) | undefined;
       const result = Transition({
-        each: child,
+        get children() {
+          return child() as any;
+        },
         mode: 'out-in',
         onExit: (_el, done) => {
           exitDone = done;
         },
-      });
+      }) as unknown as () => JSX.Element[];
 
       setChild(null);
       exitDone!();
@@ -318,15 +343,54 @@ describe('Transition', () => {
     });
   });
 
-  it('tracks reactive changes through the each getter', () => {
+  it('tracks reactive changes through children getter (signal)', () => {
     root(() => {
       const [child, setChild] = createState<string>('A');
-      // Pass the getter directly (same as `each: () => child()`)
-      const result = Transition({ each: child });
+      // Pass signal function directly as children — it is a 0-arg function so
+      // Transition calls it inside the effect and MobX tracks the dependency.
+      const result = Transition({ children: child as any }) as unknown as () => JSX.Element[];
 
       expect(result()).toEqual(['A']);
       setChild('B');
       expect(result()).toEqual(['B']);
+    });
+  });
+
+  it('works with Show output as children (canonical usage)', () => {
+    root(() => {
+      const [condition, setCondition] = createState(true);
+      const viewA = 'viewA';
+      const viewB = 'viewB';
+
+      // Show returns a reactive memo — pass it directly to Transition.
+      const showResult = Show({
+        get when() {
+          return condition();
+        },
+        children: viewA as any,
+        fallback: viewB as any,
+      });
+
+      let exitDone: (() => void) | undefined;
+      const result = Transition({
+        mode: 'out-in',
+        onExit: (_el, done) => {
+          exitDone = done;
+        },
+        children: showResult as any,
+      }) as unknown as () => JSX.Element[];
+
+      // Initially showing viewA
+      expect(result()).toEqual(['viewA']);
+
+      // Condition becomes false → Show switches to viewB
+      setCondition(false);
+      // out-in: still showing viewA while it exits
+      expect(result()).toEqual(['viewA']);
+
+      // Exit completes → viewB is now shown
+      exitDone!();
+      expect(result()).toEqual(['viewB']);
     });
   });
 });

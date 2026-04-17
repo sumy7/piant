@@ -1,5 +1,4 @@
 import { untracked } from 'mobx';
-import type { Getter } from '../reactivity';
 import { effect } from '../reactivity/effects';
 import { createState } from '../reactivity/hooks';
 
@@ -12,34 +11,69 @@ export interface TransitionEvents {
   onAfterExit?: (el: any) => void;
 }
 
-export interface TransitionProps<T = any> extends TransitionEvents {
+export interface TransitionProps extends TransitionEvents {
   mode?: 'out-in' | 'in-out' | 'parallel';
   appear?: boolean;
   /**
-   * A reactive getter returning the current item (or null).
-   * Pass a getter from `createState` directly (`each: mySignal`) or wrap an
-   * expression (`each: () => state()`). Transition tracks changes through this
-   * getter and fires lifecycle hooks whenever the returned value changes reference.
-   * Use `Show` or `For` to render the returned display list.
+   * The element to transition. Typically the output of a `Show` component
+   * (a reactive memo) so that Transition intercepts content switching.
+   * 0-arg functions (memos) are called inside the reactive effect and their
+   * dependencies tracked automatically.
+   *
+   * @example
+   * ```ts
+   * // Wrap Show — el in lifecycle hooks is the actual rendered element
+   * Transition({
+   *   mode: 'out-in',
+   *   onEnter: (el, done) => animate(el, done),
+   *   onExit:  (el, done) => animate(el, done),
+   *   children: Show({ when: condition, children: viewA, fallback: viewB }),
+   * });
+   * ```
    */
-  each: Getter<T | null>;
+  children?: JSX.Element;
+}
+
+/** Normalize "nothing" values (null / false / empty-array) to null. */
+function toEl(raw: unknown): JSX.Element | null {
+  if (raw == null || raw === false) return null;
+  if (Array.isArray(raw) && raw.length === 0) return null;
+  return raw as JSX.Element;
 }
 
 /**
- * Manages enter/exit lifecycle hooks for a single switching item.
- * Returns a reactive `Getter<T[]>` representing the items currently on screen
- * (at most 2: the entering item and/or the leaving item).
- * Compose with `Show` or `For` to render the display list.
+ * Coordinates enter/exit lifecycle hooks for a single switching element.
+ *
+ * Use with `Show` — pass Show's output as `children` so Transition intercepts
+ * content switching and fires enter/exit hooks on the actual rendered elements.
+ *
+ * Returns a `JSX.Element` (reactive array) representing the elements currently
+ * on screen (at most 2: the entering element and/or the leaving element).
+ * The renderer handles the array — no extra `For` call is needed.
+ *
+ * @example
+ * ```ts
+ * const viewA = MyViewA({});
+ * const viewB = MyViewB({});
+ *
+ * return Transition({
+ *   mode: 'out-in',
+ *   onBeforeEnter: (el) => { el.alpha = 0; },
+ *   onEnter: (el, done) => gsap.to(el, { alpha: 1, onComplete: done }),
+ *   onExit:  (el, done) => gsap.to(el, { alpha: 0, onComplete: done }),
+ *   children: Show({ when: condition, children: viewA, fallback: viewB }),
+ * });
+ * ```
  */
-export function Transition<T = any>(props: TransitionProps<T>): Getter<T[]> {
-  const [items, setItems] = createState<T[]>([]);
+export function Transition(props: TransitionProps): JSX.Element {
+  const [displayItems, setDisplayItems] = createState<JSX.Element[]>([]);
   let initialized = false;
-  let mainEl: T | null = null;
+  let mainEl: JSX.Element | null = null;
   // Monotonically increasing token; incremented on every new transition so that
   // async completion callbacks can detect they have been superseded.
   let token = 0;
 
-  const doEnter = (el: T, onComplete?: () => void) => {
+  const doEnter = (el: JSX.Element, onComplete?: () => void) => {
     props.onBeforeEnter?.(el);
     queueMicrotask(() => {
       // Guard against double-invocation by the consumer.
@@ -58,7 +92,7 @@ export function Transition<T = any>(props: TransitionProps<T>): Getter<T[]> {
     });
   };
 
-  const doExit = (el: T, onDone: () => void) => {
+  const doExit = (el: JSX.Element, onDone: () => void) => {
     props.onBeforeExit?.(el);
     // Guard against double-invocation by the consumer.
     let called = false;
@@ -76,15 +110,24 @@ export function Transition<T = any>(props: TransitionProps<T>): Getter<T[]> {
   };
 
   effect(() => {
-    // props.each() is a reactive getter — MobX tracks the dependency here.
-    const child = props.each();
+    // Resolve children:
+    //   • 0-arg functions (memos / signals, e.g. Show's output) are called so
+    //     MobX tracks the reactive dependency and re-runs on change.
+    //   • Getter properties on props are read here and also tracked by MobX.
+    //   • Static elements are used as-is.
+    const raw = props.children ?? null;
+    const resolved =
+      typeof raw === 'function' && (raw as (...args: unknown[]) => unknown).length === 0
+        ? (raw as () => unknown)()
+        : raw;
+    const child = toEl(resolved);
 
     untracked(() => {
       if (!initialized) {
         initialized = true;
         mainEl = child;
         if (child != null) {
-          setItems([child]);
+          setDisplayItems([child]);
           if (props.appear) {
             doEnter(child);
           }
@@ -92,8 +135,8 @@ export function Transition<T = any>(props: TransitionProps<T>): Getter<T[]> {
         return;
       }
 
-      // Use Object.is for referential identity: the same item reference
-      // means the item has not changed, so no transition should occur.
+      // Use Object.is for referential identity: the same element reference
+      // means the content has not changed, so no transition should occur.
       if (Object.is(child, mainEl)) return;
 
       const prev = mainEl;
@@ -105,60 +148,61 @@ export function Transition<T = any>(props: TransitionProps<T>): Getter<T[]> {
 
       if (mode === 'out-in') {
         if (prev != null) {
-          setItems([prev]);
+          setDisplayItems([prev]);
           doExit(prev, () => {
             // Skip if a newer transition started while we were waiting.
             if (token !== currentToken) return;
             const next = mainEl;
-            setItems(next != null ? [next] : []);
+            setDisplayItems(next != null ? [next] : []);
             if (next != null) doEnter(next);
           });
         } else {
-          setItems(child != null ? [child] : []);
+          setDisplayItems(child != null ? [child] : []);
           if (child != null) doEnter(child);
         }
       } else if (mode === 'in-out') {
         if (child != null) {
           const snapshot = prev;
           const enterToken = currentToken;
-          const combined: T[] = [child];
+          const combined: JSX.Element[] = [child];
           if (snapshot != null) combined.push(snapshot);
-          setItems(combined);
+          setDisplayItems(combined);
           doEnter(child, () => {
             // Skip exit phase if a newer transition superseded this one.
             if (token !== enterToken) return;
             if (snapshot != null) {
               doExit(snapshot, () => {
-                setItems((cur) => cur.filter((i) => i !== snapshot));
+                setDisplayItems((cur) => cur.filter((i) => i !== snapshot));
               });
             }
           });
         } else {
           if (prev != null) {
-            setItems([prev]);
-            doExit(prev, () => setItems([]));
+            setDisplayItems([prev]);
+            doExit(prev, () => setDisplayItems([]));
           } else {
-            setItems([]);
+            setDisplayItems([]);
           }
         }
       } else {
         // parallel mode
         const snapshot = prev;
-        const newItems: T[] = [];
+        const newItems: JSX.Element[] = [];
         if (child != null) newItems.push(child);
         if (snapshot != null) newItems.push(snapshot);
-        setItems(newItems);
+        setDisplayItems(newItems);
         if (child != null) doEnter(child);
         if (snapshot != null) {
           doExit(snapshot, () => {
-            setItems((cur) => cur.filter((i) => i !== snapshot));
+            setDisplayItems((cur) => cur.filter((i) => i !== snapshot));
           });
         }
       }
     });
   });
 
-  // Return the reactive display list directly.
-  // Use Show or For to render this in your component.
-  return items;
+  // Return the reactive display list as JSX.Element.
+  // The renderer handles arrays natively — during transitions up to two elements
+  // (entering + leaving) are rendered simultaneously.
+  return displayItems as unknown as JSX.Element;
 }

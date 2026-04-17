@@ -2,60 +2,48 @@
 
 Piant 提供了两个过渡动画组件：`Transition` 和 `TransitionGroup`，用于在 Canvas 元素切换时触发进入/离开生命周期钩子，实现原生画布动画工作流，不依赖任何 DOM/CSS。
 
-这两个组件采用**关注点分离**的设计：
-- 它们只负责**生命周期管理**（何时触发 enter/exit）和**维护响应式显示列表**（当前应渲染哪些元素）；
-- **实际渲染**交由 `Show`（单元素）和 `For`（列表）负责。
+两个组件遵循**关注点分离**的设计原则：
+
+- **只负责生命周期管理**（何时触发 enter/exit 钩子）；
+- **不自行渲染子元素**——渲染由 `Show`（单元素）和 `For`（列表）负责；
+- 生命周期钩子接收的是**已渲染的 JSX 元素**（如 Pixi 容器），可直接用于动画。
 
 ---
 
 ## Transition
 
-`Transition` 管理单个元素的切换过渡。接收一个响应式 getter（`each`），当返回值发生变化时触发进入/离开钩子，并返回一个响应式 `T[]`，其中包含当前显示的元素（最多 2 个：进入中 + 离开中）。
+`Transition` 管理单个元素的切换过渡，配合 `Show` 使用。
+
+将 `Show` 的输出传入 `children`，`Transition` 会检测内容切换，并在元素进入/离开时触发钩子。
 
 ### 基本用法
 
-配合 `For` 渲染：
-
 ```tsx
-import { Transition, For, createState } from '@piant/core';
+import { Transition, Show, createState } from '@piant/core';
 
 function Scene() {
-  const [page, setPage] = createState<'home' | 'detail'>('home');
+  const [isLoggedIn, setIsLoggedIn] = createState(false);
 
-  // 只管理生命周期和显示列表，不渲染 children
-  const transItems = Transition({
-    each: page,               // 直接传入响应式 getter
+  // 预先创建好 Pixi 元素（稳定引用是正确切换检测的基础）
+  const dashboard = Dashboard({});
+  const loginScreen = LoginScreen({});
+
+  return Transition({
     mode: 'out-in',
-    onBeforeEnter: (p) => { /* 设置初始状态，如 alpha = 0 */ },
-    onEnter: (p, done) => animate(p, { alpha: 1 }, { onComplete: done }),
-    onExit: (p, done) => animate(p, { alpha: 0 }, { onComplete: done }),
-  });
-
-  // 用 For 渲染 transItems() 返回的显示列表
-  return For({
-    each: transItems(),
-    children: (p) => p === 'home' ? HomeView({}) : DetailView({}),
+    onBeforeEnter: (el) => { el.alpha = 0; },
+    onEnter: (el, done) => animate(el, { alpha: 1 }, { onComplete: done }),
+    onExit:  (el, done) => animate(el, { alpha: 0 }, { onComplete: done }),
+    // children 是 Show 的输出（响应式 memo），Transition 直接感知切换
+    children: Show({
+      get when() { return isLoggedIn(); },
+      children: dashboard,
+      fallback: loginScreen,
+    }),
   });
 }
 ```
 
-也可以配合 `Show` 渲染单个元素：
-
-```tsx
-const [visible, setVisible] = createState(true);
-
-const transItems = Transition({
-  each: () => visible() ? 'content' : null,
-  mode: 'out-in',
-  onEnter: (_el, done) => { /* 动画 */ done(); },
-  onExit: (_el, done) => { /* 动画 */ done(); },
-});
-
-return Show({
-  when: transItems()[0],
-  children: (item) => ContentView({}),
-});
-```
+> **注意**：将 Pixi 元素（`Dashboard({})`、`LoginScreen({})`）在外部**预先创建**，保证每次 Show 求值时返回相同的引用，Transition 才能准确检测元素切换。
 
 ### 切换模式（mode）
 
@@ -70,24 +58,24 @@ return Show({
 设置 `appear={true}` 时，初始挂载的元素也会触发进入钩子：
 
 ```tsx
-const transItems = Transition({
-  each: page,
+Transition({
   appear: true,
-  onBeforeEnter: (p) => { /* ... */ },
-  onEnter: (p, done) => { /* ... */ done(); },
+  onBeforeEnter: (el) => { el.alpha = 0; },
+  onEnter: (el, done) => animate(el, { alpha: 1 }, { onComplete: done }),
+  children: Show({ get when() { return visible(); }, children: myView }),
 });
 ```
 
 ### 生命周期钩子
 
 ```
-onBeforeEnter(el)          ← 同步，进入前
-onEnter(el, done)          ← 通过 queueMicrotask 调用，调用 done() 标志完成
-onAfterEnter(el)           ← done() 调用后触发
+onBeforeEnter(el)   ← 同步，进入前（el 是将要显示的 Pixi 元素）
+onEnter(el, done)   ← 通过 queueMicrotask 调用，调用 done() 标志完成
+onAfterEnter(el)    ← done() 调用后触发
 
-onBeforeExit(el)           ← 同步，离开前
-onExit(el, done)           ← 同步调用，调用 done() 标志完成
-onAfterExit(el)            ← done() 调用后触发
+onBeforeExit(el)    ← 同步，离开前（el 是将要隐藏的 Pixi 元素）
+onExit(el, done)    ← 同步调用，调用 done() 标志完成
+onAfterExit(el)     ← done() 调用后触发
 ```
 
 > **注意**：`done` 回调是幂等的——多次调用只执行一次。
@@ -96,46 +84,44 @@ onAfterExit(el)            ← done() 调用后触发
 
 | 属性 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
-| `each` | `() => T \| null` | — | 响应式 getter，返回当前元素（或 null） |
+| `children` | `JSX.Element` | — | 通常为 `Show` 的输出；0-arg 函数（memo）在 effect 内被自动调用并追踪依赖 |
 | `mode` | `"parallel" \| "out-in" \| "in-out"` | `"parallel"` | 进入/离开的时序模式 |
 | `appear` | `boolean` | `false` | 初始挂载时是否触发进入钩子 |
-| `onBeforeEnter` | `(el: T) => void` | — | 进入前同步回调 |
-| `onEnter` | `(el: T, done) => void` | — | 进入动画回调，调用 `done()` 完成 |
-| `onAfterEnter` | `(el: T) => void` | — | 进入完成后回调 |
-| `onBeforeExit` | `(el: T) => void` | — | 离开前同步回调 |
-| `onExit` | `(el: T, done) => void` | — | 离开动画回调，调用 `done()` 完成 |
-| `onAfterExit` | `(el: T) => void` | — | 离开完成后回调 |
+| `onBeforeEnter` | `(el) => void` | — | 进入前同步回调，`el` 为渲染元素 |
+| `onEnter` | `(el, done) => void` | — | 进入动画回调，调用 `done()` 完成 |
+| `onAfterEnter` | `(el) => void` | — | 进入完成后回调 |
+| `onBeforeExit` | `(el) => void` | — | 离开前同步回调 |
+| `onExit` | `(el, done) => void` | — | 离开动画回调，调用 `done()` 完成 |
+| `onAfterExit` | `(el) => void` | — | 离开完成后回调 |
 
 ### 返回值
 
-`Getter<T[]>` — 调用后返回当前显示列表（0–2 个元素），配合 `Show`/`For` 渲染。
+`JSX.Element`（响应式数组）——渲染器直接处理，过渡期间最多同时包含两个元素（进入中 + 离开中）。
 
 ### 与 GSAP 集成示例
 
 ```tsx
 import { gsap } from 'gsap';
 
-const transItems = Transition({
-  each: currentPage,
-  mode: 'out-in',
-  onBeforeEnter: (page) => {
-    const container = pageContainers[page];
-    container.alpha = 0;
-    container.scale.set(0.9);
-  },
-  onEnter: (page, done) =>
-    gsap.to(pageContainers[page], {
-      alpha: 1, scaleX: 1, scaleY: 1, duration: 0.3, onComplete: done,
-    }),
-  onExit: (page, done) =>
-    gsap.to(pageContainers[page], {
-      alpha: 0, scaleX: 0.9, scaleY: 0.9, duration: 0.3, onComplete: done,
-    }),
-});
+const pageA = PageA({});
+const pageB = PageB({});
+const [showA, setShowA] = createState(true);
 
-return For({
-  each: transItems(),
-  children: (page) => PageComponent({ page }),
+return Transition({
+  mode: 'out-in',
+  onBeforeEnter: (el) => {
+    el.alpha = 0;
+    el.scale.set(0.9);
+  },
+  onEnter: (el, done) =>
+    gsap.to(el, { alpha: 1, scaleX: 1, scaleY: 1, duration: 0.3, onComplete: done }),
+  onExit: (el, done) =>
+    gsap.to(el, { alpha: 0, scaleX: 0.9, scaleY: 0.9, duration: 0.3, onComplete: done }),
+  children: Show({
+    get when() { return showA(); },
+    children: pageA,
+    fallback: pageB,
+  }),
 });
 ```
 
@@ -143,12 +129,14 @@ return For({
 
 ## TransitionGroup
 
-`TransitionGroup` 管理**列表**中元素的增删过渡。接收一个响应式 getter（`each`），跟踪新增和移除的元素，对新增元素触发进入钩子，对移除元素触发离开钩子，并在离开动画完成前将其保留在显示列表中。返回 `Getter<T[]>`，配合 `For` 渲染。
+`TransitionGroup` 管理**列表**中元素的增删过渡，用法与 `For` 相同——**直接替换 `For` 使用**，无需额外组合。
+
+每个条目的 JSX 元素通过 `children(item)` 创建一次并复用，直到其离开动画结束。生命周期钩子接收**渲染出的 JSX 元素**（Pixi 容器），可直接动画。
 
 ### 基本用法
 
 ```tsx
-import { TransitionGroup, For, createState } from '@piant/core';
+import { TransitionGroup, createState } from '@piant/core';
 
 function CardList() {
   const [cards, setCards] = createState([
@@ -156,39 +144,35 @@ function CardList() {
     { id: 2, label: '卡片 B' },
   ]);
 
-  // 只管理生命周期和显示列表
-  const displayItems = TransitionGroup({
-    each: cards,             // 直接传入响应式 getter
-    onBeforeEnter: (card) => { /* 设置初始状态 */ },
-    onEnter: (card, done) => animate(cardRefs[card.id], { alpha: 1 }, { onComplete: done }),
-    onExit: (card, done) => animate(cardRefs[card.id], { alpha: 0 }, { onComplete: done }),
-  });
-
-  // 用 For 渲染显示列表（包含正在离开的元素）
-  return For({
-    each: displayItems(),
-    children: (card) => CardView({ card }),
+  // 直接替换 For 使用，加上动画钩子即可
+  return TransitionGroup({
+    get each() { return cards(); },
+    children: (card) => CardView({ card }),   // 同 For 的 children
+    onBeforeEnter: (el) => { el.alpha = 0; },
+    onEnter: (el, done) => animate(el, { alpha: 1 }, { onComplete: done }),
+    onExit:  (el, done) => animate(el, { alpha: 0 }, { onComplete: done }),
   });
 }
 ```
 
 ### 工作原理
 
-- `each` getter 中新增的元素：自动触发进入钩子
-- `each` getter 中移除的元素：保留在返回的显示列表中，触发离开钩子，`done()` 调用后才从列表中移除
-- 多个元素可同时处于离开状态（并发动画）
-- 元素以**引用相等**为 key，同一引用不会重复处理
+- `each` 中**新增**的条目：调用 `children(item)` 创建元素，触发进入钩子；
+- `each` 中**移除**的条目：保留在输出中，触发离开钩子，`done()` 调用后才从渲染树中移除；
+- 多个条目可同时处于离开状态（并发动画）；
+- 条目以**引用相等**为 key，同一引用不会重复处理。
 
 ### appear
 
-与 `Transition` 相同，设置 `appear={true}` 时，初始挂载的所有元素都会触发进入钩子：
+与 `Transition` 相同，设置 `appear={true}` 时，初始挂载的所有条目都会触发进入钩子：
 
 ```tsx
-const displayItems = TransitionGroup({
-  each: items,
+TransitionGroup({
+  get each() { return items(); },
+  children: (item) => ItemView({ item }),
   appear: true,
-  onBeforeEnter: (item) => { /* ... */ },
-  onEnter: (item, done) => { /* ... */ done(); },
+  onBeforeEnter: (el) => { el.alpha = 0; },
+  onEnter: (el, done) => animate(el, { alpha: 1 }, { onComplete: done }),
 });
 ```
 
@@ -196,18 +180,19 @@ const displayItems = TransitionGroup({
 
 | 属性 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
-| `each` | `() => T[]` | — | 响应式 getter，返回当前列表 |
+| `each` | `T[]` | — | 响应式列表；使用 getter 模式（`get each() { return list(); }`）令 MobX 追踪变化，与 `For` 一致 |
+| `children` | `(item: T) => JSX.Element` | — | 每个条目的渲染函数，创建后复用直到离开完成 |
 | `appear` | `boolean` | `false` | 初始挂载时是否触发进入钩子 |
-| `onBeforeEnter` | `(el: T) => void` | — | 同 `Transition` |
-| `onEnter` | `(el: T, done) => void` | — | 同 `Transition` |
-| `onAfterEnter` | `(el: T) => void` | — | 同 `Transition` |
-| `onBeforeExit` | `(el: T) => void` | — | 同 `Transition` |
-| `onExit` | `(el: T, done) => void` | — | 同 `Transition` |
-| `onAfterExit` | `(el: T) => void` | — | 同 `Transition` |
+| `onBeforeEnter` | `(el) => void` | — | 同 `Transition`，`el` 为 `children(item)` 返回的渲染元素 |
+| `onEnter` | `(el, done) => void` | — | 同 `Transition` |
+| `onAfterEnter` | `(el) => void` | — | 同 `Transition` |
+| `onBeforeExit` | `(el) => void` | — | 同 `Transition` |
+| `onExit` | `(el, done) => void` | — | 同 `Transition` |
+| `onAfterExit` | `(el) => void` | — | 同 `Transition` |
 
 ### 返回值
 
-`Getter<T[]>` — 调用后返回当前显示列表（活跃元素 + 正在离开的元素），配合 `For` 渲染。
+`JSX.Element`（响应式数组）——包含当前活跃的元素以及正在执行离开动画的元素。
 
 ---
 
@@ -216,7 +201,9 @@ const displayItems = TransitionGroup({
 | | `Transition` | `TransitionGroup` |
 |-|--------------|-------------------|
 | 适用场景 | 单个元素切换 | 列表增删 |
-| `each` 类型 | `() => T \| null` | `() => T[]` |
-| 推荐渲染方式 | `Show` 或 `For` | `For` |
+| 配合组件 | `Show` | `For`（直接替换） |
+| `children` 含义 | `Show` 的输出（响应式 memo） | 每条 item 的渲染函数 |
 | mode 支持 | `out-in` / `in-out` / `parallel` | 无（进入/离开并发执行） |
-| 返回值 | `Getter<T[]>`（0–2 个元素） | `Getter<T[]>`（活跃 + 正在离开） |
+| 钩子中 `el` 的类型 | Show 返回的 JSX 元素 | `children(item)` 返回的 JSX 元素 |
+| 返回值 | `JSX.Element`（0–2 个元素） | `JSX.Element`（活跃 + 正在离开的元素） |
+
