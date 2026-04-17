@@ -13,6 +13,7 @@ export {
   type TransitionEvents,
   type TransitionProps,
 } from './components/Transition';
+export { TransitionGroup, type TransitionGroupProps } from './components/TransitionGroup';
 export { View } from './components/View';
 export type { ImageStyles, LayoutStyles, ViewStyles, VisualStyles } from './elements/layout/viewStyles';
 export { PRoot } from './elements/PRoot';

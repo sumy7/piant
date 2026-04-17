@@ -55,6 +55,10 @@ export default defineConfig({
               text: 'ErrorBoundary',
               link: '/guide/control-flow/error-boundary',
             },
+            {
+              text: 'Transition 与 TransitionGroup',
+              link: '/guide/control-flow/transition',
+            },
           ],
         },
         {
