@@ -203,7 +203,11 @@ export class PNodeAnimation {
     this._playbackRate = rate;
   }
 
-  /** Start or resume the animation. */
+  /** Start or resume the animation.
+   *
+   * Note: calling `play()` on a finished animation has no effect.
+   * To replay, create a new `PNodeAnimation` via `node.animate()`.
+   */
   play(): void {
     if (this._playState === 'finished') return;
     if (this._playState === 'running') return;
@@ -356,16 +360,11 @@ export class PNodeAnimation {
 
   private _restoreInitialProps(): void {
     applyProps(this._node, this._initialProps);
-    // Also restore alpha override to null if animation set it
-    if (this._initialProps.alpha === undefined) {
-      this._node._animAlpha = null;
-      this._node.markDirty();
-    }
-    // Reset translation offsets if they were initially zero
-    if (this._initialProps.x === 0 && this._initialProps.y === 0) {
-      this._node._animTranslate.x = 0;
-      this._node._animTranslate.y = 0;
-    }
+    // Always restore animation-specific overrides to their initial state
+    this._node._animAlpha = this._initialProps.alpha !== undefined ? this._initialProps.alpha : null;
+    this._node._animTranslate.x = this._initialProps.x ?? 0;
+    this._node._animTranslate.y = this._initialProps.y ?? 0;
+    this._node.markDirty();
   }
 
   private _makeEvent(type: 'finish' | 'cancel'): AnimationPlaybackEvent {

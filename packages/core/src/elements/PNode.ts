@@ -30,9 +30,9 @@ export class PNode {
     position: 'static',
   };
 
-  // 动画偏移量（由 @piant/animation 驱动）
+  // Animation translation offset (driven by @piant/animation)
   _animTranslate: { x: number; y: number } = { x: 0, y: 0 };
-  // 动画 alpha 覆盖（null 表示使用 _layoutStyle.opacity）
+  // Animation alpha override (null = use _layoutStyle.opacity)
   _animAlpha: number | null = null;
 
   // 实际的内容容器 = [_viewBg, _viewContent, _viewMask]
