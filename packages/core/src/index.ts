@@ -16,6 +16,7 @@ export {
 export { TransitionGroup, type TransitionGroupProps } from './components/TransitionGroup';
 export { View } from './components/View';
 export type { ImageStyles, LayoutStyles, ViewStyles, VisualStyles } from './elements/layout/viewStyles';
+export { PNode } from './elements/PNode';
 export { PRoot } from './elements/PRoot';
 export type { TextStyles, TextViewStyles } from './elements/text/textStyles';
 export * from './h';
