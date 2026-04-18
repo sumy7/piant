@@ -37,7 +37,13 @@ function resolveElements(raw: unknown): JSX.Element[] {
     return resolveElements((raw as () => unknown)());
   }
   if (Array.isArray(raw)) {
-    return (raw as unknown[]).flatMap(resolveElements);
+    const elements: JSX.Element[] = [];
+    for (const item of raw as unknown[]) {
+      for (const el of resolveElements(item)) {
+        elements.push(el);
+      }
+    }
+    return elements;
   }
   return [raw as JSX.Element];
 }

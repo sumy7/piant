@@ -343,6 +343,84 @@ describe('Transition', () => {
     });
   });
 
+  it('parallel mode: stale exit does not remove a re-added element', () => {
+    root(() => {
+      const [child, setChild] = createState<string | null>('A');
+      const exitDones: Array<() => void> = [];
+      const result = Transition({
+        get children() {
+          return child() as any;
+        },
+        mode: 'parallel',
+        onExit: (_el, done) => {
+          exitDones.push(done);
+        },
+      }) as unknown as () => JSX.Element[];
+
+      // A → B: A starts exiting
+      setChild('B');
+      expect(result()).toContain('A');
+      expect(result()).toContain('B');
+
+      // B → A: A becomes current again before old exit finishes
+      setChild('A');
+
+      // Old exit done (for A) fires — must NOT remove A since it is current
+      exitDones[0]();
+      expect(result()).toContain('A');
+      // B is still exiting (from the B→A transition); its own exit callback
+      // (exitDones[1]) hasn't fired yet, so B is still in the display list.
+      expect(result()).toContain('B');
+
+      // Complete B's own exit — now B should be removed
+      exitDones[1]();
+      expect(result()).toEqual(['A']);
+    });
+  });
+
+  it('in-out mode: stale exit does not remove a re-added element', async () => {
+    await root(async () => {
+      const [child, setChild] = createState<string | null>('A');
+      const exitDones: Array<() => void> = [];
+      let enterDone: (() => void) | undefined;
+      const result = Transition({
+        get children() {
+          return child() as any;
+        },
+        mode: 'in-out',
+        onEnter: (_el, done) => {
+          enterDone = done;
+        },
+        onExit: (_el, done) => {
+          exitDones.push(done);
+        },
+      }) as unknown as () => JSX.Element[];
+
+      // A → B: B starts entering
+      setChild('B');
+      await new Promise<void>((resolve) => queueMicrotask(resolve));
+
+      // Complete B's enter → A starts exiting
+      enterDone!();
+
+      // B → A: A becomes current again before A's exit completes
+      setChild('A');
+      await new Promise<void>((resolve) => queueMicrotask(resolve));
+
+      // Stale exit done for A fires — must NOT remove A since it is now current
+      exitDones[0]();
+      expect(result()).toContain('A');
+      // B is still visible because A's enter in the B→A transition hasn't completed yet
+      expect(result()).toContain('B');
+
+      // Complete A's enter in the B→A transition → B starts exiting
+      enterDone!();
+      // Complete B's exit — now only A remains
+      exitDones[1]();
+      expect(result()).toEqual(['A']);
+    });
+  });
+
   it('tracks reactive changes through children getter (signal)', () => {
     root(() => {
       const [child, setChild] = createState<string>('A');

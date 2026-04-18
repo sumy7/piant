@@ -34,9 +34,9 @@ export interface TransitionProps extends TransitionEvents {
   children?: JSX.Element;
 }
 
-/** Normalize "nothing" values (null / false / empty-array) to null. */
+/** Normalize "nothing" values (null / boolean / empty-array) to null. */
 function toEl(raw: unknown): JSX.Element | null {
-  if (raw == null || raw === false) return null;
+  if (raw == null || typeof raw === 'boolean') return null;
   if (Array.isArray(raw) && raw.length === 0) return null;
   return raw as JSX.Element;
 }
@@ -172,6 +172,9 @@ export function Transition(props: TransitionProps): JSX.Element {
             if (token !== enterToken) return;
             if (snapshot != null) {
               doExit(snapshot, () => {
+                // Guard: if snapshot has been re-added as the current element,
+                // do not remove it from the display list.
+                if (Object.is(mainEl, snapshot)) return;
                 setDisplayItems((cur) => cur.filter((i) => i !== snapshot));
               });
             }
@@ -194,6 +197,9 @@ export function Transition(props: TransitionProps): JSX.Element {
         if (child != null) doEnter(child);
         if (snapshot != null) {
           doExit(snapshot, () => {
+            // Guard: if snapshot has been re-added as the current element,
+            // do not remove it from the display list.
+            if (Object.is(mainEl, snapshot)) return;
             setDisplayItems((cur) => cur.filter((i) => i !== snapshot));
           });
         }
