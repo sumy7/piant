@@ -151,9 +151,9 @@ export function TransitionGroup(props: TransitionGroupProps): JSX.Element {
           const exitId = entry.id;
           doExit(entry.el, () => {
             setExitingEntries((cur) => cur.filter((e) => e.id !== exitId));
-            // Only remove from display if the element is no longer active in
-            // For's output. If it was re-added before the animation finished,
-            // it should remain visible.
+            // Re-read For's current output at animation-finish time (not at
+            // schedule time) because the element may have been re-added while
+            // the exit animation was in progress.
             const isActive = resolveElements(props.children ?? null).some(
               (el) => Object.is(el, entry.el),
             );
@@ -181,6 +181,9 @@ export function TransitionGroup(props: TransitionGroupProps): JSX.Element {
       } else {
         const prevDisplay = displayList();
 
+        // Build an index map for O(1) position lookups in prevDisplay.
+        const prevDisplayIdx = new Map(prevDisplay.map((el, i) => [el, i]));
+
         // For each exiting element, find the last active element that appeared
         // before it in prevDisplay ("insert-after anchor"). If none exists, the
         // element goes to the front of the list.
@@ -188,7 +191,7 @@ export function TransitionGroup(props: TransitionGroupProps): JSX.Element {
         const anchoredAfter = new Map<JSX.Element, JSX.Element>();
 
         for (const exitEl of allExiting) {
-          const prevIdx = prevDisplay.indexOf(exitEl);
+          const prevIdx = prevDisplayIdx.get(exitEl) ?? -1;
           let insertAfter: JSX.Element | null = null;
           for (let i = prevIdx - 1; i >= 0; i--) {
             if (currentSet.has(prevDisplay[i])) {
