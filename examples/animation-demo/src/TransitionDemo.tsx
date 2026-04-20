@@ -161,7 +161,7 @@ export function TransitionDemo() {
           mode: mode(),
           appear: true,
           onBeforeEnter: (el) => {
-            el.alpha = 0;
+            el._animAlpha = 0;
             el._animTranslate.x = showA() ? -SLIDE : SLIDE;
             el.markDirty();
           },
@@ -175,7 +175,7 @@ export function TransitionDemo() {
             ).finished.then(done);
           },
           onAfterEnter: (el) => {
-            el.alpha = 1;
+            el._animAlpha = null;
             el._animTranslate.x = 0;
             el.markDirty();
           },

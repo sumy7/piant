@@ -53,8 +53,9 @@ export function parseEasing(easing: string): EasingFunction {
       return anticipate;
     default: {
       // Parse cubic-bezier(x1, y1, x2, y2)
+      // Supports negative values and values > 1 (e.g. overshoot: cubic-bezier(0.68,-0.55,0.27,1.55))
       const cbMatch = easing.match(
-        /^cubic-bezier\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*\)$/,
+        /^cubic-bezier\(\s*(-?[\d.]+(?:e[+-]?\d+)?)\s*,\s*(-?[\d.]+(?:e[+-]?\d+)?)\s*,\s*(-?[\d.]+(?:e[+-]?\d+)?)\s*,\s*(-?[\d.]+(?:e[+-]?\d+)?)\s*\)$/i,
       );
       if (cbMatch) {
         const x1 = Number(cbMatch[1]);

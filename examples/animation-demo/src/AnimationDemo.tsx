@@ -121,7 +121,7 @@ export function AnimationDemo() {
     // Reset transform before each demo
     el._animTranslate.x = 0;
     el._animTranslate.y = 0;
-    el.alpha = 1;
+    el._animAlpha = null;
     el._view.scale.x = 1;
     el._view.scale.y = 1;
     el._view.rotation = 0;

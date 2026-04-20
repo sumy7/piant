@@ -120,8 +120,13 @@ function propertyIndexedToKeyframes(input: PropertyIndexedKeyframes): Keyframe[]
 /**
  * Normalise a raw KeyframeEffect into a sorted array of NormalizedKeyframe
  * with explicit offset values distributed evenly for any missing offsets.
+ *
+ * @param effect       Raw keyframe input.
+ * @param defaultEasing Easing to use when a keyframe does not specify its own
+ *                     (e.g. the `easing` field from `AnimationOptions`).
+ *                     Defaults to `'linear'`.
  */
-export function normalizeKeyframes(effect: KeyframeEffect): NormalizedKeyframe[] {
+export function normalizeKeyframes(effect: KeyframeEffect, defaultEasing = 'linear'): NormalizedKeyframe[] {
   // Normalise to array format
   const raw: Keyframe[] = Array.isArray(effect)
     ? effect
@@ -130,14 +135,14 @@ export function normalizeKeyframes(effect: KeyframeEffect): NormalizedKeyframe[]
   if (raw.length === 0) return [];
   if (raw.length === 1) {
     // Single keyframe — treat as "to" (offset = 1)
-    return [{ ...raw[0], offset: raw[0].offset ?? 1, easing: raw[0].easing ?? 'linear' }];
+    return [{ ...raw[0], offset: raw[0].offset ?? 1, easing: raw[0].easing ?? defaultEasing }];
   }
 
   // Fill in missing offsets
   const result: NormalizedKeyframe[] = raw.map((kf) => ({
     ...kf,
     offset: kf.offset ?? -1, // sentinel
-    easing: kf.easing ?? 'linear',
+    easing: kf.easing ?? defaultEasing,
   })) as NormalizedKeyframe[];
 
   // Ensure first and last have explicit offsets
@@ -177,7 +182,10 @@ export function interpolateKeyframes(
   progress: number,
 ): AnimatableProps {
   if (keyframes.length === 0) return {};
-  if (keyframes.length === 1) return { ...keyframes[0] };
+  if (keyframes.length === 1) {
+    const { offset, easing, ...props } = keyframes[0];
+    return props;
+  }
 
   // Clamp progress to [0, 1]
   const p = Math.max(0, Math.min(1, progress));

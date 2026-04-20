@@ -102,7 +102,10 @@ function applyProps(node: PNode, props: AnimatableProps): void {
   const styleUpdate: Record<string, unknown> = {};
   let hasStyle = false;
   for (const key of styleKeys) {
-    if (props[key] !== undefined) {
+    // Use hasOwnProperty so that restore calls with undefined-valued keys (i.e.
+    // props that were unset initially) still call setStyle() and clear any
+    // animated value — preventing stale values after fill:'none' or cancel().
+    if (Object.prototype.hasOwnProperty.call(props, key)) {
       styleUpdate[key] = props[key];
       hasStyle = true;
     }
@@ -161,7 +164,7 @@ export class PNodeAnimation {
     this._node = node;
     this._opts = resolveOptions(options);
     this._playbackRate = this._opts.playbackRate;
-    this._keyframes = normalizeKeyframes(effect);
+    this._keyframes = normalizeKeyframes(effect, this._opts.easing);
     this._initialProps = captureInitialProps(node);
 
     this.finished = new Promise<PNodeAnimation>((resolve, reject) => {

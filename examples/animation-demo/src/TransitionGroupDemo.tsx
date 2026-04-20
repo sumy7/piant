@@ -184,7 +184,7 @@ export function TransitionGroupDemo() {
         {TransitionGroup({
           appear: true,
           onBeforeEnter: (el) => {
-            el.alpha = 0;
+            el._animAlpha = 0;
             el._animTranslate.x = -30;
             el.markDirty();
           },
@@ -195,7 +195,7 @@ export function TransitionGroupDemo() {
             ).finished.then(done);
           },
           onAfterEnter: (el) => {
-            el.alpha = 1;
+            el._animAlpha = null;
             el._animTranslate.x = 0;
             el.markDirty();
           },
