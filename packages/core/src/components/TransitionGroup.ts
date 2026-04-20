@@ -1,5 +1,5 @@
 import { untracked } from 'mobx';
-import { effect, memo } from '../reactivity/effects';
+import { effect } from '../reactivity/effects';
 import { createState } from '../reactivity/hooks';
 import type { TransitionEvents } from './Transition';
 
@@ -76,6 +76,9 @@ export function TransitionGroup(props: TransitionGroupProps): JSX.Element {
   let nextId = 0;
   // Still-exiting elements — removed from For's list but kept for animation.
   const [exitingEntries, setExitingEntries] = createState<ExitEntry[]>([]);
+  // Explicit display list: active elements in their current order, with
+  // exiting elements interleaved at their original positions.
+  const [displayList, setDisplayList] = createState<JSX.Element[]>([]);
   let prevElements: JSX.Element[] = [];
   let initialized = false;
 
@@ -121,6 +124,7 @@ export function TransitionGroup(props: TransitionGroupProps): JSX.Element {
     untracked(() => {
       if (!initialized) {
         initialized = true;
+        setDisplayList([...currentElements]);
         if (props.appear) {
           for (const el of currentElements) doEnter(el);
         }
@@ -146,11 +150,79 @@ export function TransitionGroup(props: TransitionGroupProps): JSX.Element {
         for (const entry of newExiting) {
           const exitId = entry.id;
           doExit(entry.el, () => {
-            // Remove by id so that a re-added element with the same reference
-            // is not accidentally removed from the display.
             setExitingEntries((cur) => cur.filter((e) => e.id !== exitId));
+            // Only remove from display if the element is no longer active in
+            // For's output. If it was re-added before the animation finished,
+            // it should remain visible.
+            const isActive = resolveElements(props.children ?? null).some(
+              (el) => Object.is(el, entry.el),
+            );
+            if (!isActive) {
+              setDisplayList((cur) => cur.filter((el) => el !== entry.el));
+            }
           });
         }
+      }
+
+      // Rebuild the display list so that:
+      //  1. Active elements appear in the order given by currentElements.
+      //  2. Exiting elements stay at their original positions (relative to the
+      //     active element that preceded them in the previous display list).
+      // Elements that are re-active (in both currentSet and exitingEls) are
+      // treated purely as active and are NOT included in allExiting.
+      const allExiting = new Set(
+        [...exitingEls, ...newExiting.map((e) => e.el)].filter(
+          (el) => !currentSet.has(el),
+        ),
+      );
+
+      if (allExiting.size === 0) {
+        setDisplayList([...currentElements]);
+      } else {
+        const prevDisplay = displayList();
+
+        // For each exiting element, find the last active element that appeared
+        // before it in prevDisplay ("insert-after anchor"). If none exists, the
+        // element goes to the front of the list.
+        const noAnchor: JSX.Element[] = [];
+        const anchoredAfter = new Map<JSX.Element, JSX.Element>();
+
+        for (const exitEl of allExiting) {
+          const prevIdx = prevDisplay.indexOf(exitEl);
+          let insertAfter: JSX.Element | null = null;
+          for (let i = prevIdx - 1; i >= 0; i--) {
+            if (currentSet.has(prevDisplay[i])) {
+              insertAfter = prevDisplay[i];
+              break;
+            }
+          }
+          if (insertAfter === null) {
+            noAnchor.push(exitEl);
+          } else {
+            anchoredAfter.set(exitEl, insertAfter);
+          }
+        }
+
+        // Start with active elements in their current order.
+        const result: JSX.Element[] = [...currentElements];
+
+        // Insert anchored exiting elements immediately after their anchor.
+        for (const [exitEl, anchor] of anchoredAfter.entries()) {
+          const anchorIdx = result.indexOf(anchor);
+          result.splice(
+            anchorIdx === -1 ? result.length : anchorIdx + 1,
+            0,
+            exitEl,
+          );
+        }
+
+        // Insert no-anchor exiting elements at the beginning, preserving their
+        // relative order (process in reverse so unshift keeps them in order).
+        for (let i = noAnchor.length - 1; i >= 0; i--) {
+          result.unshift(noAnchor[i]);
+        }
+
+        setDisplayList(result);
       }
 
       // Trigger enter hooks for newly added elements.
@@ -162,15 +234,8 @@ export function TransitionGroup(props: TransitionGroupProps): JSX.Element {
     });
   });
 
-  // Return merged output: For/Index current elements + still-exiting elements.
-  // Elements that have been re-added to For's list are not duplicated.
-  return memo(() => {
-    const current = resolveElements(props.children ?? null);
-    const currentSet = new Set(current);
-    const exiting = exitingEntries()
-      .map((e) => e.el)
-      .filter((el) => !currentSet.has(el));
-    return [...current, ...exiting];
-  }) as unknown as JSX.Element;
+  // Return the explicit display list as a reactive JSX.Element.
+  // The renderer reads this getter and reconciles the DOM on each change.
+  return displayList as unknown as JSX.Element;
 }
 

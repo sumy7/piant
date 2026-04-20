@@ -312,6 +312,8 @@ export class PNode {
   }
 
   insertBefore(newChild: PNode, refChild: PNode | null) {
+    // Inserting a node before itself is a no-op (matches browser DOM semantics).
+    if (newChild === refChild) return;
     if (newChild._parent) {
       newChild._parent.removeChild(newChild);
     }

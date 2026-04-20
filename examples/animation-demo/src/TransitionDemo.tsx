@@ -132,6 +132,56 @@ export function TransitionDemo() {
   const SLIDE = 60;
   const DURATION = 380;
 
+  // Pre-create Show with a reactive `when` getter so that the Show memo
+  // re-evaluates when `showA` changes instead of holding a stale value.
+  const showContent = Show({
+    get when() {
+      return showA();
+    },
+    children: cardA,
+    fallback: cardB,
+  });
+
+  // Pre-create Transition outside JSX so it is instantiated once and holds
+  // its own state (mainEl, token, etc.) across re-renders.
+  // Pass `mode` as a getter so Transition tracks the reactive dependency and
+  // uses the current mode for each new transition.
+  const transitionContent = Transition({
+    get mode() {
+      return mode();
+    },
+    appear: true,
+    onBeforeEnter: (el) => {
+      el._animAlpha = 0;
+      el._animTranslate.x = showA() ? -SLIDE : SLIDE;
+      el.markDirty();
+    },
+    onEnter: (el, done) => {
+      el.animate(
+        [
+          { alpha: 0, x: showA() ? -SLIDE : SLIDE },
+          { alpha: 1, x: 0 },
+        ],
+        { duration: DURATION, easing: 'ease-out', fill: 'forwards' },
+      ).finished.then(done);
+    },
+    onAfterEnter: (el) => {
+      el._animAlpha = null;
+      el._animTranslate.x = 0;
+      el.markDirty();
+    },
+    onExit: (el, done) => {
+      el.animate(
+        [
+          { alpha: 1, x: 0 },
+          { alpha: 0, x: showA() ? SLIDE : -SLIDE },
+        ],
+        { duration: DURATION, easing: 'ease-in', fill: 'forwards' },
+      ).finished.then(done);
+    },
+    children: showContent,
+  });
+
   return (
     <View style={styles.root}>
       <Text style={styles.title}>Transition 组件</Text>
@@ -157,43 +207,7 @@ export function TransitionDemo() {
       </View>
 
       <View style={styles.stage}>
-        {Transition({
-          mode: mode(),
-          appear: true,
-          onBeforeEnter: (el) => {
-            el._animAlpha = 0;
-            el._animTranslate.x = showA() ? -SLIDE : SLIDE;
-            el.markDirty();
-          },
-          onEnter: (el, done) => {
-            el.animate(
-              [
-                { alpha: 0, x: showA() ? -SLIDE : SLIDE },
-                { alpha: 1, x: 0 },
-              ],
-              { duration: DURATION, easing: 'ease-out', fill: 'forwards' },
-            ).finished.then(done);
-          },
-          onAfterEnter: (el) => {
-            el._animAlpha = null;
-            el._animTranslate.x = 0;
-            el.markDirty();
-          },
-          onExit: (el, done) => {
-            el.animate(
-              [
-                { alpha: 1, x: 0 },
-                { alpha: 0, x: showA() ? SLIDE : -SLIDE },
-              ],
-              { duration: DURATION, easing: 'ease-in', fill: 'forwards' },
-            ).finished.then(done);
-          },
-          children: Show({
-            when: showA(),
-            children: cardA,
-            fallback: cardB,
-          }),
-        })}
+        {transitionContent}
       </View>
 
       <View style={styles.toggleBtn} onClick={handleToggle}>
