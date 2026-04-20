@@ -1,0 +1,22 @@
+{
+  "name": "@piant/examples-animation-demo",
+  "description": "动画示例：演示 Transition、TransitionGroup 组件与 @piant/animation 的动画能力。",
+  "private": true,
+  "scripts": {
+    "dev": "rsbuild dev --open",
+    "build": "rsbuild build",
+    "preview": "rsbuild preview"
+  },
+  "dependencies": {
+    "@piant/core": "workspace:*",
+    "@piant/animation": "workspace:*",
+    "@pixi/devtools": "^2.0.1",
+    "pixi.js": "^8.17.1"
+  },
+  "devDependencies": {
+    "@rsbuild/core": "1.7.5",
+    "@rsbuild/plugin-babel": "1.0.6",
+    "@piant/babel-preset-piant": "workspace:*",
+    "typescript": "^5.9.2"
+  }
+}

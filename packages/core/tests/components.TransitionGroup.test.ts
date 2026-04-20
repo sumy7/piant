@@ -241,7 +241,7 @@ describe('TransitionGroup', () => {
     });
   });
 
-  it('maintains element order: active first, still-exiting appended', () => {
+  it('maintains element order: exiting element stays at its original position', () => {
     root(() => {
       const [items, setItems] = createState<string[]>(['A', 'B', 'C']);
       const forOutput = simFor(() => items());
@@ -253,11 +253,11 @@ describe('TransitionGroup', () => {
         },
       }) as unknown as () => JSX.Element[];
 
-      // Remove B — B appended after active items [A, C]
+      // Remove B — B stays at its original position between A and C
       setItems(['A', 'C']);
-      expect(result()).toEqual(['A', 'C', 'B']);
+      expect(result()).toEqual(['A', 'B', 'C']);
 
-      // Reorder active items
+      // Reorder active items — B still follows its anchor (A)
       setItems(['C', 'A']);
       expect(result()).toEqual(['C', 'A', 'B']); // B still exiting
 

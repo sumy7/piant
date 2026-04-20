@@ -1,0 +1,43 @@
+{
+  "name": "@piant/animation",
+  "version": "0.0.1-alpha.0",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "rslib build",
+    "dev": "rslib build -w",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "popmotion": "^11.0.5"
+  },
+  "peerDependencies": {
+    "@piant/core": "workspace:*",
+    "pixi.js": ">=8.0.0"
+  },
+  "devDependencies": {
+    "@piant/core": "workspace:*",
+    "@rslib/core": "0.20.3",
+    "@vitest/ui": "^4.1.2",
+    "happy-dom": "^20.8.9",
+    "pixi.js": "^8.17.1",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.2"
+  },
+  "engines": {
+    "node": ">=18.12.0"
+  }
+}

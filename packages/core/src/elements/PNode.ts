@@ -30,6 +30,11 @@ export class PNode {
     position: 'static',
   };
 
+  // Animation translation offset (driven by @piant/animation)
+  _animTranslate: { x: number; y: number } = { x: 0, y: 0 };
+  // Animation alpha override (null = use _layoutStyle.opacity)
+  _animAlpha: number | null = null;
+
   // 实际的内容容器 = [_viewBg, _viewContent, _viewMask]
   _view = new Container();
   // 背景
@@ -215,13 +220,13 @@ export class PNode {
       return;
     }
     this._view.visible = true;
-    this._view.alpha = this._layoutStyle.opacity ?? 1.0;
+    this._view.alpha = this._animAlpha !== null ? this._animAlpha : (this._layoutStyle.opacity ?? 1.0);
 
     for (const child of this._children) {
       child.applyLayout();
     }
-    this._view.x = this._layoutNode.getComputedLeft();
-    this._view.y = this._layoutNode.getComputedTop();
+    this._view.x = this._layoutNode.getComputedLeft() + this._animTranslate.x;
+    this._view.y = this._layoutNode.getComputedTop() + this._animTranslate.y;
 
     this._view.emit('sizeChange', {
       width: this._layoutNode.getComputedWidth(),
@@ -307,6 +312,8 @@ export class PNode {
   }
 
   insertBefore(newChild: PNode, refChild: PNode | null) {
+    // Inserting a node before itself is a no-op (matches browser DOM semantics).
+    if (newChild === refChild) return;
     if (newChild._parent) {
       newChild._parent.removeChild(newChild);
     }

@@ -122,6 +122,11 @@ export function Transition(props: TransitionProps): JSX.Element {
         : raw;
     const child = toEl(resolved);
 
+    // Read mode outside untracked so MobX tracks it as a dependency.
+    // When props.mode is a reactive getter, changing it will cause the effect
+    // to re-run and pick up the new mode for the next transition.
+    const currentMode = props.mode ?? 'parallel';
+
     untracked(() => {
       if (!initialized) {
         initialized = true;
@@ -141,7 +146,7 @@ export function Transition(props: TransitionProps): JSX.Element {
 
       const prev = mainEl;
       mainEl = child;
-      const mode = props.mode ?? 'parallel';
+      const mode = currentMode;
       // Capture current token before async ops; callbacks compare against it
       // to detect whether a newer transition has superseded this one.
       const currentToken = ++token;
