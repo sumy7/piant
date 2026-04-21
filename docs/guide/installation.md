@@ -1,6 +1,43 @@
 # 安装与配置
 
-## 安装依赖
+## 使用 create-piant 创建新项目（推荐）
+
+最快捷的方式是使用官方脚手架工具 `create-piant` 创建一个开箱即用的项目：
+
+```bash
+# 使用 pnpm（推荐）
+pnpm create piant
+
+# 使用 npm
+npm create piant@latest
+
+# 使用 yarn
+yarn create piant
+```
+
+也可以直接指定项目名称：
+
+```bash
+pnpm create piant my-app
+```
+
+创建完成后进入项目目录，安装依赖并启动开发服务器：
+
+```bash
+cd my-app
+pnpm install
+pnpm dev
+```
+
+> **可用模板**
+>
+> | 模板 | 说明 |
+> |------|------|
+> | `basic` | 基础应用模板（rsbuild + @piant/core） |
+
+---
+
+## 在已有项目中安装依赖
 
 在已有项目中安装 Piant：
 

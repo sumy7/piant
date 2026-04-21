@@ -155,20 +155,27 @@ MVP 范围：
 
 目标：降低新项目接入门槛，统一工程配置。
 
-- [ ] 创建脚手架入口（建议：`scripts/create-piant-app` 或独立包）
-- [ ] 模板内容
-  - [ ] 基础应用模板（单页）
+- [x] 创建脚手架入口（`packages/create-piant`，以 `create-piant` 发布）
+- [x] 模板内容
+  - [x] 基础应用模板（单页，`template-basic`）
   - [ ] 路由模板（依赖 `@piant/router`）
   - [ ] 含调试模板（可选 `@piant/devtools`）
-- [ ] 默认集成 JSX preset（`@piant/babel-preset-piant`）
-- [ ] 默认 rsbuild 配置与 TypeScript 配置
-- [ ] 初始化后可一键运行（`pnpm install` + `pnpm dev`）
+- [x] 默认集成 JSX preset（`@piant/babel-preset-piant`）
+- [x] 默认 rsbuild 配置与 TypeScript 配置
+- [x] 初始化后可一键运行（`pnpm install` + `pnpm dev`）
 
 验收标准：
 
 - [ ] 从零创建项目后 3 分钟内完成首屏渲染
-- [ ] 模板项目通过 lint 与构建
-- [ ] 文档提供完整“创建-运行-发布”流程
+- [x] 模板项目通过 lint 与构建
+- [x] 文档提供完整"创建-运行-发布"流程
+
+进展备注（2026-04-21）：
+
+- 已新增 `packages/create-piant`（CLI 入口 `index.js`，支持 `pnpm create piant`）
+- 已创建 `template-basic` 基础应用模板（rsbuild + @piant/core + TypeScript）
+- CLI 交互式询问项目名、复制模板、替换包名、输出操作提示
+- 已更新 `docs/guide/quick-start.md` 与 `docs/guide/installation.md` 说明创建流程
 
 ---
 
