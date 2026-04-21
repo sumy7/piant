@@ -91,7 +91,8 @@ function toValidPackageName(name) {
     .toLowerCase()
     .replace(/\s+/g, '-')
     .replace(/^[^a-z0-9]+/, '')
-    .replace(/[^a-z0-9-._]+/g, '-');
+    .replace(/[^a-z0-9-._]+/g, '-')
+    .replace(/-+$/, '');
 }
 
 async function main() {
@@ -107,7 +108,12 @@ async function main() {
   }
 
   const targetDir = resolve(process.cwd(), projectName);
-  const packageName = toValidPackageName(basename(targetDir));
+  let packageName = toValidPackageName(basename(targetDir));
+
+  if (!packageName) {
+    const fallback = await prompt(`无法从路径推导包名，请输入包名 ${colorize('(默认: piant-app)', DIM)}: `);
+    packageName = toValidPackageName(fallback) || 'piant-app';
+  }
 
   if (!isEmptyDir(targetDir)) {
     console.log();

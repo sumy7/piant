@@ -39,7 +39,9 @@ pnpm dev
 
 ## 在已有项目中安装依赖
 
-在已有项目中安装 Piant：```bash
+在已有项目中安装 Piant：
+
+```bash
 # 使用 pnpm
 pnpm add @piant/core
 
