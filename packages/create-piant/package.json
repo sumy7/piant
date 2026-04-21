@@ -1,0 +1,28 @@
+{
+  "name": "create-piant",
+  "version": "0.0.1-alpha.0",
+  "description": "使用 CLI 创建 Piant 项目",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "create-piant": "./index.js"
+  },
+  "files": [
+    "index.js",
+    "template-*"
+  ],
+  "engines": {
+    "node": ">=18.12.0"
+  },
+  "keywords": [
+    "piant",
+    "create",
+    "scaffold",
+    "template"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sumy7/piant.git",
+    "directory": "packages/create-piant"
+  }
+}

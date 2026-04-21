@@ -9,7 +9,34 @@
 
 ## 创建新项目
 
-目前 Piant 没有官方脚手架工具，你可以参考 `examples/todos` 示例手动搭建，或克隆示例后修改。
+### 使用 create-piant（推荐）
+
+Piant 提供官方脚手架工具 `create-piant`，可一键生成项目模板：
+
+```bash
+# 使用 pnpm（推荐）
+pnpm create piant
+
+# 使用 npm
+npm create piant@latest
+
+# 使用 yarn
+yarn create piant
+```
+
+运行后，脚手架会询问项目名称并自动完成项目初始化。创建完成后执行：
+
+```bash
+cd <project-name>
+pnpm install
+pnpm dev
+```
+
+> 详细说明请参阅 [安装与配置](/guide/installation)。
+
+### 手动创建
+
+也可以参考 `examples/todos` 示例手动搭建，或克隆示例后修改。
 
 ```bash
 # 克隆仓库
