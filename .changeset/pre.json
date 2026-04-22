@@ -2,10 +2,15 @@
   "mode": "pre",
   "tag": "alpha",
   "initialVersions": {
+    "@piant/animation": "0.0.1",
     "@piant/babel-preset-piant": "0.0.1",
-    "@piant/core": "0.0.1"
+    "@piant/core": "0.0.1",
+    "create-piant": "0.0.1",
+    "@piant/hooks": "0.0.1",
+    "@piant/router": "0.0.1",
+    "@piant/store": "0.0.1"
   },
   "changesets": [
-    "gold-suits-lead"
+    "thick-dots-yell"
   ]
 }

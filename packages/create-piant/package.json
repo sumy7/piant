@@ -1,6 +1,6 @@
 {
   "name": "create-piant",
-  "version": "0.0.1-alpha.0",
+  "version": "0.0.2-alpha.0",
   "description": "使用 CLI 创建 Piant 项目",
   "license": "MIT",
   "type": "module",
@@ -24,5 +24,9 @@
     "type": "git",
     "url": "https://github.com/sumy7/piant.git",
     "directory": "packages/create-piant"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   }
 }

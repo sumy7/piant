@@ -15,7 +15,7 @@ module.exports = (context, options = {}) => {
             // 'Suspense',
             // 'SuspenseList',
             // 'Portal',
-            // 'Index',
+            'Index',
             'Dynamic',
             'ErrorBoundary',
           ],
