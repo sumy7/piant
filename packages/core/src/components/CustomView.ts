@@ -4,7 +4,7 @@ import { PCustomView } from '../elements/PCustomView';
 import type { PixiEventProps } from '../events';
 import { bindEventEffects, EVENT_PROPS } from '../events';
 import { createState } from '../reactivity';
-import { effect } from '../reactivity/effects';
+import { cleanup, effect } from '../reactivity/effects';
 import { splitProps } from '../reactivity/props';
 import { StyleSheet } from '../styleSheet';
 import type { StyleValue } from '../styleSheet';
@@ -31,11 +31,15 @@ export function CustomView(props: CustomViewProps) {
   const element = new PCustomView();
   props.ref?.(element);
 
-  element._view.on('sizeChange', (event) => {
+  const onSizeChange = (event: { width: number; height: number }) => {
     setSize({
       width: event.width,
       height: event.height,
     });
+  };
+  element._view.on('sizeChange', onSizeChange);
+  cleanup(() => {
+    element._view.off('sizeChange', onSizeChange);
   });
 
   effect(() => {

@@ -45,7 +45,6 @@ export class PNode {
   _viewMask = new Graphics();
 
   constructor() {
-    console.log('PNode created with id:', this._id, this);
     this.displayName = this.constructor.name;
     this._view.label = this.displayName;
     this._view.addChild(this._viewBg);

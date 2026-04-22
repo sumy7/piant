@@ -192,7 +192,6 @@ export function Text(props: TextProps) {
     });
 
     effect(() => {
-      console.log('Text children changed');
       const nodes = collectTextViewNodes(children(), getTextViewStyles());
       const contents = nodes
         .map((n) => {

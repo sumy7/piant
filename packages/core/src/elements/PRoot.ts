@@ -71,4 +71,9 @@ export class PRoot extends PView {
     );
     this.applyLayout();
   }
+
+  destroy() {
+    layoutTicker.remove(this.doLayout, this);
+    super.destroy();
+  }
 }
