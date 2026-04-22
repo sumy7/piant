@@ -6,7 +6,7 @@
 
 ## TODO
 
-- [ ] letter spacing
+- [x] letter spacing
 - [ ] break words
 - [ ] ellipsis
 - [ ] decoration (underline, strikethrough)

@@ -31,7 +31,7 @@
     "yoga-layout": "^3.2.1"
   },
   "devDependencies": {
-    "@chenglou/pretext": "0.0.5",
+    "@chenglou/pretext": "0.0.6",
     "@microsoft/api-extractor": "^7.53.1",
     "@rslib/core": "0.20.3",
     "@vitest/ui": "^4.1.2",

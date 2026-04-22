@@ -224,6 +224,7 @@ export class Typesetter {
       return {
         text: this.applyTextTransform(item.content ?? '', style.textTransform),
         font: this.toFont(style),
+        letterSpacing: style.letterSpacing,
         extraWidth: 0,
       };
     });

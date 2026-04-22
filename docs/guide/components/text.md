@@ -82,7 +82,7 @@ const icon = new Graphics().svg(iconSvg);
 | `fontStyle`     | `'normal' \| 'italic'`                                 | `'normal'`     | 字体风格                             |
 | `color`         | `ColorSource`                                          | `'#000000'`    | 文字颜色                             |
 | `lineHeight`    | `number \| string`                                     | `20`           | 行高（像素或倍数字符串如 `'1.5x'`）  |
-| `letterSpacing` | `number`                                               | `0`            | 字间距（像素）                       |
+| `letterSpacing` | `number`                                               | `0`            | 字间距（像素）；由 pretext 在断行时原生计算，渲染时逐字符绘制 |
 | `textAlign`     | `'left' \| 'center' \| 'right'`                        | `'left'`       | 文本对齐                             |
 | `textTransform` | `'none' \| 'uppercase' \| 'lowercase' \| 'capitalize'` | `'none'`       | 文本变换                             |
 | `whiteSpace`    | `'normal' \| 'nowrap'`                                 | `'normal'`     | 空白字符处理                         |
@@ -109,6 +109,30 @@ const icon = new Graphics().svg(iconSvg);
   }}
 >
   这是一段较长文本，用于演示在限定行数后自动追加省略号的效果。
+</Text>
+```
+
+### letterSpacing
+
+`letterSpacing` 设置字符间距（像素），基于 `@chenglou/pretext` 在断行阶段原生计算，渲染时逐字符绘制，兼顾精确布局与正确换行：
+
+```tsx
+<Text style={{ fontSize: 18, letterSpacing: 6 }}>
+  <Span>增大字间距的示例文本</Span>
+</Text>
+```
+
+`letterSpacing` 与 `textAlign`、`lineClamp + textOverflow` 可正常组合使用：
+
+```tsx
+<Text style={{ fontSize: 18, letterSpacing: 6, textAlign: 'center' }}>
+  <Span>居中对齐 + 字间距</Span>
+</Text>
+
+<Text
+  style={{ fontSize: 18, letterSpacing: 6, lineClamp: 1, textOverflow: 'ellipsis' }}
+>
+  <Span>字间距 + 省略截断：超出部分将被替换为省略号</Span>
 </Text>
 ```
 
