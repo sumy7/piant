@@ -30,7 +30,6 @@ export function insertExpression(
   marker?: any,
   unwrapArray?: any,
 ) {
-  console.log('[insertExpression]', { parent, value, current, marker });
   while (typeof current === 'function') {
     current = current();
   }
@@ -43,13 +42,10 @@ export function insertExpression(
 
   if (t === 'string' || t === 'number') {
     // todo textNode
-    console.warn('[insertExpression]text value', value);
-    console.warn('Text nodes must wrapped in <Text /> node');
+    console.warn('[piant] Text nodes must be wrapped in a <Text /> component.');
   } else if (value == null || t === 'boolean') {
-    console.info('[insertExpression]boolean value', value);
     current = cleanChildren(parent, current, marker);
   } else if (t === 'function') {
-    console.log('[insertExpression]function value', value);
     effect(() => {
       let v = value();
       while (typeof v === 'function') {
@@ -59,7 +55,6 @@ export function insertExpression(
     });
     return () => current;
   } else if (Array.isArray(value)) {
-    console.log('[insertExpression]array value', value);
     const array: any[] = [];
     const currentArray = current && Array.isArray(current);
     if (normalizeIncomingArray(array, value, current, unwrapArray)) {
@@ -85,7 +80,6 @@ export function insertExpression(
     }
     current = array;
   } else if (value instanceof PNode) {
-    console.info('[insertExpression]PNode value', value);
     if (Array.isArray(current)) {
       if (multi) {
         current = cleanChildren(parent, current, marker, value);

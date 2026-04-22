@@ -92,7 +92,7 @@ export function bindEventEffects(
       const newFn = eventProps[key as PixiEventProp];
       const pixiEventName = getPixiEventName(key);
       if (!pixiEventName) {
-        console.warn('bindEventEffects', key, 'is not a valid event property');
+        console.warn(`[piant] "${key}" is not a valid event property.`);
         return;
       }
 
