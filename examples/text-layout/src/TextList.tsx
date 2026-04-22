@@ -152,11 +152,31 @@ const TextList = () => {
               </Span>
             </Text>
             <Text style={{ fontSize: 20, color: 'brown', letterSpacing: 5 }}>
-              <Span>
-                Letter spacing test: The letters in this text should be spaced
-                out by 5 pixels, making it easier to read and visually
-                appealing.
-              </Span>
+              <Span>letterSpacing: 5 — slightly wider character gaps.</Span>
+            </Text>
+            <Text style={{ fontSize: 20, color: '#0055aa', letterSpacing: 10 }}>
+              <Span>letterSpacing: 10 — notably wider gaps, wraps earlier.</Span>
+            </Text>
+            <Text
+              style={{
+                fontSize: 20,
+                color: '#008855',
+                letterSpacing: 5,
+                textAlign: 'center',
+              }}
+            >
+              <Span>letterSpacing + center align</Span>
+            </Text>
+            <Text
+              style={{
+                fontSize: 20,
+                color: '#aa0055',
+                lineClamp: 1,
+                textOverflow: 'ellipsis',
+                letterSpacing: 6,
+              }}
+            >
+              <Span>letterSpacing + ellipsis clamp: long text gets cut off here</Span>
             </Text>
           </View>
 

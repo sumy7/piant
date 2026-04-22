@@ -134,4 +134,48 @@ describe('Typesetter', () => {
     expect(clampedResult.height).toBe(40);
     expect(noClampResult.height).toBeGreaterThan(clampedResult.height);
   });
+
+  it('letterSpacing widens measured width compared to no spacing', () => {
+    const items: InlineItem[] = [{ type: 'text', content: 'Hello' }];
+
+    const noSpacing = new Typesetter(items, {
+      fontSize: 16,
+      lineHeight: 20,
+      letterSpacing: 0,
+    });
+    const withSpacing = new Typesetter(items, {
+      fontSize: 16,
+      lineHeight: 20,
+      letterSpacing: 10,
+    });
+
+    const noSpacingResult = noSpacing.flow(Number.POSITIVE_INFINITY);
+    const withSpacingResult = withSpacing.flow(Number.POSITIVE_INFINITY);
+
+    expect(withSpacingResult.width).toBeGreaterThan(noSpacingResult.width);
+  });
+
+  it('letterSpacing causes more or equal line breaks under narrow width', () => {
+    const items: InlineItem[] = [
+      { type: 'text', content: 'Hello world test' },
+    ];
+
+    const noSpacing = new Typesetter(items, {
+      fontSize: 16,
+      lineHeight: 20,
+      letterSpacing: 0,
+    });
+    const withSpacing = new Typesetter(items, {
+      fontSize: 16,
+      lineHeight: 20,
+      letterSpacing: 10,
+    });
+
+    const noSpacingResult = noSpacing.flow(200);
+    const withSpacingResult = withSpacing.flow(200);
+
+    expect(withSpacingResult.height).toBeGreaterThanOrEqual(
+      noSpacingResult.height,
+    );
+  });
 });
