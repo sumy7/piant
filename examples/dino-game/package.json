@@ -1,0 +1,22 @@
+{
+  "name": "@piant/examples-dino-game",
+  "description": "Chrome 断网恐龙游戏示例：演示 onTick 游戏循环、响应式状态与键盘/点击交互。",
+  "private": true,
+  "scripts": {
+    "dev": "rsbuild dev --open",
+    "build": "rsbuild build",
+    "preview": "rsbuild preview"
+  },
+  "dependencies": {
+    "@piant/core": "workspace:*",
+    "@piant/hooks": "workspace:*",
+    "@pixi/devtools": "^2.0.1",
+    "pixi.js": "^8.17.1"
+  },
+  "devDependencies": {
+    "@rsbuild/core": "1.7.5",
+    "@rsbuild/plugin-babel": "1.0.6",
+    "@piant/babel-preset-piant": "workspace:*",
+    "typescript": "^5.9.2"
+  }
+}
