@@ -277,7 +277,7 @@ export function GameView({ state, onJump }: GameViewProps) {
           <View style={styles.overlay}>
             <Text style={styles.overlayTitle}>DINO GAME</Text>
             <View style={styles.gameOverLine} />
-            <Text style={styles.overlayHint}>Press Space / ↑ or tap to start</Text>
+            <Text style={styles.overlayHint}>Press Space / ↑ / W or tap to start</Text>
           </View>
         </Show>
 
@@ -286,7 +286,7 @@ export function GameView({ state, onJump }: GameViewProps) {
           <View style={styles.overlay}>
             <Text style={styles.overlayTitle}>GAME OVER</Text>
             <View style={styles.gameOverLine} />
-            <Text style={styles.overlayHint}>Press Space / ↑ or tap to restart</Text>
+            <Text style={styles.overlayHint}>Press Space / ↑ / W or tap to restart</Text>
           </View>
         </Show>
       </View>

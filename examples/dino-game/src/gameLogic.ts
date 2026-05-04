@@ -194,9 +194,11 @@ export function stepGame(state: GameState, deltaMS: number): GameState {
     .map((o) => ({ ...o, x: o.x - speed * dt }))
     .filter((o) => o.x + o.w > -20);
 
+  let nextObstacleGap = state.nextObstacleGap;
   if (obstacleTimer <= 0) {
     obstacles = [...obstacles, spawnObstacle()];
-    obstacleTimer = (randomGap() / speed) * 1000;
+    obstacleTimer = (nextObstacleGap / speed) * 1000;
+    nextObstacleGap = randomGap();
   }
 
   // ── Clouds ────────────────────────────────────────────────────────────────
@@ -230,6 +232,7 @@ export function stepGame(state: GameState, deltaMS: number): GameState {
       highScore: Math.max(state.highScore, score),
       scoreTimer,
       obstacleTimer,
+      nextObstacleGap,
       status: 'over',
     };
   }
@@ -244,6 +247,7 @@ export function stepGame(state: GameState, deltaMS: number): GameState {
     highScore: Math.max(state.highScore, score),
     scoreTimer,
     obstacleTimer,
+    nextObstacleGap,
   };
 }
 
