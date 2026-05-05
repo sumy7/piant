@@ -10,9 +10,11 @@ function drawClock(
   now: number,
 ) {
   const size = Math.min(width, height);
+  const r = size / 2 - 8;
+  if (r <= 0) return;
+
   const cx = width / 2;
   const cy = height / 2;
-  const r = size / 2 - 8;
 
   graphics.clear();
 
