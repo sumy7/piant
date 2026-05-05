@@ -1,5 +1,5 @@
+import { CustomView, createState, onTick, StyleSheet } from '@piant/core';
 import type { Graphics } from 'pixi.js';
-import { CustomView, StyleSheet, createState, onTick } from '@piant/core';
 
 const TWO_PI = Math.PI * 2;
 
