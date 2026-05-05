@@ -5,18 +5,24 @@ export let GAME_HEIGHT = 300;
 
 export let GROUND_Y = 240; // y position of the ground line
 
+// Physics — scale with GROUND_Y so the jump arc feels the same at any screen size.
+// Reference: Chrome Dino source (groundY=93px canvas): gravity≈2160 px/s², jv≈-600 px/s.
+// Ratios: GRAVITY = 23.2 * GROUND_Y,  JUMP_VELOCITY = -6.45 * GROUND_Y
+// This keeps air-time constant (~0.55 s) regardless of screen resolution.
+export let GRAVITY = 23.2 * GROUND_Y; // px/s²
+export let JUMP_VELOCITY = -6.45 * GROUND_Y; // px/s (upward)
+
 /** Call once (before render) with the actual screen size. */
 export function setGameDimensions(width: number, height: number): void {
   GAME_WIDTH = width;
   GAME_HEIGHT = height;
   GROUND_Y = Math.round(height * 0.78); // ground sits at ~78% of screen height
+  GRAVITY = 23.2 * GROUND_Y;
+  JUMP_VELOCITY = -6.45 * GROUND_Y;
 }
 export const DINO_X = 80; // fixed horizontal position of dino
 export const DINO_W = 44;
 export const DINO_H = 48;
-
-export const GRAVITY = 2000; // px/s²
-export const JUMP_VELOCITY = -700; // px/s (upward)
 
 export const INITIAL_SPEED = 400; // px/s
 export const SPEED_INCREMENT = 20; // px/s per second of play
