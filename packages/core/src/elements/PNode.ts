@@ -36,13 +36,24 @@ export class PNode {
   _animAlpha: number | null = null;
 
   // 实际的内容容器 = [_viewBg, _viewContent, _viewMask]
-  _view = new Container();
+  _view = new Container({
+    label: 'view',
+  });
   // 背景
-  _viewBg = new Graphics();
+  _viewBg = new Graphics({
+    label: 'bg',
+    zIndex: -1,
+  });
   // 子内容容器
-  _viewContent = new Container();
+  _viewContent = new Container({
+    label: 'content',
+    zIndex: 0,
+  });
   // 遮罩圆角
-  _viewMask = new Graphics();
+  _viewMask = new Graphics({
+    label: 'mask',
+    zIndex: 1,
+  });
 
   constructor() {
     this.displayName = this.constructor.name;
@@ -219,7 +230,10 @@ export class PNode {
       return;
     }
     this._view.visible = true;
-    this._view.alpha = this._animAlpha !== null ? this._animAlpha : (this._layoutStyle.opacity ?? 1.0);
+    this._view.alpha =
+      this._animAlpha !== null
+        ? this._animAlpha
+        : (this._layoutStyle.opacity ?? 1.0);
 
     for (const child of this._children) {
       child.applyLayout();

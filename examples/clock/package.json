@@ -1,0 +1,21 @@
+{
+  "name": "@piant/examples-clock",
+  "description": "时钟示例：演示 onTick 与 CustomView 绘制动态时钟。",
+  "private": true,
+  "scripts": {
+    "dev": "rsbuild dev --open",
+    "build": "rsbuild build",
+    "preview": "rsbuild preview"
+  },
+  "dependencies": {
+    "@piant/core": "workspace:*",
+    "@pixi/devtools": "^2.0.1",
+    "pixi.js": "^8.17.1"
+  },
+  "devDependencies": {
+    "@rsbuild/core": "1.7.5",
+    "@rsbuild/plugin-babel": "1.0.6",
+    "@piant/babel-preset-piant": "workspace:*",
+    "typescript": "^5.9.2"
+  }
+}

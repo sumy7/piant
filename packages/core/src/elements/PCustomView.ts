@@ -8,6 +8,8 @@ export class PCustomView extends PNode {
 
   constructor() {
     super();
-    this._viewContent.addChild(this._graphic);
+    // add graphic before _viewContent
+    const viewContentIndex = this._view.getChildIndex(this._viewContent);
+    this._view.addChildAt(this._graphic, viewContentIndex);
   }
 }
