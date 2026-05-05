@@ -1,24 +1,20 @@
 // Dino game constants and pure game-logic helpers
 
 export let GAME_WIDTH = 800;
-export let GAME_HEIGHT = 300;
+// Fixed game scene dimensions — obstacle heights and jump height are tuned to these values.
+export const GAME_HEIGHT = 300;
+export const GROUND_Y = 240; // y position of the ground line (80% of GAME_HEIGHT)
 
-export let GROUND_Y = 240; // y position of the ground line
+// Physics tuned for GROUND_Y=240.
+// Reference: Chrome Dino source (groundY=93px): gravity≈2160 px/s², jv≈-600 px/s.
+// Scaled by factor 240/93 ≈ 2.58 → air-time ~0.55 s, jump clears tallest obstacle (50px).
+export const GRAVITY = 5568; // px/s²
+export const JUMP_VELOCITY = -1548; // px/s (upward)
 
-// Physics — scale with GROUND_Y so the jump arc feels the same at any screen size.
-// Reference: Chrome Dino source (groundY=93px canvas): gravity≈2160 px/s², jv≈-600 px/s.
-// Ratios: GRAVITY = 23.2 * GROUND_Y,  JUMP_VELOCITY = -6.45 * GROUND_Y
-// This keeps air-time constant (~0.55 s) regardless of screen resolution.
-export let GRAVITY = 23.2 * GROUND_Y; // px/s²
-export let JUMP_VELOCITY = -6.45 * GROUND_Y; // px/s (upward)
-
-/** Call once (before render) with the actual screen size. */
-export function setGameDimensions(width: number, height: number): void {
+/** Call when the container resizes to keep obstacle spawn positions correct. */
+export function setGameDimensions(width: number, _height: number): void {
   GAME_WIDTH = width;
-  GAME_HEIGHT = height;
-  GROUND_Y = Math.round(height * 0.78); // ground sits at ~78% of screen height
-  GRAVITY = 23.2 * GROUND_Y;
-  JUMP_VELOCITY = -6.45 * GROUND_Y;
+  // Game height is intentionally fixed; only width adapts to the container.
 }
 export const DINO_X = 80; // fixed horizontal position of dino
 export const DINO_W = 44;

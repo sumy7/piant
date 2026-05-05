@@ -4,6 +4,7 @@ import {
   DINO_H,
   DINO_W,
   DINO_X,
+  GAME_HEIGHT,
   GROUND_Y,
 } from './gameLogic';
 
@@ -177,12 +178,14 @@ const styles = StyleSheet.create({
   root: {
     width: '100%',
     height: '100%',
-    backgroundColor: BG,
+    backgroundColor: '#000',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  // canvas fills the root (full screen)
+  // canvas: full width, fixed height — keeps game proportions regardless of screen size
   canvas: {
     width: '100%',
-    height: '100%',
+    height: GAME_HEIGHT,
     backgroundColor: BG,
   },
   scoreLabel: {
@@ -240,8 +243,7 @@ export function GameView(props: GameViewProps) {
   const scoreStr = () => String(s().score).padStart(5, '0');
   const hiStr = () => `HI ${String(s().highScore).padStart(5, '0')}`;
 
-  // Ground style must be computed at render time so it picks up the live GROUND_Y
-  // value that was set via setGameDimensions() before render.
+  // Ground line positioned at the fixed GROUND_Y constant.
   const groundStyle = () => ({
     position: 'absolute' as const,
     left: 0,
