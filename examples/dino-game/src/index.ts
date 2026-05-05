@@ -2,6 +2,7 @@ import { PRoot, render } from '@piant/core';
 import { initDevtools } from '@pixi/devtools';
 import { Application } from 'pixi.js';
 import { App } from './App';
+import { setGameDimensions } from './gameLogic';
 
 import './index.css';
 
@@ -12,6 +13,8 @@ import './index.css';
 
   document.body.appendChild(app.canvas);
 
+  setGameDimensions(app.screen.width, app.screen.height);
+
   const root = new PRoot(app.stage, {
     width: app.screen.width,
     height: app.screen.height,
@@ -20,6 +23,7 @@ import './index.css';
   render(App, root);
 
   window.onresize = () => {
+    setGameDimensions(app.screen.width, app.screen.height);
     root.setStyle({ width: app.screen.width, height: app.screen.height });
   };
 })();

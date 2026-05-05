@@ -4,8 +4,6 @@ import {
   DINO_H,
   DINO_W,
   DINO_X,
-  GAME_HEIGHT,
-  GAME_WIDTH,
   GROUND_Y,
 } from './gameLogic';
 
@@ -23,16 +21,17 @@ interface DinoProps {
   dino: Dino;
 }
 
-function DinoView({ dino }: DinoProps) {
+// Do NOT destructure props — preserves SolidJS-style reactive getters.
+function DinoView(props: DinoProps) {
   const c = DINO_COLOR;
-  const f = () => dino.frame;
+  const f = () => props.dino.frame;
 
   return (
     <View
       style={{
         position: 'absolute',
         left: DINO_X,
-        top: dino.y,
+        top: props.dino.y,
         width: DINO_W,
         height: DINO_H,
       }}
@@ -89,8 +88,8 @@ interface CactusProps {
   obs: Obstacle;
 }
 
-function CactusView({ obs }: CactusProps) {
-  const { kind, x, w, h } = obs;
+function CactusView(props: CactusProps) {
+  const { kind, x, w, h } = props.obs;
   const top = GROUND_Y - h;
 
   if (kind === 'cactus-s') {
@@ -156,13 +155,13 @@ interface CloudProps {
   cloud: Cloud;
 }
 
-function CloudView({ cloud }: CloudProps) {
+function CloudView(props: CloudProps) {
   return (
     <View
       style={{
         position: 'absolute',
-        left: cloud.x,
-        top: cloud.y,
+        left: props.cloud.x,
+        top: props.cloud.y,
         width: 72,
         height: 22,
         backgroundColor: CLOUD_COLOR,
@@ -178,44 +177,35 @@ const styles = StyleSheet.create({
   root: {
     width: '100%',
     height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
     backgroundColor: BG,
   },
+  // canvas fills the root (full screen)
   canvas: {
-    width: GAME_WIDTH,
-    height: GAME_HEIGHT,
+    width: '100%',
+    height: '100%',
     backgroundColor: BG,
-  },
-  ground: {
-    position: 'absolute',
-    left: 0,
-    top: GROUND_Y,
-    width: GAME_WIDTH,
-    height: 2,
-    backgroundColor: GROUND_COLOR,
   },
   scoreLabel: {
     position: 'absolute',
-    top: 12,
-    right: 12,
-    fontSize: 16,
+    top: 16,
+    right: 16,
+    fontSize: 18,
     fontWeight: 'bold',
     color: SCORE_COLOR,
   },
   hiLabel: {
     position: 'absolute',
-    top: 12,
-    right: 110,
-    fontSize: 16,
+    top: 16,
+    right: 120,
+    fontSize: 18,
     color: '#9e9e9e',
   },
   overlay: {
     position: 'absolute',
     left: 0,
     top: 0,
-    width: GAME_WIDTH,
-    height: GAME_HEIGHT,
+    width: '100%',
+    height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -230,7 +220,7 @@ const styles = StyleSheet.create({
     color: '#9e9e9e',
   },
   gameOverLine: {
-    width: GAME_WIDTH * 0.4,
+    width: 200,
     height: 2,
     backgroundColor: '#9e9e9e',
     marginBottom: 16,
@@ -243,17 +233,29 @@ interface GameViewProps {
   onJump: () => void;
 }
 
-export function GameView({ state, onJump }: GameViewProps) {
-  const s = () => state;
+// Do NOT destructure props — preserves SolidJS-style reactive getters.
+export function GameView(props: GameViewProps) {
+  const s = () => props.state;
 
   const scoreStr = () => String(s().score).padStart(5, '0');
   const hiStr = () => `HI ${String(s().highScore).padStart(5, '0')}`;
 
+  // Ground style must be computed at render time so it picks up the live GROUND_Y
+  // value that was set via setGameDimensions() before render.
+  const groundStyle = () => ({
+    position: 'absolute' as const,
+    left: 0,
+    top: GROUND_Y,
+    width: '100%' as const,
+    height: 2,
+    backgroundColor: GROUND_COLOR,
+  });
+
   return (
-    <View style={styles.root} onClick={onJump}>
+    <View style={styles.root} onClick={() => props.onJump()}>
       <View style={styles.canvas}>
         {/* Ground */}
-        <View style={styles.ground} />
+        <View style={groundStyle()} />
 
         {/* Clouds */}
         <For each={s().clouds}>

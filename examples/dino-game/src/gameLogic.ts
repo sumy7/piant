@@ -1,9 +1,16 @@
 // Dino game constants and pure game-logic helpers
 
-export const GAME_WIDTH = 800;
-export const GAME_HEIGHT = 300;
+export let GAME_WIDTH = 800;
+export let GAME_HEIGHT = 300;
 
-export const GROUND_Y = 240; // y position of the ground line
+export let GROUND_Y = 240; // y position of the ground line
+
+/** Call once (before render) with the actual screen size. */
+export function setGameDimensions(width: number, height: number): void {
+  GAME_WIDTH = width;
+  GAME_HEIGHT = height;
+  GROUND_Y = Math.round(height * 0.78); // ground sits at ~78% of screen height
+}
 export const DINO_X = 80; // fixed horizontal position of dino
 export const DINO_W = 44;
 export const DINO_H = 48;
