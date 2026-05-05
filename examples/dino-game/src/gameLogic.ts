@@ -104,7 +104,9 @@ function randomObstacleKind(): ObstacleKind {
 }
 
 function randomGap(): number {
-  return OBSTACLE_MIN_GAP + Math.random() * (OBSTACLE_MAX_GAP - OBSTACLE_MIN_GAP);
+  return (
+    OBSTACLE_MIN_GAP + Math.random() * (OBSTACLE_MAX_GAP - OBSTACLE_MIN_GAP)
+  );
 }
 
 export function spawnObstacle(): Obstacle {
@@ -223,9 +225,10 @@ export function stepGame(state: GameState, deltaMS: number): GameState {
   // ── Score ─────────────────────────────────────────────────────────────────
   let { score, scoreTimer } = state;
   scoreTimer += deltaMS;
-  if (scoreTimer >= SCORE_INTERVAL_MS) {
-    score += 1;
-    scoreTimer -= SCORE_INTERVAL_MS;
+  const scoreIncrements = Math.floor(scoreTimer / SCORE_INTERVAL_MS);
+  if (scoreIncrements > 0) {
+    score += scoreIncrements;
+    scoreTimer -= scoreIncrements * SCORE_INTERVAL_MS;
   }
 
   // ── Collision ─────────────────────────────────────────────────────────────

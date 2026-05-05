@@ -9,6 +9,7 @@ export function App() {
   useKey(' ', () => game.jump());
   useKey('ArrowUp', () => game.jump());
   useKey('w', () => game.jump());
+  useKey('W', () => game.jump());
 
   return <GameView state={game.state()} onJump={() => game.jump()} />;
 }
