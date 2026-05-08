@@ -18,6 +18,11 @@ export { View } from './components/View';
 export type { ImageStyles, LayoutStyles, ViewStyles, VisualStyles } from './elements/layout/viewStyles';
 export { PNode } from './elements/PNode';
 export { PRoot } from './elements/PRoot';
+export {
+  PScrollView,
+  type ScrollAlignment,
+  type ScrollIntoViewOptions,
+} from './elements/PScrollView';
 export type { TextStyles, TextViewStyles } from './elements/text/textStyles';
 export * from './h';
 export * from './hooks';

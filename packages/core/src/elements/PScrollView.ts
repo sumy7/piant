@@ -2,6 +2,23 @@ import { PNode } from './PNode';
 import { PView } from './PView';
 import { Trackpad } from './trackpad/Trackpad';
 
+/** Alignment option for a single scroll axis, modeled after DOM `Element.scrollIntoView`. */
+export type ScrollAlignment = 'start' | 'center' | 'end' | 'nearest';
+
+/**
+ * Options for {@link PScrollView.scrollIntoView}, controlling how the target node
+ * is aligned within the scroll viewport.
+ *
+ * - `block`  – vertical alignment (used when the scroll view is in vertical mode).
+ * - `inline` – horizontal alignment (used when the scroll view is in horizontal mode).
+ *
+ * Defaults: `{ block: 'start', inline: 'nearest' }`.
+ */
+export interface ScrollIntoViewOptions {
+  block?: ScrollAlignment;
+  inline?: ScrollAlignment;
+}
+
 export class PScrollView extends PNode {
   _trackpad: Trackpad;
   horizontal = false;
@@ -153,22 +170,138 @@ export class PScrollView extends PNode {
   }
 
   /**
-   * 将节点滚动到可见区域，节点需要是当前滚动容器的子节点，否则可能无法正确计算位置
+   * 将节点滚动到可见区域，节点需要是当前滚动容器的子节点，否则可能无法正确计算位置。
+   *
+   * @param node    - 目标节点（需在 scrollContent 子树内）
+   * @param options - 对齐方式，参考 DOM `Element.scrollIntoView` 的 block/inline 语义。
+   *                  垂直滚动视图使用 `block`，水平滚动视图使用 `inline`。
+   *                  默认值：`{ block: 'start', inline: 'nearest' }`。
    */
-  scrollIntoView(node: PNode) {
-    const nodeBounds = node._view.getBounds();
-    const scrollContentBounds = this.scrollContent._view.getBounds();
-    const scrollContainerBounds = this._view.getBounds();
-    // 节点距离容器的上边距
-    const offsetTop = nodeBounds.top - scrollContentBounds.top;
-    if (offsetTop + nodeBounds.height < scrollContainerBounds.height) {
-      // 节点整个在可视区域内
-      this.scrollY = 0;
+  scrollIntoView(node: PNode, options: ScrollIntoViewOptions = {}) {
+    if (!this._trackpad) return;
+
+    const { block = 'start', inline = 'nearest' } = options;
+
+    const offset = this.getNodeOffsetInContent(node);
+    if (!offset) return;
+    const nodeWidth = node._layoutNode.getComputedWidth();
+    const nodeHeight = node._layoutNode.getComputedHeight();
+    const viewportWidth =
+      this.scrollContentHolder._layoutNode.getComputedWidth();
+    const viewportHeight =
+      this.scrollContentHolder._layoutNode.getComputedHeight();
+
+    if (!this.horizontal) {
+      // Vertical mode: apply block alignment to the Y axis
+      this._trackpad.yAxis.value = this.computeScrollTarget(
+        block,
+        offset.y,
+        nodeHeight,
+        viewportHeight,
+        this._trackpad.yAxis.value,
+        this._trackpad.yAxis.max,
+        this._trackpad.yAxis.min,
+      );
     } else {
-      // 节点超出可视区域
-      this.scrollY =
-        scrollContainerBounds.height - offsetTop - nodeBounds.height;
+      // Horizontal mode: apply inline alignment to the X axis
+      this._trackpad.xAxis.value = this.computeScrollTarget(
+        inline,
+        offset.x,
+        nodeWidth,
+        viewportWidth,
+        this._trackpad.xAxis.value,
+        this._trackpad.xAxis.max,
+        this._trackpad.xAxis.min,
+      );
     }
+  }
+
+  /**
+   * Compute the target axis value that satisfies the requested alignment.
+   *
+   * Axis convention (matches existing trackpad usage):
+   *   - min = 0   (no over-scroll past the beginning)
+   *   - max ≤ 0   (e.g. -300 when content is 300 px taller than viewport)
+   *   - value ≤ 0 (negative = scrolled towards the end of the content)
+   *
+   * @param alignment    - Desired scroll alignment
+   * @param nodeOffset   - Node's offset from the start of the scroll content (px)
+   * @param nodeSize     - Node's size along the axis (px)
+   * @param viewportSize - Viewport size along the axis (px)
+   * @param currentValue - Current axis value (≤ 0)
+   * @param axisMax      - Axis maximum constraint (≤ 0)
+   * @param axisMin      - Axis minimum constraint (≥ 0, typically 0)
+   */
+  private computeScrollTarget(
+    alignment: ScrollAlignment,
+    nodeOffset: number,
+    nodeSize: number,
+    viewportSize: number,
+    currentValue: number,
+    axisMax: number,
+    axisMin: number,
+  ): number {
+    let target = currentValue;
+
+    switch (alignment) {
+      case 'start':
+        target = -nodeOffset;
+        break;
+      case 'center':
+        target = -(nodeOffset + nodeSize / 2 - viewportSize / 2);
+        break;
+      case 'end':
+        target = -(nodeOffset + nodeSize - viewportSize);
+        break;
+      case 'nearest': {
+        // Visible content range in content coordinates: [scrollStart, scrollEnd]
+        const scrollStart = -currentValue;
+        const scrollEnd = scrollStart + viewportSize;
+        const nodeEnd = nodeOffset + nodeSize;
+
+        if (nodeOffset >= scrollStart && nodeEnd <= scrollEnd) {
+          // Node is already fully visible – no adjustment needed
+          return currentValue;
+        }
+        if (nodeOffset < scrollStart) {
+          // Node is (partially) above/before the viewport – align start
+          target = -nodeOffset;
+        } else {
+          // Node is (partially) below/after the viewport – align end
+          target = -(nodeEnd - viewportSize);
+        }
+        break;
+      }
+    }
+
+    // Clamp to valid axis range
+    return Math.max(axisMax, Math.min(axisMin, target));
+  }
+
+  /**
+   * Walk up the PNode parent chain from `node` to `scrollContent` and accumulate
+   * the yoga-computed offsets, giving the node's position within the scroll content.
+   * Returns `null` if `node` is not a descendant of `scrollContent`.
+   */
+  private getNodeOffsetInContent(
+    node: PNode,
+  ): { x: number; y: number } | null {
+    let x = 0;
+    let y = 0;
+    let current: PNode | null = node;
+
+    while (current && current !== this.scrollContent) {
+      x += current._layoutNode.getComputedLeft();
+      y += current._layoutNode.getComputedTop();
+      current = current._parent;
+    }
+
+    if (!current) {
+      // node is not a descendant of scrollContent – cannot compute a valid offset
+      return null;
+    }
+
+    return { x, y };
   }
 
   get scrollY(): number {
