@@ -240,7 +240,7 @@ export class PScrollView extends PNode {
     axisMax: number,
     axisMin: number,
   ): number {
-    let target: number;
+    let target = currentValue;
 
     switch (alignment) {
       case 'start':

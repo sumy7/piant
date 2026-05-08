@@ -227,7 +227,14 @@ describe('PScrollView', () => {
       expect(scrollView.scrollX).toBe(0);
     });
 
-    it('default options use inline:nearest', () => {
+    it('default options use inline:nearest – scrolls when node is not visible', () => {
+      const { scrollView, node } = buildHorizontalScrollView(200, 50);
+      // scrollX=0 → visible [0,100], node [200,250] → beyond → align end → -150
+      scrollView.scrollIntoView(node);
+      expect(scrollView.scrollX).toBe(-150);
+    });
+
+    it('default options use inline:nearest – no change when already visible', () => {
       const { scrollView, node } = buildHorizontalScrollView(20, 50);
       // node [20,70] already visible → no change
       scrollView.scrollIntoView(node);
