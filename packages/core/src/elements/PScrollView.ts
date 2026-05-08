@@ -183,6 +183,7 @@ export class PScrollView extends PNode {
     const { block = 'start', inline = 'nearest' } = options;
 
     const offset = this.getNodeOffsetInContent(node);
+    if (!offset) return;
     const nodeWidth = node._layoutNode.getComputedWidth();
     const nodeHeight = node._layoutNode.getComputedHeight();
     const viewportWidth =
@@ -280,8 +281,11 @@ export class PScrollView extends PNode {
   /**
    * Walk up the PNode parent chain from `node` to `scrollContent` and accumulate
    * the yoga-computed offsets, giving the node's position within the scroll content.
+   * Returns `null` if `node` is not a descendant of `scrollContent`.
    */
-  private getNodeOffsetInContent(node: PNode): { x: number; y: number } {
+  private getNodeOffsetInContent(
+    node: PNode,
+  ): { x: number; y: number } | null {
     let x = 0;
     let y = 0;
     let current: PNode | null = node;
@@ -290,6 +294,11 @@ export class PScrollView extends PNode {
       x += current._layoutNode.getComputedLeft();
       y += current._layoutNode.getComputedTop();
       current = current._parent;
+    }
+
+    if (!current) {
+      // node is not a descendant of scrollContent – cannot compute a valid offset
+      return null;
     }
 
     return { x, y };
