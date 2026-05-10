@@ -9,20 +9,20 @@
 参考：`packages/core/src/elements/text/README.md`
 
 - [ ] 补齐 README 中已列出的文本能力
-  - [ ] letter spacing
-  - [ ] break words
+  - [x] letter spacing
+  - [x] break words
   - [x] ellipsis
   - [ ] decoration (underline / strikethrough)
-- [ ] 为 Text 增加对应 style/API（仅在必要时新增）
+- [x] 为 Text 增加对应 style/API（仅在必要时新增）
 - [x] 增加回归测试（覆盖中英文、换行、极窄容器、长文本）
 - [x] 提供示例页面（建议新增 `examples/text-layout` 对应演示场景）
-- [ ] 更新文档
-  - [ ] `docs/guide/components/text.md`
-  - [ ] `docs/reference/components.md`
+- [x] 更新文档
+  - [x] `docs/guide/components/text.md`
+  - [x] `docs/reference/components.md`
 
 验收标准：
 
-- [ ] `pnpm --filter @piant/core exec vitest run` 通过
+- [x] `pnpm --filter @piant/core exec vitest run` 通过
 - [ ] 新增能力在示例中可视化验证通过
 - [ ] 文档与 API 行为一致
 
@@ -31,6 +31,8 @@
 - 已支持 `textOverflow` + `lineClamp`（含 `ellipsis` 截断逻辑）
 - 已补充 `Typesetter` 相关回归测试并通过 core 全量测试
 - 已更新 `examples/text-layout` 增加独立 Text overflow 演示
+- 已支持 `letterSpacing` 与 `wordBreak`（基于 pretext 布局能力）
+- 已补充 Text 指南与组件 API 文档中的 `letterSpacing` / `lineClamp` / `textOverflow` 说明
 
 ---
 
@@ -55,9 +57,9 @@ MVP 范围：
 
 验收标准：
 
-- [ ] 新包可独立构建与类型导出
-- [ ] 至少 1 个完整示例可运行
-- [ ] 路由匹配/跳转/参数解析有测试覆盖
+- [x] 新包可独立构建与类型导出
+- [x] 至少 1 个完整示例可运行
+- [x] 路由匹配/跳转/参数解析有测试覆盖
 
 进展备注（2026-04-12）：
 
@@ -125,12 +127,12 @@ MVP 范围：
 
 MVP 范围：
 
-- [ ] 创建包目录：`packages/animation`
+- [x] 创建包目录：`packages/animation`
 - [ ] 集成 motion 核心能力（进入/离开/位移/透明度/缩放）
 - [ ] 核心 API：`createMotion`、`MotionView`、`useMotion`（命名可微调）
 - [ ] 支持与 `createState` 联动驱动动画（状态变化触发补间）
 - [ ] 提供基础预设效果集（`fade`、`slide`、`scale`）
-- [ ] 最小示例（建议新增 `examples/animation-basic`）
+- [x] 最小示例（已新增 `examples/animation-demo`）
 
 增强项（第二阶段）：
 
@@ -141,7 +143,7 @@ MVP 范围：
 
 验收标准：
 
-- [ ] `@piant/animation` 可独立构建与类型导出
+- [x] `@piant/animation` 可独立构建与类型导出
 - [ ] 至少 1 个完整示例可运行，覆盖 enter/exit + 状态驱动动画
 - [ ] 核心动画行为有测试覆盖（触发时机、结束回调、清理逻辑）
 - [ ] 在不启用动画时无额外行为回归（对现有组件渲染零影响）
