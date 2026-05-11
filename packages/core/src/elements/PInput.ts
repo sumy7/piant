@@ -27,9 +27,10 @@ export class PInput extends PNode {
   }
 
   applyInputElement() {
-    if (this._viewContent.children.indexOf(this._domContainer) < 0) {
-      this._viewContent.removeChildren();
-      this._viewContent.addChild(this._domContainer);
+    if (this._view.children.indexOf(this._domContainer) < 0) {
+      // add dom container before _viewContent
+      const viewContentIndex = this._view.getChildIndex(this._viewContent);
+      this._view.addChildAt(this._domContainer, viewContentIndex);
     }
 
     const width = this._layoutNode.getComputedWidth();

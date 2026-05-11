@@ -12,6 +12,7 @@ import type { StyleValue } from '../styleSheet';
 import { StyleSheet } from '../styleSheet';
 import type { ComponentChild, ComponentValue, RefCallback } from './types';
 import type { ImageSource } from '../elements/text';
+import { Sprite, Texture } from 'pixi.js';
 
 type TextElementLike = {
   type: string | { name?: string; displayName?: string };
@@ -19,14 +20,14 @@ type TextElementLike = {
     style?: StyleValue<TextStyles>;
     bold?: boolean;
     italic?: boolean;
-    src?: string;
+    src?: Sprite;
     children?: ComponentChild;
   } & Record<string, ComponentValue | ComponentValue[]>;
 };
 
 type TextViewNode =
   | { type: 'span'; content: string; style: TextStyles }
-  | { type: 'imageSpan'; src: string; style: TextStyles };
+  | { type: 'imageSpan'; src: Sprite; style: TextStyles };
 
 const isZeroArgGetter = (
   value: ComponentChild,
@@ -113,7 +114,7 @@ export function collectTextViewNodes(
       if (typeName === 'Img' || typeName === 'img') {
         nodes.push({
           type: 'imageSpan',
-          src: typeof props.src === 'string' ? props.src : '',
+          src: props.src ? props.src : Sprite.from(Texture.EMPTY),
           style: currentStyle,
         });
         return;
@@ -224,7 +225,7 @@ export function Span(props: SpanProps) {
 
 export function Img(props: ImgProps) {
   return memo(() => ({
-    type: 'imageSpan',
+    type: 'img',
     props: props,
   }));
 }

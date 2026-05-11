@@ -155,7 +155,9 @@ const TextList = () => {
               <Span>letterSpacing: 5 — slightly wider character gaps.</Span>
             </Text>
             <Text style={{ fontSize: 20, color: '#0055aa', letterSpacing: 10 }}>
-              <Span>letterSpacing: 10 — notably wider gaps, wraps earlier.</Span>
+              <Span>
+                letterSpacing: 10 — notably wider gaps, wraps earlier.
+              </Span>
             </Text>
             <Text
               style={{
@@ -176,7 +178,9 @@ const TextList = () => {
                 letterSpacing: 6,
               }}
             >
-              <Span>letterSpacing + ellipsis clamp: long text gets cut off here</Span>
+              <Span>
+                letterSpacing + ellipsis clamp: long text gets cut off here
+              </Span>
             </Text>
           </View>
 
