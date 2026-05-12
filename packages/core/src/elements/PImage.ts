@@ -1,28 +1,35 @@
-import { type Graphics, Sprite } from 'pixi.js';
+import { type Graphics, Sprite, Container } from 'pixi.js';
 import type { ImageStyles } from './layout/viewStyles';
 import { PNode } from './PNode';
 
 export class PImage extends PNode {
   _image: Sprite | Graphics | null = null;
   _layoutStyle: ImageStyles = {};
+  _imageContent = new Container({
+    label: 'image-content',
+  });
 
   constructor() {
     super();
+
+    // add image content before _viewContent
+    const viewContentIndex = this._view.getChildIndex(this._viewContent);
+    this._view.addChildAt(this._imageContent, viewContentIndex);
   }
 
   // Remove all children except the image
   private applyImage() {
     if (!this._image) {
-      this._viewContent.removeChildren();
+      this._imageContent.removeChildren();
       return;
     }
-    if (this._viewContent.children.indexOf(this._image) < 0) {
-      this._viewContent.addChild(this._image);
+    if (this._imageContent.children.indexOf(this._image) < 0) {
+      this._imageContent.addChild(this._image);
     }
-    const toRemove = this._viewContent.children.filter(
+    const toRemove = this._imageContent.children.filter(
       (child) => child !== this._image,
     );
-    this._viewContent.removeChild(...toRemove);
+    this._imageContent.removeChild(...toRemove);
   }
 
   private applyObjectFit() {

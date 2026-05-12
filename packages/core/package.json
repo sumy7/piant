@@ -26,12 +26,12 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@chenglou/pretext": "0.0.7",
     "mobx": "^6.15.0",
     "pixi.js": "^8.17.1",
     "yoga-layout": "^3.2.1"
   },
   "devDependencies": {
-    "@chenglou/pretext": "0.0.7",
     "@microsoft/api-extractor": "^7.53.1",
     "@rslib/core": "0.20.3",
     "@vitest/ui": "^4.1.2",

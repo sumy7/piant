@@ -293,6 +293,9 @@ importers:
 
   packages/core:
     dependencies:
+      '@chenglou/pretext':
+        specifier: 0.0.7
+        version: 0.0.7
       mobx:
         specifier: ^6.15.0
         version: 6.15.0
@@ -303,9 +306,6 @@ importers:
         specifier: ^3.2.1
         version: 3.2.1
     devDependencies:
-      '@chenglou/pretext':
-        specifier: 0.0.7
-        version: 0.0.7
       '@microsoft/api-extractor':
         specifier: ^7.53.1
         version: 7.53.1(@types/node@22.18.9)
