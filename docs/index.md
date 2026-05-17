@@ -5,6 +5,9 @@ hero:
   name: "Piant"
   text: "Canvas 布局引擎"
   tagline: 基于 PixiJS，以声明式 JSX 构建高性能 2D 画布界面
+  image:
+    src: /piant-3d.png
+    alt: Piant
   actions:
     - theme: brand
       text: 快速开始
