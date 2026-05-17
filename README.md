@@ -1,5 +1,8 @@
 <div align="center">
-  <h1>Piant</h1>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./docs/public/piant-logo-dark.svg">
+    <img src="./docs/public/piant-logo-light.svg" alt="Piant" height="80">
+  </picture>
   <p>基于 PixiJS 的画布布局引擎 · A Canvas Layout Engine Powered by PixiJS</p>
 
   [![npm version](https://img.shields.io/npm/v/@piant/core.svg)](https://www.npmjs.com/package/@piant/core)

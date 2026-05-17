@@ -6,7 +6,18 @@ export default defineConfig({
   lang: 'zh-CN',
   ignoreDeadLinks: [/^\/examples\//],
 
+  head: [
+    ['link', { rel: 'icon', href: '/piant-logo-light.svg', media: '(prefers-color-scheme: light)' }],
+    ['link', { rel: 'icon', href: '/piant-logo-dark.svg', media: '(prefers-color-scheme: dark)' }],
+  ],
+
   themeConfig: {
+    logo: {
+      light: '/piant-logo-light.svg',
+      dark: '/piant-logo-dark.svg',
+      alt: 'Piant',
+    },
+
     nav: [
       { text: '指南', link: '/guide/introduction' },
       { text: 'Animation', link: '/animation/introduction' },
