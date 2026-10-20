@@ -19,6 +19,7 @@
       "**/examples/**",
       "**/e2e/**",
       "**/scripts/**",
+      "**/docs/**",
       "**/website/**",
       "!**/node_modules",
       "!**/.nx",

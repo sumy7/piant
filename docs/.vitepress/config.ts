@@ -1,10 +1,19 @@
 import { defineConfig } from 'vitepress';
+import { piantExamples } from './piantExamples';
 
 export default defineConfig({
   title: 'Piant',
   description: '基于 PixiJS 的画布布局引擎',
   lang: 'zh-CN',
   ignoreDeadLinks: [/^\/examples\//],
+  vite: {
+    plugins: [piantExamples()],
+    // yoga-layout initializes its WASM module using top-level await.
+    build: { target: 'es2022' },
+    optimizeDeps: { esbuildOptions: { target: 'es2022' } },
+    // Keep a single runtime when examples import the workspace packages.
+    resolve: { dedupe: ['@piant/core', 'pixi.js', 'vue'] },
+  },
 
   head: [
     ['link', { rel: 'icon', href: '/piant-logo-light.svg', media: '(prefers-color-scheme: light)' }],

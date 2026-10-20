@@ -35,6 +35,8 @@ Piant 的布局系统基于 [Yoga Layout](https://www.yogalayout.dev/)，提供�
 | `rowGap` | `number` | 行间距 |
 | `columnGap` | `number` | 列间距 |
 
+<LiveExample example="layout" title="切换 Flexbox 方向" />
+
 ### 子项属性
 
 | 属性 | 类型 | 说明 |

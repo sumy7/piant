@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ESNext", "DOM"],
+    "strict": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "jsx": "preserve",
+    "types": ["node", "vite/client", "@piant/core/jsx-runtime"]
+  },
+  "include": [".vitepress/**/*.ts", "examples/**/*.tsx", "env.d.ts"]
+}
