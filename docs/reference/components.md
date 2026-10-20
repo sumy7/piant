@@ -19,7 +19,7 @@ type ViewProps = {
 ```ts
 type ImageProps = {
   src: Sprite | Graphics;
-  style?: ImageStyles | ImageStyles[];
+  style?: StyleValue<ImageStyles>;
   ref?: (el: PImage) => void;
 } & PixiEventProps<PImage>;
 
@@ -27,6 +27,8 @@ interface ImageStyles extends ViewStyles {
   objectFit?: 'contain' | 'cover' | 'fill' | 'none';
 }
 ```
+
+`objectFit` 默认为 `contain`；`cover` 居中并沿容器圆角裁剪图像层，子节点仍由 `overflow` 控制。`none` 恢复每次布局读取的未缩放尺寸（Sprite 的纹理 `orig` / Graphics 绘图 bounds），左上对齐。源对象和纹理由调用者管理。
 
 详见：[Image 组件文档](/guide/components/image)
 

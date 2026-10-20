@@ -58,5 +58,12 @@ export type VisualStyles = {
 export type ViewStyles = Partial<VisualStyles> & YogaStyles;
 
 export interface ImageStyles extends ViewStyles {
+  /**
+   * Fits the source's unscaled geometry/texture dimensions to the layout box.
+   * Defaults to contain. Cover centers and clips only the image to the box's
+   * rounded outline; overflow continues to control clipping of child nodes.
+   * None restores intrinsic dimensions at the top-left. Image manages the
+   * source's position and scale; changes are read again on each layout pass.
+   */
   objectFit?: 'contain' | 'cover' | 'fill' | 'none';
 }
