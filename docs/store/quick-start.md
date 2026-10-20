@@ -91,6 +91,8 @@ export function StatusBar() {
 
 `StatusBar` 和 `Counter` 中的 `store.count` 引用同一个 observable，任何一侧的更新都会同步到另一侧。
 
+<LiveExample example="store" title="两个组件共享计数" />
+
 ## 4. 在组件外部使用
 
 通过 store 的静态方法，可以在任何地方读写状态，无需组件上下文：

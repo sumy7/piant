@@ -123,6 +123,8 @@ export function App() {
 }
 ```
 
+<LiveExample example="counter" title="运行第一个计数器" />
+
 ## 配置 Babel
 
 在使用 JSX 语法前，需要配置 Babel 预设。以 Rsbuild 为例：

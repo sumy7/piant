@@ -46,17 +46,21 @@ export function App() {
   return (
     <View>
       <RouterProvider router={router}>
-        <RouterErrorBoundary fallback={(error) => <ErrorPage error={error} />}>
-          <RouteView
-            fallback={<NotFoundPage />}
-            loadingFallback={<LoadingPage />}
-          />
-        </RouterErrorBoundary>
+        {() => (
+          <RouterErrorBoundary fallback={(error) => <ErrorPage error={error} />}>
+            <RouteView
+              fallback={<NotFoundPage />}
+              loadingFallback={<LoadingPage />}
+            />
+          </RouterErrorBoundary>
+        )}
       </RouterProvider>
     </View>
   );
 }
 ```
+
+`RouterProvider` 的子树使用函数延迟创建，确保 `RouteView`、`useNavigate` 和 `useRoute` 在路由上下文中执行。
 
 ## 4. 使用 useNavigate 导航
 
@@ -88,6 +92,8 @@ function RouteInfo() {
   );
 }
 ```
+
+<LiveExample example="router" title="在示例内切换路由" />
 
 ## 6. 添加守卫与重定向
 

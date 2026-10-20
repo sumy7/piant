@@ -15,27 +15,30 @@ import '@piant/animation';
 
 ## 1. 淡入 / 淡出
 
-通过 `alpha` 关键帧实现透明度动画：
-
-点击事件的 `target` 是 Pixi 对象；使用 `View` 的 `ref` 获取 Piant 节点，再调用 `.animate()`：
+通过 `alpha` 关键帧实现透明度动画。点击事件的 `target` 是 Pixi 对象；使用 `View` 的 `ref` 获取 Piant 节点，再调用 `.animate()`：
 
 ```tsx
-import { View, type PNode } from '@piant/core';
+import { onCleanup, type PNode, View } from '@piant/core';
 import '@piant/animation';
+import type { PNodeAnimation } from '@piant/animation';
 
 export function FadeDemo() {
-  let viewRef: PNode | undefined;
+  let node: PNode | undefined;
+  let animation: PNodeAnimation | undefined;
+  onCleanup(() => animation?.cancel());
 
   function handleClick() {
-    viewRef?.animate(
+    animation?.cancel();
+    animation = node?.animate(
       [{ alpha: 1 }, { alpha: 0 }, { alpha: 1 }],
       { duration: 1000, easing: 'ease-in-out' },
     );
+    animation?.finished.catch(() => {});
   }
 
   return (
     <View
-      ref={(el) => { viewRef = el; }}
+      ref={(el) => { node = el; }}
       style={{ width: 100, height: 100, backgroundColor: '#4f46e5' }}
       onClick={handleClick}
     />
@@ -43,27 +46,34 @@ export function FadeDemo() {
 }
 ```
 
+<LiveExample example="animation" title="点击播放淡入动画" />
+
 ## 2. 位移动画
 
 `x` / `y` 属性是叠加在 Flexbox 布局上的**偏移量**，不会影响其他节点的布局：
 
 ```tsx
-import { View, type PNode } from '@piant/core';
+import { onCleanup, type PNode, View } from '@piant/core';
 import '@piant/animation';
+import type { PNodeAnimation } from '@piant/animation';
 
 export function SlideDemo() {
-  let viewRef: PNode | undefined;
+  let node: PNode | undefined;
+  let animation: PNodeAnimation | undefined;
+  onCleanup(() => animation?.cancel());
 
   function handleClick() {
-    viewRef?.animate(
+    animation?.cancel();
+    animation = node?.animate(
       [{ x: 0 }, { x: 200 }],
       { duration: 600, easing: 'ease-out', fill: 'forwards' },
     );
+    animation?.finished.catch(() => {});
   }
 
   return (
     <View
-      ref={(el) => { viewRef = el; }}
+      ref={(el) => { node = el; }}
       style={{ width: 80, height: 80, backgroundColor: '#10b981' }}
       onClick={handleClick}
     />

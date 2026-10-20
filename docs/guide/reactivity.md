@@ -66,6 +66,8 @@ setFirstName('李');
 console.log(fullName()); // "李三"（重新计算）
 ```
 
+<LiveExample example="counter" title="状态与派生值" />
+
 ### 自定义相等比较
 
 ```ts
