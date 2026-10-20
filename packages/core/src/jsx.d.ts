@@ -14,11 +14,11 @@ import type { PixiEventProps } from './events';
 type Eventful<T> = T & PixiEventProps;
 
 interface PiantIntrinsicElements {
-  view: Eventful<ViewProps>;
+  view: ViewProps;
   text: Eventful<TextProps>;
-  image: Eventful<ImageProps>;
-  customview: Eventful<CustomViewProps>;
-  scrollview: Eventful<ScrollViewProps>;
+  image: ImageProps;
+  customview: CustomViewProps;
+  scrollview: ScrollViewProps;
   show: ShowProps<ComponentValue>;
   for: ForProps<ComponentValue>;
   index: IndexProps<ComponentValue>;

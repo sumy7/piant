@@ -1,14 +1,6 @@
+import type { AllFederatedEventMap, Container, EventMode } from 'pixi.js';
+import type { PNode } from '../elements/PNode';
 import { cleanup, effect } from '../reactivity/effects';
-
-type EventCallback = (...args: object[]) => void;
-
-type EventTargetLike = {
-  on: (eventName: string, handler: EventCallback) => void;
-  off: (eventName: string, handler: EventCallback) => void;
-  interactive?: boolean;
-};
-
-export type PixiEventHandler = (event: object) => void;
 
 /**
  * React 风格事件属性到 PIXI.js 事件名称的映射
@@ -33,85 +25,106 @@ export const eventMap = {
   onGlobalMouseMove: 'globalmousemove',
   onGlobalTouchMove: 'globaltouchmove',
   onGlobalPointerMove: 'globalpointermove',
-} as const;
+} as const satisfies Record<string, keyof AllFederatedEventMap>;
 
 export type PixiEventProp = keyof typeof eventMap;
 
-export type PixiEventProps = Partial<Record<PixiEventProp, PixiEventHandler>>;
+export type PixiEventHandler<
+  TNode extends PNode = PNode,
+  TEvent extends keyof AllFederatedEventMap = keyof AllFederatedEventMap,
+> = (event: AllFederatedEventMap[TEvent], node: TNode) => void;
+
+export type PixiEventProps<TNode extends PNode = PNode> = {
+  [Prop in PixiEventProp]?: PixiEventHandler<TNode, (typeof eventMap)[Prop]>;
+};
 
 export const EVENT_PROPS = Object.keys(eventMap) as PixiEventProp[];
-/**
- * 获取 PIXI.js 事件名称
- * @param reactEventName React 风格的事件属性名
- * @returns PIXI.js 事件名称
- */
-export function getPixiEventName(reactEventName: string): string | undefined {
-  return eventMap[reactEventName as PixiEventProp];
-}
 
-/**
- * 检查是否为事件属性
- * @param propName 属性名
- * @returns 是否为事件属性
- */
-export function isEventProp(propName: string): boolean {
-  return propName in eventMap;
-}
-
-/**
- * 从 props 中提取事件处理器
- * @param props 组件属性
- * @returns 事件处理器映射
- */
-export function extractEventHandlers(
-  props: PixiEventProps,
-): Partial<Record<string, PixiEventHandler>> {
-  const eventHandlers: Partial<Record<string, PixiEventHandler>> = {};
-  for (const [propName, handler] of Object.entries(props)) {
-    if (isEventProp(propName) && typeof handler === 'function') {
-      const pixiEventName = getPixiEventName(propName);
-      if (pixiEventName) {
-        eventHandlers[pixiEventName] = handler;
-      }
-    }
+function createBinding<TNode extends PNode, Prop extends PixiEventProp>(
+  node: TNode,
+  eventProps: PixiEventProps<TNode>,
+  prop: Prop,
+) {
+  const element = node._view;
+  const eventName: (typeof eventMap)[PixiEventProp] = eventMap[prop];
+  let handler: PixiEventProps<TNode>[Prop];
+  let listening = false;
+  // Keep each prop's listener identity, including aliases of the same Pixi event.
+  function listener(
+    this: Container,
+    event: AllFederatedEventMap[(typeof eventMap)[PixiEventProp]],
+  ) {
+    // The wrapper is registered only for eventMap[prop]; retain that correlation
+    // across EventEmitter's union of event argument tuples.
+    handler?.call(
+      this,
+      event as AllFederatedEventMap[(typeof eventMap)[Prop]],
+      node,
+    );
   }
 
-  return eventHandlers;
+  return {
+    update() {
+      const next = eventProps[prop];
+      handler = typeof next === 'function' ? next : undefined;
+      const enabled = handler !== undefined;
+      if (enabled !== listening) {
+        if (enabled) element.on(eventName, listener);
+        else element.off(eventName, listener);
+        listening = enabled;
+      }
+      return enabled;
+    },
+    dispose() {
+      if (listening) element.off(eventName, listener);
+      listening = false;
+      handler = undefined;
+    },
+  };
 }
 
-export function bindEventEffects(
-  element: EventTargetLike,
-  eventProps: PixiEventProps,
+export function bindEventEffects<TNode extends PNode>(
+  node: TNode,
+  eventProps: PixiEventProps<TNode>,
 ) {
+  const element = node._view;
+  const bindings = EVENT_PROPS.filter((prop) =>
+    Object.hasOwn(eventProps, prop),
+  ).map((prop) => createBinding(node, eventProps, prop));
+  let hasHandlers = false;
+  let previousMode: EventMode | undefined;
+
+  function restoreEventMode() {
+    // Restore only the value we still own; preserve later external mode changes.
+    if (previousMode !== undefined && element.eventMode === 'static') {
+      element.eventMode = previousMode;
+    }
+    previousMode = undefined;
+  }
+
   effect(() => {
-    const keys = Object.keys(eventProps);
+    let enabled = false;
+    for (const binding of bindings) {
+      enabled = binding.update() || enabled;
+    }
+    if (enabled === hasHandlers) return;
+    hasHandlers = enabled;
+    if (!enabled) {
+      restoreEventMode();
+    } else if (
+      element.eventMode === undefined ||
+      element.eventMode === 'passive' ||
+      element.eventMode === 'auto'
+    ) {
+      // Pixi initializes its passive default only when the renderer starts.
+      previousMode = element.eventMode ?? 'passive';
+      element.eventMode = 'static';
+    }
+  });
 
-    const eventHandlers: Partial<Record<string, EventCallback>> = {};
-    let hasPixiEvent = false;
-    keys.forEach((key) => {
-      const newFn = eventProps[key as PixiEventProp];
-      const pixiEventName = getPixiEventName(key);
-      if (!pixiEventName) {
-        console.warn(`[piant] "${key}" is not a valid event property.`);
-        return;
-      }
-
-      if (newFn) {
-        hasPixiEvent = true;
-
-        element.on(pixiEventName, newFn);
-        eventHandlers[pixiEventName] = newFn;
-      }
-    });
-    element.interactive = hasPixiEvent;
-
-    cleanup(() => {
-      Object.keys(eventHandlers).forEach((pixiEventName) => {
-        const handler = eventHandlers[pixiEventName];
-        if (handler) {
-          element.off(pixiEventName, handler);
-        }
-      });
-    });
+  // This cleanup belongs to the component lifetime, not each effect rerun.
+  cleanup(() => {
+    for (const binding of bindings) binding.dispose();
+    restoreEventMode();
   });
 }

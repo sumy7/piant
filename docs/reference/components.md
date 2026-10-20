@@ -7,7 +7,7 @@ type ViewProps = {
   style?: ViewStyles | ViewStyles[];
   children?: any;
   ref?: (el: PView) => void;
-} & EventProps;
+} & PixiEventProps<PView>;
 ```
 
 详见：[View 组件文档](/guide/components/view)
@@ -21,7 +21,7 @@ type ImageProps = {
   src: Sprite | Graphics;
   style?: ImageStyles | ImageStyles[];
   ref?: (el: PImage) => void;
-} & EventProps;
+} & PixiEventProps<PImage>;
 
 interface ImageStyles extends ViewStyles {
   objectFit?: 'contain' | 'cover' | 'fill' | 'none';
@@ -85,7 +85,7 @@ type ScrollViewProps = {
   children?: any;
   ref?: (el: PScrollView) => void;
   horizontal?: boolean;
-} & EventProps;
+} & PixiEventProps<PScrollView>;
 ```
 
 详见：[ScrollView 组件文档](/guide/components/scrollview)
@@ -99,7 +99,7 @@ type CustomViewProps = {
   style?: ViewStyles | ViewStyles[];
   onDraw?: (graphics: Graphics, width: number, height: number) => void;
   ref?: (el: PCustomView) => void;
-} & EventProps;
+} & PixiEventProps<PCustomView>;
 ```
 
 详见：[CustomView 组件文档](/guide/components/customview)
@@ -207,33 +207,36 @@ function ErrorBoundary(props: {
 
 ---
 
-## 事件 Props（EventProps）
+## 事件 Props（PixiEventProps）
 
 所有支持交互的组件（View、Image、ScrollView、CustomView）均接受以下事件 props：
 
 ```ts
-type EventProps = {
-  onClick?: (event: FederatedPointerEvent) => void;
-  onPointerDown?: (event: FederatedPointerEvent) => void;
-  onPointerUp?: (event: FederatedPointerEvent) => void;
-  onPointerMove?: (event: FederatedPointerEvent) => void;
-  onPointerEnter?: (event: FederatedPointerEvent) => void;
-  onPointerLeave?: (event: FederatedPointerEvent) => void;
-  onPointerOver?: (event: FederatedPointerEvent) => void;
-  onPointerOut?: (event: FederatedPointerEvent) => void;
-  onPointerCancel?: (event: FederatedPointerEvent) => void;
-  onPointerUpOutside?: (event: FederatedPointerEvent) => void;
-  onPointerTap?: (event: FederatedPointerEvent) => void;
-  onRightClick?: (event: FederatedPointerEvent) => void;
-  onRightDown?: (event: FederatedPointerEvent) => void;
-  onRightUp?: (event: FederatedPointerEvent) => void;
-  onRightUpOutside?: (event: FederatedPointerEvent) => void;
-  onWheel?: (event: FederatedWheelEvent) => void;
-  onGlobalMouseMove?: (event: FederatedPointerEvent) => void;
-  onGlobalTouchMove?: (event: FederatedPointerEvent) => void;
-  onGlobalPointerMove?: (event: FederatedPointerEvent) => void;
-  // ... 完整列表详见事件处理文档
+type PixiEventProps<TNode extends PNode = PNode> = {
+  onClick?: (event: FederatedPointerEvent, node: TNode) => void;
+  onPointerDown?: (event: FederatedPointerEvent, node: TNode) => void;
+  onPointerUp?: (event: FederatedPointerEvent, node: TNode) => void;
+  onPointerMove?: (event: FederatedPointerEvent, node: TNode) => void;
+  onPointerEnter?: (event: FederatedPointerEvent, node: TNode) => void;
+  onPointerLeave?: (event: FederatedPointerEvent, node: TNode) => void;
+  onPointerOver?: (event: FederatedPointerEvent, node: TNode) => void;
+  onPointerOut?: (event: FederatedPointerEvent, node: TNode) => void;
+  onPointerCancel?: (event: FederatedPointerEvent, node: TNode) => void;
+  onPointerUpOutside?: (event: FederatedPointerEvent, node: TNode) => void;
+  onPointerTap?: (event: FederatedPointerEvent, node: TNode) => void;
+  onRightClick?: (event: FederatedPointerEvent, node: TNode) => void;
+  onRightDown?: (event: FederatedPointerEvent, node: TNode) => void;
+  onRightUp?: (event: FederatedPointerEvent, node: TNode) => void;
+  onRightUpOutside?: (event: FederatedPointerEvent, node: TNode) => void;
+  onWheel?: (event: FederatedWheelEvent, node: TNode) => void;
+  onGlobalMouseMove?: (event: FederatedPointerEvent, node: TNode) => void;
+  onGlobalTouchMove?: (event: FederatedPointerEvent, node: TNode) => void;
+  onGlobalPointerMove?: (event: FederatedPointerEvent, node: TNode) => void;
 };
 ```
+
+回调的 `node` 根据组件推导为 `PView`、`PImage`、`PScrollView` 或 `PCustomView`。只接收一个参数或不接收参数的回调仍然兼容。`event.target` / `event.currentTarget` 保持 PixiJS 原生语义，操作 Piant 节点请使用 `node`。
+
+`onClick` 对应 PixiJS 的 `pointertap` 事件，可与 `onPointerTap` 独立使用。
 
 详见：[事件处理文档](/guide/events)

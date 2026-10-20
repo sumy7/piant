@@ -14,7 +14,7 @@ export type ImageProps = {
   src: Sprite | Graphics;
   style?: StyleValue<ImageStyles>;
   ref?: RefCallback<PImage>;
-} & PixiEventProps;
+} & PixiEventProps<PImage>;
 
 export function Image(props: ImageProps) {
   const [srcProps, styleProps, eventProps] = splitProps(
@@ -31,7 +31,7 @@ export function Image(props: ImageProps) {
     element.setImage(srcProps.src);
   });
   bindStyle<ImageStyles>(element, () => StyleSheet.flatten(styleProps.style));
-  bindEventEffects(element._view, eventProps);
+  bindEventEffects(element, eventProps);
 
   return element;
 }

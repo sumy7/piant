@@ -14,7 +14,7 @@ export type ViewProps = {
   style?: StyleValue<ViewStyles>;
   children?: ComponentChild;
   ref?: RefCallback<PView>;
-} & PixiEventProps;
+} & PixiEventProps<PView>;
 
 export function View(props: ViewProps): JSX.Element {
   const [eventProps, styleProps, childrenProps] = splitProps(
@@ -27,7 +27,7 @@ export function View(props: ViewProps): JSX.Element {
 
   props.ref?.(element);
 
-  bindEventEffects(element._view, eventProps);
+  bindEventEffects(element, eventProps);
 
   bindStyle<ViewStyles>(element, () => StyleSheet.flatten(styleProps.style));
 
