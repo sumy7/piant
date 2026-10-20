@@ -1,7 +1,10 @@
 import { Span, StyleSheet, Text, View } from '@piant/core';
+import type { Renderer } from 'pixi.js';
+import { InlineImageExample } from './InlineImageExample';
 import TextList from './TextList';
 
-export function App() {
+export function App(props: { renderer: Renderer }) {
+  const renderer = props.renderer;
   const styles = StyleSheet.create({
     pageContainer: {
       width: '100%',
@@ -54,6 +57,7 @@ export function App() {
             </Span>
           </Text>
         </View>
+        <InlineImageExample renderer={renderer} />
         <View style={styles.textListBlock}>
           <TextList />
         </View>

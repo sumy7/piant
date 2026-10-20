@@ -20,7 +20,7 @@ import './index.css';
   });
   root.setDebugOptions({ textRendering: true });
 
-  render(App, root);
+  render(() => App({ renderer: app.renderer }), root);
 
   window.onresize = () => {
     root.setStyle({ width: app.screen.width, height: app.screen.height });

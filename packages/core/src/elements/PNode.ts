@@ -446,8 +446,11 @@ export class PNode {
   }
 
   destroyRecursive() {
-    for (const child of this._children) {
-      child.destroyRecursive();
+    // Finish logical detachment before Pixi removal events can trigger cleanup.
+    this.detach();
+    this._view.removeFromParent();
+    for (const child of [...this._children]) {
+      if (child._parent === this) child.destroyRecursive();
     }
     this.destroy();
   }
