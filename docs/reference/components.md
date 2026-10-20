@@ -70,10 +70,14 @@ function Span(props: {
 ```ts
 // Img 行内图片，仅用于 Text 内部
 function Img(props: {
-  src: Sprite | Graphics;
-  style?: TextStyles;
+  src?: Sprite | Texture | null;
+  style?: StyleValue<TextStyles>;
 }): JSX.Element;
 ```
+
+`Img` 借用输入纹理；传入 `Sprite` 时仅使用其纹理，不复制变换或滤镜。行内尺寸优先使用有效的样式宽高（包括从父级 Text/Span 继承的值），没有有效样式值时使用纹理尺寸。`Graphics` 需由调用方先转换为纹理，纹理的创建、更新和释放由调用方管理。
+
+详见：[图文混排示例](/guide/components/text#图文混排)
 
 ---
 

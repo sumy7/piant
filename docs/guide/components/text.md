@@ -31,20 +31,15 @@ import { Text, Span } from '@piant/core';
 
 ## 图文混排
 
-使用 `Img` 可以在文字行内插入图片：
+使用 `Img` 可以在文字行内插入 `Texture` 或 `Sprite`。`Img` 读取 `Sprite` 的纹理，不会将原 Sprite 加入文本容器，也不会复制它的变换或滤镜；行内尺寸优先使用有效的样式宽高（包括从父级 Text/Span 继承的值），没有有效样式值时使用纹理尺寸。建议通过 `Img` 的 `style.width`、`style.height` 显式设置所需尺寸。
 
-```tsx
-import { Text, Span, Img } from '@piant/core';
-import { Graphics } from 'pixi.js';
+`Graphics` 不能直接传给 `Img`。如果需要 SVG 图标，可由调用方使用已初始化的 PixiJS 渲染器将 `Graphics` 转成纹理，再传给 `Img`：
 
-const icon = new Graphics().svg(iconSvg);
+<<< ../../../examples/text-layout/src/InlineImageExample.tsx
 
-<Text>
-  <Span>点击</Span>
-  <Img src={icon} style={{ width: 16, height: 16 }} />
-  <Span>图标</Span>
-</Text>;
-```
+在 `await app.init(...)` 之后，将 `app.renderer` 作为 `renderer` 属性传入此组件。完整运行示例见 [text-layout](https://github.com/sumy7/piant/tree/main/examples/text-layout)，在仓库根目录执行 `pnpm --filter @piant/examples-text-layout dev` 即可查看。
+
+生成的纹理是 Graphics 当前内容的快照；后续修改 Graphics 不会自动更新它。示例生成纹理后立即释放临时 Graphics，并在组件清理时释放自己创建的 Sprite 和纹理（包括纹理源）。`Img` 借用输入纹理，不负责销毁；共享纹理应由其所有者在所有使用者结束后统一释放。参见 [PixiJS 纹理文档](https://pixijs.com/8.x/guides/components/textures)。
 
 ## Props
 
@@ -67,10 +62,10 @@ const icon = new Graphics().svg(iconSvg);
 
 ### Img Props
 
-| 属性    | 类型                 | 说明               |
-| ------- | -------------------- | ------------------ |
-| `src`   | `Sprite \| Graphics` | 图片源             |
-| `style` | `TextStyles`         | 内联样式（宽高等） |
+| 属性    | 类型                        | 说明                             |
+| ------- | --------------------------- | -------------------------------- |
+| `src`   | `Sprite \| Texture \| null` | 可选；省略或为 null 时使用空纹理 |
+| `style` | `StyleValue<TextStyles>`    | 内联样式（宽高、垂直对齐等）     |
 
 ## 文本样式属性
 
