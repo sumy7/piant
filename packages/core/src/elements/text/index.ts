@@ -8,7 +8,7 @@ import {
   type RichInlineLineRange,
   walkRichInlineLineRanges,
 } from '@chenglou/pretext/rich-inline';
-import { type Container, Sprite, Texture, type TextureSource } from 'pixi.js';
+import { type Container, Sprite, Texture } from 'pixi.js';
 import type {
   ImageSource,
   InlineBaseStyle,
@@ -853,17 +853,28 @@ export class Typesetter {
     height: number,
   ) {
     const texture =
-      surface.texture ?? surface.sprite.texture ?? Texture.from(surface.canvas);
+      surface.texture ??
+      (surface.sprite.texture.source.resource === surface.canvas
+        ? surface.sprite.texture
+        : Texture.from(surface.canvas));
     surface.texture = texture;
 
-    (texture.source as TextureSource | undefined)?.update?.();
+    // Dynamic textures notify a retained sprite when their frame changes. Rebind
+    // once if the caller created the sprite before enabling texture updates.
+    if (!texture.dynamic && surface.sprite.texture === texture) {
+      surface.sprite.texture = Texture.EMPTY;
+    }
+    texture.dynamic = true;
+    surface.sprite.texture = texture;
+    const source = texture.source;
+    source.resize(
+      surface.canvas.width / source.resolution,
+      surface.canvas.height / source.resolution,
+    );
+    source.update();
     texture.update();
 
-    // FIXME: 更新了 texure 但是 持有的 Sprite 宽高未更新
-    surface.sprite = new Sprite({
-      texture,
-      roundPixels: true,
-    });
+    surface.sprite.roundPixels = true;
     surface.sprite.width = width;
     surface.sprite.height = height;
   }

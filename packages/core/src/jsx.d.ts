@@ -35,19 +35,21 @@ interface PiantIntrinsicAttributes {
 }
 
 export namespace JSX {
-  type Element = ComponentChild;
+  export type Element = ComponentChild;
 
-  interface ElementClass {}
+  // biome-ignore lint/suspicious/noEmptyInterface: Keep JSX's mergeable class-component marker.
+  export interface ElementClass {}
 
-  interface ElementAttributesProperty {}
+  // biome-ignore lint/suspicious/noEmptyInterface: JSX uses this marker to select component attributes.
+  export interface ElementAttributesProperty {}
 
-  interface ElementChildrenAttribute {
+  export interface ElementChildrenAttribute {
     children: ComponentChild;
   }
 
-  interface IntrinsicAttributes extends PiantIntrinsicAttributes {}
+  export interface IntrinsicAttributes extends PiantIntrinsicAttributes {}
 
-  interface IntrinsicElements extends PiantIntrinsicElements {}
+  export interface IntrinsicElements extends PiantIntrinsicElements {}
 }
 
 declare global {
@@ -67,5 +69,3 @@ declare global {
     interface IntrinsicElements extends PiantIntrinsicElements {}
   }
 }
-
-export {};

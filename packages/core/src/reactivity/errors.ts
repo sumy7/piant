@@ -30,6 +30,6 @@ export function runErrors(
   try {
     for (const f of fns) f(err);
   } catch (e) {
-    handleError(e, (owner && owner.owner) || null);
+    handleError(e, (owner?.owner) || null);
   }
 }

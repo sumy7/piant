@@ -4,6 +4,7 @@ import { cleanup, effect } from '../reactivity/effects';
 import { splitProps } from '../reactivity/props';
 import type { StyleValue } from '../styleSheet';
 import { StyleSheet } from '../styleSheet';
+import { bindStyle } from './bindStyle';
 import type { RefCallback } from './types';
 
 export type InputProps = {
@@ -37,9 +38,7 @@ export function Input(props: InputProps): JSX.Element {
 
   props.ref?.(element);
 
-  effect(() => {
-    element.setStyle(StyleSheet.flatten(styleProps.style) || {});
-  });
+  bindStyle<ViewStyles>(element, () => StyleSheet.flatten(styleProps.style));
 
   // defaultValue is initialization-only (mirrors HTML semantics)
   if (inputProps.defaultValue !== undefined) {

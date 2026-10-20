@@ -6,8 +6,9 @@ import { onTick } from '../hooks';
 import { children, effect } from '../reactivity/effects';
 import { splitProps } from '../reactivity/props';
 import { insert } from '../renderer/runtime';
-import { StyleSheet } from '../styleSheet';
 import type { StyleValue } from '../styleSheet';
+import { StyleSheet } from '../styleSheet';
+import { bindStyle } from './bindStyle';
 import type { ComponentChild, RefCallback } from './types';
 
 export type ScrollViewProps = {
@@ -33,9 +34,7 @@ export function ScrollView(props: ScrollViewProps) {
 
   bindEventEffects(element._view, eventProps);
 
-  effect(() => {
-    element.setStyle(StyleSheet.flatten(styleProps.style) || {});
-  });
+  bindStyle<ViewStyles>(element, () => StyleSheet.flatten(styleProps.style));
 
   effect(() => {
     element.setHorizontal(behaviorProps.horizontal ?? false);

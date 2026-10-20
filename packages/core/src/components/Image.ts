@@ -5,8 +5,9 @@ import type { PixiEventProps } from '../events';
 import { bindEventEffects, EVENT_PROPS } from '../events';
 import { effect } from '../reactivity/effects';
 import { splitProps } from '../reactivity/props';
-import { StyleSheet } from '../styleSheet';
 import type { StyleValue } from '../styleSheet';
+import { StyleSheet } from '../styleSheet';
+import { bindStyle } from './bindStyle';
 import type { RefCallback } from './types';
 
 export type ImageProps = {
@@ -29,9 +30,7 @@ export function Image(props: ImageProps) {
   effect(() => {
     element.setImage(srcProps.src);
   });
-  effect(() => {
-    element.setStyle(StyleSheet.flatten(styleProps.style) || {});
-  });
+  bindStyle<ImageStyles>(element, () => StyleSheet.flatten(styleProps.style));
   bindEventEffects(element._view, eventProps);
 
   return element;

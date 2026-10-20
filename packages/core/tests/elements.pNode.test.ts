@@ -1,6 +1,5 @@
 import { Container } from 'pixi.js';
 import { describe, expect, it } from 'vitest';
-import { PNode } from '../src/elements/PNode';
 import { PRoot } from '../src/elements/PRoot';
 import { PView } from '../src/elements/PView';
 

@@ -44,9 +44,7 @@ describe('Typesetter renderTo', () => {
     };
   };
 
-  // Temporary: text surface currently recreates Sprite on each render to ensure
-  // width/height updates follow texture changes in runtime rendering.
-  it.skip('reuses render objects across repeated renders', () => {
+  it('reuses render objects across repeated renders', () => {
     const imageSprite = new Sprite(Texture.WHITE);
     imageSprite.width = 24;
     imageSprite.height = 24;
@@ -77,6 +75,28 @@ describe('Typesetter renderTo', () => {
     for (let i = 0; i < first.length; i++) {
       expect(second[i]).toBe(first[i]);
     }
+  });
+
+  it('updates cached sprite bounds and canvas texture dimensions without replacing them', () => {
+    const typesetter = new Typesetter([{ type: 'text', content: 'Resize' }]);
+    const container = new Container();
+    const surface = createSurface();
+    const sprite = surface.sprite;
+    const texture = sprite.texture;
+    typesetter.flow(80);
+    typesetter.renderTo(container, surface, { width: 80, height: 20 });
+    expect(sprite.getBounds().width).toBe(80);
+
+    typesetter.flow(160);
+    typesetter.renderTo(container, surface, { width: 160, height: 40 });
+
+    expect(surface.sprite).toBe(sprite);
+    expect(surface.texture).toBe(texture);
+    expect(texture.source.pixelWidth).toBe(surface.canvas.width);
+    expect(texture.source.pixelHeight).toBe(surface.canvas.height);
+    expect(sprite.getBounds().width).toBe(160);
+    expect(sprite.getBounds().height).toBe(40);
+    expect(container.children).toEqual([sprite]);
   });
 
   it('keeps renderTo benchmark stable and without child growth', () => {

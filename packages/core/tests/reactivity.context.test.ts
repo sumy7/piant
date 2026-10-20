@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { root } from '../src/reactivity/effects';
 import { createContext, lookup, useContext } from '../src/reactivity/context';
-import { createOwner, runWithOwner } from '../src/reactivity/owner';
+import { root } from '../src/reactivity/effects';
+import { createOwner } from '../src/reactivity/owner';
 
 describe('createContext', () => {
   it('creates a context with a unique id', () => {

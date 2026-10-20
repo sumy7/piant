@@ -1,12 +1,13 @@
-import { ViewStyles } from '../elements/layout/viewStyles';
+import type { ViewStyles } from '../elements/layout/viewStyles';
 import { PView } from '../elements/PView';
 import type { PixiEventProps } from '../events';
 import { bindEventEffects, EVENT_PROPS } from '../events';
-import { children, effect } from '../reactivity/effects';
+import { children } from '../reactivity/effects';
 import { splitProps } from '../reactivity/props';
 import { insert } from '../renderer/runtime';
-import { StyleSheet } from '../styleSheet';
 import type { StyleValue } from '../styleSheet';
+import { StyleSheet } from '../styleSheet';
+import { bindStyle } from './bindStyle';
 import type { ComponentChild, RefCallback } from './types';
 
 export type ViewProps = {
@@ -28,9 +29,7 @@ export function View(props: ViewProps): JSX.Element {
 
   bindEventEffects(element._view, eventProps);
 
-  effect(() => {
-    element.setStyle(StyleSheet.flatten(styleProps.style) || {});
-  });
+  bindStyle<ViewStyles>(element, () => StyleSheet.flatten(styleProps.style));
 
   insert(
     element,

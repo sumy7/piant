@@ -90,61 +90,84 @@ const POSITION_MAP: Record<'absolute' | 'relative' | 'static', PositionType> = {
   static: PositionType.Static,
 } as const;
 
-function alignContent(str: keyof typeof ALIGN_CONTENT_MAP): Align {
+function alignContent(
+  str: keyof typeof ALIGN_CONTENT_MAP | undefined,
+): Align {
+  if (str === undefined) return Align.FlexStart;
   if (str in ALIGN_CONTENT_MAP) return ALIGN_CONTENT_MAP[str];
 
   throw new Error(`"${str}" is not a valid value for alignContent`);
 }
 
-function alignItems(str: keyof typeof ALIGN_ITEMS_MAP): Align {
+function alignItems(str: keyof typeof ALIGN_ITEMS_MAP | undefined): Align {
+  if (str === undefined) return Align.Stretch;
   if (str in ALIGN_ITEMS_MAP) return ALIGN_ITEMS_MAP[str];
 
   throw new Error(`"${str}" is not a valid value for alignItems`);
 }
 
-function boxSizing(str: keyof typeof BOX_SIZING_MAP): BoxSizing {
+function alignSelf(str: keyof typeof ALIGN_ITEMS_MAP | undefined): Align {
+  if (str === undefined) return Align.Auto;
+  return alignItems(str);
+}
+
+function boxSizing(
+  str: keyof typeof BOX_SIZING_MAP | undefined,
+): BoxSizing {
+  if (str === undefined) return BoxSizing.BorderBox;
   if (str in BOX_SIZING_MAP) return BOX_SIZING_MAP[str];
 
   throw new Error(`"${str}" is not a valid value for boxSizing`);
 }
 
-function direction(str: keyof typeof DIRECTION_MAP): Direction {
+function direction(str: keyof typeof DIRECTION_MAP | undefined): Direction {
+  if (str === undefined) return Direction.Inherit;
   if (str in DIRECTION_MAP) return DIRECTION_MAP[str];
 
   throw new Error(`"${str}" is not a valid value for direction`);
 }
 
-function display(str: keyof typeof DISPLAY_MAP): Display {
+function display(str: keyof typeof DISPLAY_MAP | undefined): Display {
+  if (str === undefined) return Display.Flex;
   if (str in DISPLAY_MAP) return DISPLAY_MAP[str];
 
   throw new Error(`"${str}" is not a valid value for display`);
 }
 
-function flexDirection(str: keyof typeof FLEX_DIRECTION_MAP): FlexDirection {
+function flexDirection(
+  str: keyof typeof FLEX_DIRECTION_MAP | undefined,
+): FlexDirection {
+  if (str === undefined) return FlexDirection.Column;
   if (str in FLEX_DIRECTION_MAP) return FLEX_DIRECTION_MAP[str];
 
   throw new Error(`"${str}" is not a valid value for flexDirection`);
 }
 
-function flexWrap(str: keyof typeof FLEX_WRAP_MAP): Wrap {
+function flexWrap(str: keyof typeof FLEX_WRAP_MAP | undefined): Wrap {
+  if (str === undefined) return Wrap.NoWrap;
   if (str in FLEX_WRAP_MAP) return FLEX_WRAP_MAP[str];
 
   throw new Error(`"${str}" is not a valid value for flexWrap`);
 }
 
-function justifyContent(str: keyof typeof JUSTIFY_CONTENT_MAP): Justify {
+function justifyContent(
+  str: keyof typeof JUSTIFY_CONTENT_MAP | undefined,
+): Justify {
+  if (str === undefined) return Justify.FlexStart;
   if (str in JUSTIFY_CONTENT_MAP) return JUSTIFY_CONTENT_MAP[str];
 
   throw new Error(`"${str}" is not a valid value for justifyContent`);
 }
 
-function overflow(str: keyof typeof OVERFLOW_MAP): Overflow {
+function overflow(str: keyof typeof OVERFLOW_MAP | undefined): Overflow {
+  if (str === undefined) return Overflow.Visible;
   if (str in OVERFLOW_MAP) return OVERFLOW_MAP[str];
 
   throw new Error(`"${str}" is not a valid value for overflow`);
 }
 
-function position(str: keyof typeof POSITION_MAP): PositionType {
+function position(str: keyof typeof POSITION_MAP | undefined): PositionType {
+  if (str === undefined) return PositionType.Relative;
   if (str in POSITION_MAP) return POSITION_MAP[str];
 
   throw new Error(`"${str}" is not a valid value for position`);
@@ -156,7 +179,7 @@ const styleSetters: Record<
 > = {
   alignContent: (node, value) => node.setAlignContent(alignContent(value)),
   alignItems: (node, value) => node.setAlignItems(alignItems(value)),
-  alignSelf: (node, value) => node.setAlignSelf(alignItems(value)),
+  alignSelf: (node, value) => node.setAlignSelf(alignSelf(value)),
   aspectRatio: (node, value) => node.setAspectRatio(value),
   borderBottomWidth: (node, value) => node.setBorder(Edge.Bottom, value),
   borderEndWidth: (node, value) => node.setBorder(Edge.End, value),
@@ -234,7 +257,7 @@ export function applyStyle(node: YogaNode, style: YogaStyles = {}): void {
         setter(node, value);
       }
     } catch (_e) {
-      // Fail gracefully
+      console.warn(`[piant] Ignored invalid layout style "${key}".`, value);
     }
   }
 

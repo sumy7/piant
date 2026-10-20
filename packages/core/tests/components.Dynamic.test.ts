@@ -57,7 +57,7 @@ describe('Dynamic', () => {
 
   it('passes props correctly to component function', () => {
     root(() => {
-      const comp = vi.fn((p: any) => null as any);
+      const comp = vi.fn((_p: any) => null as any);
       const result = Dynamic({ component: comp as any, props: { a: 1, b: 2 } });
       (result as any)();
       expect(comp).toHaveBeenCalledTimes(1);

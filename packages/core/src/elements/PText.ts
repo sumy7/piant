@@ -143,7 +143,7 @@ export class PText extends PNode {
       height: this._layoutNode.getComputedHeight(),
     });
 
-    // Keep component-held references aligned with renderTo temporary sprite recreation.
+    // Keep the surface's texture reference aligned with the retained sprite.
     this._textSprite = surface.sprite;
     if (surface.texture) {
       this._textTexture = surface.texture;

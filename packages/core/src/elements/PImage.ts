@@ -1,4 +1,4 @@
-import { type Graphics, Sprite, Container } from 'pixi.js';
+import { Container, type Graphics, Sprite } from 'pixi.js';
 import type { ImageStyles } from './layout/viewStyles';
 import { PNode } from './PNode';
 
