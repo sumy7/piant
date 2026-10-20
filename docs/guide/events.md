@@ -13,7 +13,41 @@ import { View } from '@piant/core';
 />;
 ```
 
-当组件绑定任意事件处理器时，PixiJS 的 `interactive` 属性会自动设置为 `true`。
+## 回调参数
+
+事件回调接收 `(event, node)` 两个参数，TypeScript 会根据事件和组件自动推导类型：
+
+```tsx
+<View
+  onClick={(event, node) => {
+    console.log(event.global.x, event.global.y); // FederatedPointerEvent
+    console.log(node); // PView
+  }}
+  onWheel={(event) => {
+    console.log(event.deltaY); // FederatedWheelEvent
+  }}
+/>
+```
+
+第二个参数是绑定处理器的 Piant 节点：`View` 对应 `PView`，`Image` 对应 `PImage`，`ScrollView` 对应 `PScrollView`，`CustomView` 对应 `PCustomView`。不需要参数或只使用事件参数的现有回调仍然可用。
+
+`event.target` 和 `event.currentTarget` 保留 PixiJS 的原生语义，指向 PixiJS 渲染对象。操作 Piant 节点时请使用第二个参数；即使事件从子节点冒泡而来，`node` 也始终是当前处理器所属的组件节点。例如，导入动画扩展后可以直接启动节点动画：
+
+```tsx
+import '@piant/animation';
+
+<View
+  onClick={(_event, node) => {
+    node.animate([{ alpha: 1 }, { alpha: 0 }], { duration: 500 });
+  }}
+/>;
+```
+
+## 交互模式
+
+绑定事件处理器时，节点的 `eventMode` 为 `passive` 或 `auto` 会自动切换为 `static`。已有的 `static`、`dynamic`、`none` 保持不变；显式设置为 `none` 的节点仍不参与事件交互。
+
+全部处理器禁用或组件销毁时，若自动提升的 `eventMode` 仍为 `static`，会恢复原来的模式。若期间将其改为其他模式，则保留该设置。
 
 ## 事件映射
 
@@ -43,7 +77,7 @@ import { View } from '@piant/core';
 
 ## 响应式事件处理器
 
-事件处理器通过 `effect` 绑定，当 handler 函数变化时会自动更新：
+事件处理器支持响应式更新，函数变化后会调用最新的处理器；设为 `undefined` 可以禁用对应事件：
 
 ```tsx
 const [mode, setMode] = createState<'add' | 'remove'>('add');
@@ -54,6 +88,8 @@ const handleClick = createMemo(() =>
 
 <View onClick={handleClick()} style={{ width: 60, height: 60 }} />;
 ```
+
+`onClick` 和 `onPointerTap` 可以同时使用，各自独立更新和清理。同一事件触发时，两个处理器都会执行。
 
 ## 示例：悬停与点击
 

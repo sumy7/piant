@@ -15,7 +15,7 @@ export type CustomViewProps = {
   style?: StyleValue<ViewStyles>;
   onDraw?: (graphics: Graphics, width: number, height: number) => void;
   ref?: RefCallback<PCustomView>;
-} & PixiEventProps;
+} & PixiEventProps<PCustomView>;
 
 export function CustomView(props: CustomViewProps) {
   const [styleProps, onDrawProps, eventProps] = splitProps(
@@ -48,7 +48,7 @@ export function CustomView(props: CustomViewProps) {
     const { width, height } = size();
     onDrawProps.onDraw?.(element._graphic, width, height);
   });
-  bindEventEffects(element._view, eventProps);
+  bindEventEffects(element, eventProps);
 
   return element;
 }

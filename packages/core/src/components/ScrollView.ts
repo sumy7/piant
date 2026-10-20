@@ -16,7 +16,7 @@ export type ScrollViewProps = {
   children?: ComponentChild;
   ref?: RefCallback<PScrollView>;
   horizontal?: boolean;
-} & PixiEventProps;
+} & PixiEventProps<PScrollView>;
 
 export function ScrollView(props: ScrollViewProps) {
   const [eventProps, styleProps, childrenProps, behaviorProps] = splitProps(
@@ -32,7 +32,7 @@ export function ScrollView(props: ScrollViewProps) {
 
   onTick(element.update.bind(element));
 
-  bindEventEffects(element._view, eventProps);
+  bindEventEffects(element, eventProps);
 
   bindStyle<ViewStyles>(element, () => StyleSheet.flatten(styleProps.style));
 
