@@ -1,6 +1,6 @@
 # 文档在线示例
 
-`LiveExample` 在默认主题中全局注册。它按需加载真实的 Piant 组件，在正文中提供运行、停止、重新运行和源码查看。源码在构建时编译，浏览器中无需下载编译器。示例当前不支持在线编辑。
+`LiveExample` 在默认主题中全局注册。上方为固定高度的画布预览，挂载后自动运行；中间操作栏提供「展示代码 / 折叠代码」和「重新运行代码」；下方为可展开的 TSX 高亮源码，默认折叠。源码在构建时编译和高亮，浏览器中无需下载编译器或高亮器。示例当前不支持在线编辑。
 
 ## 添加示例
 
@@ -14,9 +14,9 @@
    `example` 对应 TSX 文件名，不含扩展名；`height` 可选，默认 `300`（像素）。预览宽度跟随正文，示例也应适应窄屏。画布背景固定为 `#f8fafc`。
 3. 使用 `onCleanup` 清理定时器、动画和订阅；Router 使用 `mode: 'memory'`，避免修改文档 URL。不要向 `document.body` 挂载内容或覆写 `window.onresize`。
 
-`piantExamples.ts` 只转换此目录内的 TSX，复用 `@piant/babel-preset-piant`，原始源码请求不参与转换。Vite 继续移除 TypeScript 类型；Vue 的编译流程保持独立。运行时仅在点击运行后导入，因此静态生成阶段不会初始化 Pixi 或访问 DOM。
+`piantExamples.ts` 只转换此目录内的 TSX，复用 `@piant/babel-preset-piant`。`?highlighted` 请求使用 VitePress 的 Markdown 渲染器生成与文档一致的明暗主题高亮 HTML，不参与 JSX 转换。Vite 继续移除 TypeScript 类型；Vue 的编译流程保持独立。运行时在组件挂载到浏览器后才导入，因此静态生成阶段不会初始化 Pixi 或访问 DOM。切换示例文件时也会自动重新运行。
 
-宿主通过 `ResizeObserver` 同步画布和布局尺寸。停止、重跑和页面卸载时释放响应式 owner、PRoot 的布局 ticker、当前树的 Yoga 节点、Pixi Application 和观察器；初始化未完成时停止，会在初始化返回后立即释放资源。由于当前核心的 `PNode.destroy()` 尚未释放 Yoga 节点，宿主在销毁时显式释放布局树；核心将来统一实现释放时，需要同步移除此补偿。此前已从树中移除的节点仍受核心原有清理限制影响。
+宿主通过 `ResizeObserver` 同步画布和布局尺寸。重跑和页面卸载时释放响应式 owner、PRoot 的布局 ticker、当前树的 Yoga 节点、Pixi Application 和观察器；初始化未完成时卸载，会在初始化返回后立即释放资源。由于当前核心的 `PNode.destroy()` 尚未释放 Yoga 节点，宿主在销毁时显式释放布局树；核心将来统一实现释放时，需要同步移除此补偿。此前已从树中移除的节点仍受核心原有清理限制影响。
 
 Yoga 使用顶层 `await` 初始化 WASM，因此文档构建和开发模式依赖预构建的目标均为 ES2022，运行示例需要支持这些能力和 WebGL 的现代浏览器。加载或初始化失败会在示例内显示错误并允许重试。
 

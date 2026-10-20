@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeUnmount, ref, watch } from 'vue';
+import { onBeforeUnmount, onMounted, ref, useId, watch } from 'vue';
 import type { ExampleComponent } from './mountExample';
 
 const props = withDefaults(
@@ -15,13 +15,16 @@ const examples = import.meta.glob<{ default: ExampleComponent }>(
   '../../examples/*.tsx',
 );
 const sources = import.meta.glob<string>('../../examples/*.tsx', {
-  query: '?raw',
+  query: '?highlighted',
   import: 'default',
   eager: true,
 });
 const host = ref<HTMLElement>();
 const status = ref<'idle' | 'loading' | 'running'>('idle');
 const error = ref('');
+const codeShown = ref(false);
+const sourceId = `example-source-${useId()}`;
+let mounted = false;
 let controller: AbortController | undefined;
 let dispose: (() => void) | undefined;
 
@@ -49,7 +52,7 @@ async function run() {
   try {
     const load = examples[`../../examples/${props.example}.tsx`];
     if (!load) throw new Error(`找不到示例：${props.example}`);
-    // Import Pixi/Piant only after a browser interaction, never during SSR.
+    // Import Pixi/Piant only after mounting in the browser, never during SSR.
     const [{ default: component }, { mountExample }] = await Promise.all([
       load(),
       import('./mountExample'),
@@ -75,32 +78,19 @@ async function run() {
 watch(
   () => props.example,
   () => {
-    stop();
-    error.value = '';
+    if (mounted) void run();
   },
+  { flush: 'post' },
 );
+onMounted(() => {
+  mounted = true;
+  void run();
+});
 onBeforeUnmount(stop);
 </script>
 
 <template>
   <section class="live-example" :aria-label="title">
-    <div class="example-toolbar">
-      <strong>{{ title }}</strong>
-      <div class="example-actions">
-        <button type="button" :disabled="status === 'loading'" @click="run">
-          {{
-            status === 'loading'
-              ? '加载中…'
-              : status === 'running'
-                ? '重新运行'
-                : '运行示例'
-          }}
-        </button>
-        <button v-if="status !== 'idle'" type="button" @click="stop">
-          停止
-        </button>
-      </div>
-    </div>
     <div
       class="example-preview"
       :style="{ height: `${height}px` }"
@@ -112,21 +102,45 @@ onBeforeUnmount(stop);
         role="img"
         :aria-label="`${title}，在画布中点击交互`"
       />
-      <p v-if="status !== 'running'" class="example-placeholder" role="status">
-        {{
-          status === 'loading'
-            ? '正在加载示例…'
-            : '点击「运行示例」，在此体验交互效果。'
-        }}
+      <p
+        v-if="status !== 'running' && !error"
+        class="example-placeholder"
+        role="status"
+      >
+        正在加载示例…
       </p>
+    </div>
+    <div class="example-toolbar">
+      <span class="example-title">{{ title }}</span>
+      <div class="example-actions">
+        <button
+          type="button"
+          :aria-expanded="codeShown"
+          :aria-controls="sourceId"
+          @click="codeShown = !codeShown"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m8 7-5 5 5 5m8-10 5 5-5 5m-3-13-2 16" />
+          </svg>
+          {{ codeShown ? '折叠代码' : '展示代码' }}
+        </button>
+        <button type="button" :disabled="status === 'loading'" @click="run">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M20 7v5h-5M20 12a8 8 0 1 0-2 5M20 12l-4-4" />
+          </svg>
+          {{ status === 'loading' ? '加载中…' : '重新运行代码' }}
+        </button>
+      </div>
     </div>
     <p v-if="error" class="example-error" role="alert">
       示例运行失败：{{ error }}。可以重新运行。
     </p>
-    <details class="example-source">
-      <summary>查看示例源码</summary>
-      <pre><code>{{ sources[`../../examples/${example}.tsx`] }}</code></pre>
-    </details>
+    <div
+      :id="sourceId"
+      v-show="codeShown"
+      class="example-source"
+      v-html="sources[`../../examples/${example}.tsx`]"
+    />
   </section>
 </template>
 
@@ -142,31 +156,51 @@ onBeforeUnmount(stop);
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 12px;
-  padding: 12px 16px;
-  background: var(--vp-c-bg-soft);
+  gap: 8px;
+  min-height: 48px;
+  padding: 8px 12px;
+  border-top: 1px solid var(--vp-c-divider);
+  background: var(--vp-c-bg);
+}
+.example-title {
+  color: var(--vp-c-text-2);
+  font-size: 13px;
 }
 .example-actions {
   display: flex;
-  gap: 8px;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-left: auto;
 }
 button {
-  padding: 4px 12px;
-  border: 1px solid var(--vp-c-divider);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
   border-radius: 6px;
-  background: var(--vp-c-bg);
-  color: var(--vp-c-brand-1);
+  color: var(--vp-c-text-2);
+  font-size: 13px;
+  line-height: 24px;
   cursor: pointer;
 }
 button:hover {
-  border-color: var(--vp-c-brand-1);
+  color: var(--vp-c-brand-1);
+  background: var(--vp-c-bg-soft);
+}
+button svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 button:disabled {
   cursor: wait;
   opacity: 0.6;
 }
-button:focus-visible,
-summary:focus-visible {
+button:focus-visible {
   outline: 2px solid var(--vp-c-brand-1);
   outline-offset: 2px;
 }
@@ -199,16 +233,15 @@ summary:focus-visible {
   color: var(--vp-c-danger-1);
 }
 .example-source {
-  padding: 12px 16px;
   border-top: 1px solid var(--vp-c-divider);
 }
-summary {
-  cursor: pointer;
+.example-source :deep(div[class*='language-']) {
+  margin: 0;
+  border-radius: 0;
 }
-.example-source pre {
-  margin-bottom: 0;
-  overflow-x: auto;
-  font-size: 13px;
-  line-height: 1.6;
+.example-source :deep(pre) {
+  max-height: 440px;
+  margin: 0;
+  overflow: auto;
 }
 </style>

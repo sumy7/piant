@@ -42,4 +42,24 @@ describe('Piant examples compiler', () => {
     ).toBeUndefined();
     expect(await transform('<Text />', '/outside/App.tsx')).toBeUndefined();
   });
+
+  it('renders highlighted TSX with the same light and dark themes as the docs', async () => {
+    const module = await piantExamples().load(`${exampleFile}?highlighted`);
+    expect(module).toBeDefined();
+    const html = JSON.parse(module!.slice('export default '.length)) as string;
+    expect(html).toContain('language-tsx');
+    expect(html).toContain('<span');
+    expect(html).toContain('--shiki-light:');
+    expect(html).toContain('--shiki-dark:');
+    expect(html).toContain('createState');
+    expect(html).toMatch(/&(?:lt|#60|#x3c);/i);
+    expect(html).not.toContain('<View');
+  });
+
+  it('only loads highlighted source from the examples directory', async () => {
+    const plugin = piantExamples();
+    expect(await plugin.load(`${exampleFile}?raw`)).toBeUndefined();
+    expect(await plugin.load(exampleFile)).toBeUndefined();
+    expect(await plugin.load('/outside/App.tsx?highlighted')).toBeUndefined();
+  });
 });
