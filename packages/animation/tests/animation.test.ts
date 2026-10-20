@@ -463,7 +463,7 @@ describe('PNodeAnimation', () => {
     ['alternate', 0.75],
     ['alternate-reverse', 0.25],
   ] as const)(
-    'seeks to the fractional endpoint for direction: %s',
+    'seeks to the filled fractional endpoint for direction: %s',
     async (direction, expected) => {
       const node = createMockNode();
       const anim = new PNodeAnimation(
@@ -473,6 +473,7 @@ describe('PNodeAnimation', () => {
           duration: 100,
           iterations: 1.25,
           direction,
+          fill: 'forwards',
         },
       );
       anim.pause();
@@ -483,6 +484,218 @@ describe('PNodeAnimation', () => {
       await cancelled;
     },
   );
+
+  describe('currentTime timeline with delay', () => {
+    it.each(['none', 'backwards', 'forwards', 'both'] as const)(
+      'samples seek and playback consistently with fill: %s',
+      async (fill) => {
+        const before = fill === 'backwards' || fill === 'both' ? 0 : -20;
+        const after = fill === 'forwards' || fill === 'both' ? 100 : -20;
+        for (const [time, expected] of [
+          [0, before], [250, before], [500, 0], [750, 25],
+          [1499, 99.9], [1500, after], [1600, after],
+          [1700, after], [1800, after],
+        ]) {
+          const node = createMockNode();
+          node._animTranslate.x = -20;
+          const anim = new PNodeAnimation(node as any, [{ x: 0 }, { x: 100 }], {
+            duration: 1000, delay: 500, endDelay: 200, fill,
+          });
+          anim.pause();
+          const onfinish = vi.fn();
+          const settled = vi.fn();
+          anim.onfinish = onfinish;
+          void anim.finished.then(settled);
+          const finished = anim.finished;
+
+          // Seek backwards from the active phase to exercise removal of stale values.
+          anim.currentTime = 1000;
+          anim.currentTime = time;
+          expect(anim.currentTime).toBe(time);
+          expect(node._animTranslate.x).toBeCloseTo(expected, 5);
+          expect(anim.playState).toBe('paused');
+          expect(anim.finished).toBe(finished);
+          await Promise.resolve();
+          expect(settled).not.toHaveBeenCalled();
+          expect(onfinish).not.toHaveBeenCalled();
+
+          tick(100);
+          expect(anim.currentTime).toBe(time);
+          anim.play();
+          tick(0);
+          expect(anim.currentTime).toBe(time);
+          expect(node._animTranslate.x).toBeCloseTo(expected, 5);
+          expect(anim.playState).toBe(time >= 1700 ? 'finished' : 'running');
+
+          // Compare with a fresh animation reaching the same time through playback.
+          if (anim.playState !== 'finished') anim.finish();
+          const playedNode = createMockNode();
+          playedNode._animTranslate.x = -20;
+          const played = new PNodeAnimation(playedNode as any, [{ x: 0 }, { x: 100 }], {
+            duration: 1000, delay: 500, endDelay: 200, fill,
+          });
+          tick(time);
+          expect(played.currentTime).toBe(time);
+          expect(playedNode._animTranslate.x).toBeCloseTo(expected, 5);
+          played.finish();
+        }
+      },
+    );
+
+    it('resumes from the sought local time and reports it on completion', async () => {
+      const node = createMockNode();
+      const anim = new PNodeAnimation(node as any, [{ x: 0 }, { x: 100 }], {
+        duration: 1000, delay: 500, endDelay: 200, fill: 'both',
+      });
+      const onfinish = vi.fn();
+      anim.onfinish = onfinish;
+      tick(250);
+      expect(anim.currentTime).toBe(250);
+      anim.pause();
+      anim.currentTime = 750;
+      expect(node._animTranslate.x).toBe(25);
+      anim.play();
+      tick(250);
+      expect(anim.currentTime).toBe(1000);
+      expect(node._animTranslate.x).toBe(50);
+      tick(699);
+      expect(anim.playState).toBe('running');
+      tick(1);
+      expect(anim.currentTime).toBe(1700);
+      expect(onfinish).toHaveBeenCalledWith(expect.objectContaining({ currentTime: 1700 }));
+      await expect(anim.finished).resolves.toBe(anim);
+    });
+
+    it.each([
+      ['normal', 25, 25], ['reverse', 75, 75],
+      ['alternate', 75, 75], ['alternate-reverse', 25, 25],
+    ] as const)('seeks iterations and endDelay with direction: %s', (direction, active, final) => {
+      const node = createMockNode();
+      const anim = new PNodeAnimation(node as any, [{ x: 0 }, { x: 100 }], {
+        duration: 100, delay: 50, endDelay: 20, iterations: 1.25, direction, fill: 'both',
+      });
+      anim.currentTime = 175;
+      expect(node._animTranslate.x).toBe(final);
+      tick(0);
+      expect(node._animTranslate.x).toBe(final);
+      anim.currentTime = 175 - 0.001;
+      expect(node._animTranslate.x).toBeCloseTo(active, 1);
+      tick(0);
+      expect(node._animTranslate.x).toBeCloseTo(active, 1);
+      anim.finish();
+    });
+
+    it('reverse playback crosses the delay boundary without retaining active values', async () => {
+      const node = createMockNode();
+      node._animTranslate.x = -20;
+      const anim = new PNodeAnimation(node as any, [{ x: 0 }, { x: 100 }], {
+        duration: 1000, delay: 500, fill: 'forwards',
+      });
+      anim.currentTime = 750;
+      anim.reverse();
+      tick(0);
+      expect(node._animTranslate.x).toBe(25);
+      tick(250);
+      expect(node._animTranslate.x).toBe(0);
+      tick(250);
+      expect(anim.currentTime).toBe(250);
+      expect(node._animTranslate.x).toBe(-20);
+      tick(250);
+      expect(anim.currentTime).toBe(0);
+      expect(node._animTranslate.x).toBe(-20);
+      await expect(anim.finished).resolves.toBe(anim);
+    });
+
+    it('clamps negative seeks and preserves finished lifecycle after seeking back', async () => {
+      const node = createMockNode();
+      const anim = new PNodeAnimation(node as any, [{ x: 0 }, { x: 100 }], {
+        duration: 1000, delay: 500, fill: 'both',
+      });
+      const onfinish = vi.fn();
+      anim.onfinish = onfinish;
+      anim.currentTime = -100;
+      expect(anim.currentTime).toBe(0);
+      expect(node._animTranslate.x).toBe(0);
+      tick(1500);
+      await expect(anim.finished).resolves.toBe(anim);
+      const finished = anim.finished;
+      anim.currentTime = 750;
+      expect(node._animTranslate.x).toBe(25);
+      expect(anim.finished).toBe(finished);
+      expect(anim.playState).toBe('finished');
+      anim.play();
+      tick(0);
+      expect(node._animTranslate.x).toBe(25);
+      expect(_tickerListeners).toHaveLength(0);
+      expect(onfinish).toHaveBeenCalledOnce();
+    });
+
+    it('does not restore unrelated properties animated on the same node', () => {
+      const node = createMockNode();
+      const move = new PNodeAnimation(node as any, [{ x: 0 }, { x: 100 }], {
+        duration: 1000, fill: 'forwards',
+      });
+      const fade = new PNodeAnimation(node as any, [{ alpha: 0 }, { alpha: 1 }], {
+        duration: 100, delay: 500, endDelay: 200,
+      });
+      tick(250);
+      expect(node._animTranslate.x).toBe(25);
+      expect(node._animAlpha).toBeNull();
+      tick(350);
+      expect(node._animTranslate.x).toBe(60);
+      expect(node._animAlpha).toBeNull();
+      tick(200);
+      expect(node._animTranslate.x).toBe(80);
+      expect(fade.playState).toBe('finished');
+      move.finish();
+    });
+
+    it.each(['none', 'backwards', 'forwards', 'both'] as const)(
+      'samples the reverse completion boundary consistently with fill: %s',
+      (fill) => {
+        const node = createMockNode();
+        node._animTranslate.x = -20;
+        const anim = new PNodeAnimation(node as any, [{ x: 0 }, { x: 100 }], {
+          duration: 100, fill,
+        });
+        anim.currentTime = 50;
+        anim.reverse();
+        anim.currentTime = 0;
+        const expected = fill === 'backwards' || fill === 'both' ? 0 : -20;
+        expect(node._animTranslate.x).toBe(expected);
+        tick(0);
+        expect(node._animTranslate.x).toBe(expected);
+        expect(anim.playState).toBe('finished');
+      },
+    );
+
+    it('keeps infinite iterations active after the delay', () => {
+      const node = createMockNode();
+      const anim = new PNodeAnimation(node as any, [{ x: 0 }, { x: 100 }], {
+        duration: 100, delay: 50, iterations: Infinity, fill: 'both',
+      });
+      anim.currentTime = 275;
+      expect(node._animTranslate.x).toBe(25);
+      tick(0);
+      expect(node._animTranslate.x).toBe(25);
+      expect(anim.playState).toBe('running');
+      anim.finish();
+    });
+
+    it('samples a zero-duration animation through delay and endDelay', () => {
+      const node = createMockNode();
+      const anim = new PNodeAnimation(node as any, [{ x: 0 }, { x: 100 }], {
+        duration: 0, delay: 50, endDelay: 20, fill: 'both',
+      });
+      for (const [time, expected] of [[25, 0], [50, 100], [60, 100], [70, 100]]) {
+        anim.currentTime = time;
+        expect(node._animTranslate.x).toBe(expected);
+        tick(0);
+        expect(node._animTranslate.x).toBe(expected);
+      }
+      expect(anim.playState).toBe('finished');
+    });
+  });
 
   it('fires onfinish callback when animation ends', () => {
     const node = createMockNode();
