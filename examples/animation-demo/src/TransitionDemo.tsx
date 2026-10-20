@@ -131,8 +131,8 @@ export function TransitionDemo() {
   const [showA, setShowA] = createState(true);
   const [mode, setMode] = createState<Mode>('out-in');
 
-  const cardA = CardA({});
-  const cardB = CardB({});
+  const cardA = CardA();
+  const cardB = CardB();
 
   const handleToggle = () => setShowA(!showA());
 

@@ -3,31 +3,21 @@
 ## StyleSheet
 
 ```ts
-const StyleSheet: {
-  create<T extends Record<string, StyleEntry<any>>>(
-    obj: T,
-  ): {
-    [K in keyof T]: T[K] extends StyleReference<infer S> ? Partial<S> : T[K];
-  };
+import { StyleSheet, type ViewStyles } from '@piant/core';
 
-  extend<T extends object = ViewStyles>(
-    parents: string | Array<string | Partial<T>> | Partial<T>,
-    override?: Partial<T>,
-  ): StyleReference<T>;
+const styles = StyleSheet.create({
+  base: { padding: 12 },
+  active: StyleSheet.extend('base', { backgroundColor: '#0055ff' }),
+});
 
-  flatten(
-    style?: StyleValue | StyleValue[] | false | null | undefined,
-  ): object | undefined;
+// 显式选择样式能力，并保留精确的 sheet key 和属性类型
+const viewStyles = StyleSheet.create<ViewStyles>()({
+  box: { width: '50%' },
+});
 
-  compose<T extends object>(
-    style1?: Partial<T> | null,
-    style2?: Partial<T> | null,
-  ): Partial<T> | [Partial<T>, Partial<T>] | undefined;
-
-  resolve<T extends object = ViewStyles>(
-    style: StyleValue<T>,
-  ): Partial<T> | undefined;
-};
+StyleSheet.flatten([styles.base, [false, styles.active]] as const);
+StyleSheet.resolve([styles.base, styles.active]);
+StyleSheet.compose(styles.base, styles.active);
 ```
 
 ---
@@ -51,7 +41,7 @@ const StyleSheet: {
 
 ### StyleSheet.create
 
-创建带类型检查的样式表，**保留输入的所有 key**。支持普通样式对象和通过 `StyleSheet.extend` 创建的继承样式引用（`StyleReference`），后者在 `create` 调用时会被立即解析为普通对象。
+创建带类型检查的样式表，**保留输入的所有 key**。默认检查 View、Image 和 Text 的已知样式属性及属性值，例如 `widht` 或 `width: 'banana'` 会产生编译错误。支持普通样式对象和通过 `StyleSheet.extend` 创建的继承样式引用（`StyleReference`），后者在 `create` 调用时会被立即解析为普通对象。
 
 循环继承链会在 `create` 时被检测：循环边被跳过，并输出 `console.warn` 告警以便开发期排查。
 
@@ -68,9 +58,28 @@ const styles = StyleSheet.create({
 // styles.activeContainer — { padding: 16, backgroundColor: '#e0e0ff' }
 ```
 
+普通样式条目保留输入对象的精确类型，已存在的属性不会被额外变成可选属性。继承条目的结果类型包含父级属性，并按运行时相同的顺序计算覆盖结果。
+
+自定义样式或需要限制为某一组件的样式时，使用两段调用：
+
+```ts
+type CustomStyle = { tone?: 'warm' | 'cool'; size?: number };
+const create = StyleSheet.create<CustomStyle>();
+const extend = StyleSheet.extend<CustomStyle>();
+const custom = create({
+  base: { size: 12 },
+  child: extend('base', { tone: 'warm' }),
+});
+// custom.child.size 为 12，tone 为 'warm'；不存在的 sheet key 会报错
+```
+
+已有的 `StyleSheet.create<ViewStyles>({...})` 和 `StyleSheet.extend<TextStyles>('base', {...})` 仍可使用。由于 TypeScript 无法在显式指定部分泛型参数后继续推导剩余参数，这些旧写法保留较宽的结果类型，继承引用也沿用原有的结构类型校验；需要完整推导与严格对象校验时使用 `create<T>()(...)` / `extend<T>()(...)`。
+
 ### StyleSheet.extend
 
-声明样式继承关系，返回一个 `StyleReference`，供 `StyleSheet.create` 在解析时使用。
+声明样式继承关系，返回一个 `StyleReference`，供 `StyleSheet.create` 在解析时使用。父级字符串字面量会在 `create` 内按当前 sheet 的 key 校验，拼写错误会报错。动态字符串和旧式显式泛型引用保留运行时解析；找不到的父级仍会被忽略。
+
+结果类型按父级从左到右、子级最后覆盖的顺序合并。循环边在类型和运行时解析中都会跳过；类型推导最多展开 16 层继承，更深的父级保守返回所选样式能力的可选属性，运行时解析不受这个类型推导上限影响。
 
 支持三种形式：
 
@@ -112,7 +121,7 @@ const styles = StyleSheet.create({
 
 ### StyleSheet.flatten
 
-将样式数组（含嵌套数组）展平为单个对象，后面的属性覆盖前面的。
+将样式数组（含嵌套数组、只读数组和 `as const` 元组）展平为单个对象，后面的属性覆盖前面的。直接传入对象时保留对象类型；数组结果的属性以可选类型表示，涵盖数组内的对象字段和值。数组字段推导最多展开 8 层；更深的输入可用 `StyleSheet.flatten<ViewStyles>(style)` 或 `resolve<ViewStyles>(style)` 选择返回的样式能力，运行时展平不受该类型推导上限影响。
 
 **Scope**：`flatten` 仅展平**数组嵌套**，不处理 `StyleReference` 继承声明。继承已在 `create` 时解析，此处无需再处理。
 
@@ -273,6 +282,8 @@ interface TextLayoutStyle {
 type StyleValue<T extends object = object> =
   | Partial<T>
   | StyleValue<T>[]
+  // 区分只读输入，保留可变初始化数组的 push 等操作
+  | (readonly StyleValue<T>[] & { readonly push?: never })
   | false
   | null
   | undefined;
@@ -281,7 +292,7 @@ type StyleValue<T extends object = object> =
 组件的 `style` prop 均接受此类型，支持：
 
 - 单个样式对象
-- 样式数组（包含嵌套）
+- 可变或只读样式数组（包含嵌套）
 - `false` / `null` / `undefined`（忽略）
 
 ---
@@ -295,10 +306,13 @@ type StyleObject<T extends object> = Partial<T>;
 // StyleSheet.create 定义的类型
 type StyleSheetDefinition<T extends object> = Record<string, StyleEntry<T>>;
 
-// StyleSheet.create 返回类型的推导辅助
-type ResolvedStyleSheet<T extends Record<string, StyleEntry<any>>> = {
-  [K in keyof T]: T[K] extends StyleReference<infer S> ? Partial<S> : T[K];
+// StyleSheet.create 返回类型的推导辅助：普通条目保留类型，继承条目合并父级
+const definition = {
+  base: { padding: 12 },
+  child: StyleSheet.extend('base', { color: 'red' }),
 };
+type Resolved = ResolvedStyleSheet<typeof definition>;
+// Resolved['child'] 包含 padding: number 和 color: 'red'
 ```
 
 ---

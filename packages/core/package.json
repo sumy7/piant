@@ -23,6 +23,7 @@
     "dev": "rslib build -w",
     "test": "vitest",
     "test:run": "vitest run",
+    "test:types": "tsc --noEmit -p tsconfig.vitest.json",
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {

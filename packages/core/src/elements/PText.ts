@@ -1,15 +1,50 @@
 import { Sprite, Texture } from 'pixi.js';
+import type { ViewStyles } from './layout/viewStyles';
 import { PNode } from './PNode';
 import {
   type ImageSource,
   type InlineItem,
+  type TextLayoutStyle,
   type TextRenderSurface,
   Typesetter,
 } from './text';
+import type { TextStyles } from './text/textStyles';
+
+type StylePatch<T extends object> = {
+  [Key in keyof T]?: T[Key] | undefined;
+};
+
+const textStyleKeys = [
+  'fontSize',
+  'color',
+  'lineHeight',
+  'verticalAlign',
+  'fontFamily',
+  'fontWeight',
+  'fontStyle',
+  'letterSpacing',
+  'textTransform',
+  'whiteSpace',
+  'wordBreak',
+  'textAlign',
+  'textOverflow',
+  'lineClamp',
+] as const satisfies readonly (keyof TextLayoutStyle)[];
+
+function assignDefinedTextStyle<Key extends keyof TextLayoutStyle>(
+  target: TextLayoutStyle,
+  source: StylePatch<TextStyles>,
+  key: Key,
+): void {
+  const value = source[key];
+  if (value !== undefined) {
+    Object.assign(target, { [key]: value });
+  }
+}
 
 export class PText extends PNode {
   _textContent: InlineItem[] = [];
-  _textLayoutStyle: any;
+  _textLayoutStyle: TextLayoutStyle;
   _textTypesetter: Typesetter;
   _textCanvas = document.createElement('canvas');
   _textCtx: CanvasRenderingContext2D;
@@ -55,30 +90,12 @@ export class PText extends PNode {
     this._layoutNode.setMeasureFunc(this.measureText.bind(this));
   }
 
-  setStyle(style: any = {}) {
-    const textStyleKeys = [
-      'fontSize',
-      'color',
-      'lineHeight',
-      'verticalAlign',
-      'fontFamily',
-      'fontWeight',
-      'fontStyle',
-      'letterSpacing',
-      'textTransform',
-      'whiteSpace',
-      'wordBreak',
-      'textAlign',
-      'textOverflow',
-      'lineClamp',
-    ];
+  setStyle(style: StylePatch<TextStyles> = {}) {
     textStyleKeys.forEach((key) => {
-      if (style[key] !== undefined) {
-        this._textLayoutStyle[key] = style[key];
-      }
+      assignDefinedTextStyle(this._textLayoutStyle, style, key);
     });
 
-    super.setStyle(style);
+    super.setStyle(style as ViewStyles);
     this._textTypesetter.setStyles(this._textLayoutStyle);
     this._layoutNode.markDirty();
     this.markDirty();
