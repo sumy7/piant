@@ -40,8 +40,11 @@ function resolveOptions(opts: AnimationOptions | undefined): ResolvedOptions {
 /**
  * Snapshot the current animated properties of a node for "fill: none" restore.
  */
-function captureInitialProps(node: PNode): AnimatableProps {
-  return {
+function captureInitialProps(
+  node: PNode,
+  keyframes: NormalizedKeyframe[],
+): AnimatableProps {
+  const initial: AnimatableProps = {
     x: node._animTranslate.x,
     y: node._animTranslate.y,
     alpha: node._animAlpha ?? undefined,
@@ -64,6 +67,15 @@ function captureInitialProps(node: PNode): AnimatableProps {
         ? node._layoutStyle.height
         : undefined,
   };
+  const animatedKeys = new Set(keyframes.flatMap((frame) => Object.keys(frame)));
+  if (animatedKeys.has('scale')) {
+    animatedKeys.add('scaleX');
+    animatedKeys.add('scaleY');
+  }
+  // Restoring one animation must not reset independent animations on this node.
+  return Object.fromEntries(
+    Object.entries(initial).filter(([key]) => animatedKeys.has(key)),
+  );
 }
 
 /**
@@ -155,7 +167,7 @@ export class PNodeAnimation {
   private readonly _opts: ResolvedOptions;
 
   private _playState: PlayState = 'idle';
-  /** Accumulated animation time in ms (excluding delay) */
+  /** Accumulated local animation time in ms (including delay and endDelay) */
   private _elapsed = 0;
   private _playbackRate: number;
 
@@ -171,7 +183,7 @@ export class PNodeAnimation {
     this._opts = resolveOptions(options);
     this._playbackRate = this._opts.playbackRate;
     this._keyframes = normalizeKeyframes(effect, this._opts.easing);
-    this._initialProps = captureInitialProps(node);
+    this._initialProps = captureInitialProps(node, this._keyframes);
 
     this.finished = new Promise<PNodeAnimation>((resolve, reject) => {
       this._finishResolve = resolve;
@@ -193,15 +205,15 @@ export class PNodeAnimation {
     return this._playState;
   }
 
-  /** Current animation time in ms (from start of active phase, excluding delay). */
+  /** Local animation time in ms, including delay and endDelay. */
   get currentTime(): number {
     return this._elapsed;
   }
 
-  /** Seek to a specific time in ms. */
+  /** Seek and sample immediately without changing playState or finished. */
   set currentTime(ms: number) {
     this._elapsed = Math.max(0, ms);
-    this._applyAtElapsed(this._elapsed);
+    this._applyAtCurrentTime();
   }
 
   get playbackRate(): number {
@@ -283,33 +295,31 @@ export class PNodeAnimation {
       return;
     }
 
-    // Before active phase (delay)
-    if (this._elapsed < delay) {
-      if (this._opts.fill === 'backwards' || this._opts.fill === 'both') {
-        this._applyAtProgress(this._getDirectedProgress(0, 0));
-      }
+    const activeDuration = iterations === Infinity ? Infinity : duration * iterations;
+    if (
+      iterations !== Infinity &&
+      this._elapsed >= delay &&
+      this._elapsed - delay >= activeDuration &&
+      this._elapsed >= delay + activeDuration + endDelay
+    ) {
+      this._completeAnimation();
       return;
     }
 
+    this._applyAtCurrentTime();
+  }
+
+  /** Sample the same local timeline for both seeking and ticker updates. */
+  private _applyAtCurrentTime(): void {
+    const { delay, duration, iterations } = this._opts;
     const activeElapsed = this._elapsed - delay;
-    const isInfinite = iterations === Infinity;
-    const activeDuration = isInfinite ? Infinity : duration * iterations;
-
-    if (!isInfinite && activeElapsed >= activeDuration) {
-      // End of active phase — move to endDelay, then finish
-      const totalElapsed = activeDuration + delay;
-      if (this._elapsed >= totalElapsed + endDelay) {
-        this._completeAnimation();
-        return;
-      }
-      // In endDelay — apply fill='forwards'/'both' state
-      if (this._opts.fill === 'forwards' || this._opts.fill === 'both') {
-        this._applyAtProgress(this._getFinalDirectedProgress());
-      }
-      return;
+    if (activeElapsed < 0 || (this._playbackRate < 0 && this._elapsed === 0)) {
+      this._applyBoundary('start');
+    } else if (iterations !== Infinity && activeElapsed >= duration * iterations) {
+      this._applyBoundary('end');
+    } else {
+      this._applyAtElapsed(activeElapsed);
     }
-
-    this._applyAtElapsed(activeElapsed);
   }
 
   private _applyAtElapsed(activeElapsed: number): void {
@@ -373,6 +383,17 @@ export class PNodeAnimation {
     this._detachTicker();
     this._playState = 'finished';
 
+    this._applyBoundary(boundary);
+
+    const event = this._makeEvent('finish');
+    this.onfinish?.(event);
+    this._finishResolve?.(this);
+    this._finishResolve = null;
+    this._finishReject = null;
+  }
+
+  /** Apply directional fill or clear a previously sampled active value. */
+  private _applyBoundary(boundary: 'start' | 'end'): void {
     const { fill } = this._opts;
     const shouldFill =
       boundary === 'start'
@@ -387,21 +408,14 @@ export class PNodeAnimation {
     } else {
       this._restoreInitialProps();
     }
-
-    const event = this._makeEvent('finish');
-    this.onfinish?.(event);
-    this._finishResolve?.(this);
-    this._finishResolve = null;
-    this._finishReject = null;
   }
 
   private _restoreInitialProps(): void {
     applyProps(this._node, this._initialProps);
-    // Always restore animation-specific overrides to their initial state
-    this._node._animAlpha =
-      this._initialProps.alpha !== undefined ? this._initialProps.alpha : null;
-    this._node._animTranslate.x = this._initialProps.x ?? 0;
-    this._node._animTranslate.y = this._initialProps.y ?? 0;
+    // An initially absent alpha override must be cleared, but only if animated here.
+    if (Object.hasOwn(this._initialProps, 'alpha')) {
+      this._node._animAlpha = this._initialProps.alpha ?? null;
+    }
     this._node.markDirty();
   }
 

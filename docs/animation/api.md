@@ -78,9 +78,9 @@ type AnimationOptions =
 
 | 值 | 行为 |
 |----|------|
-| `'none'`（默认） | 动画结束后属性恢复到动画前的值 |
-| `'forwards'` | 动画结束后保持最后一帧的值 |
-| `'backwards'` | 在 `delay` 阶段立即应用第一帧的值 |
+| `'none'`（默认） | 活动区间外恢复到动画前的值 |
+| `'forwards'` | 活动区间结束后（包括 `endDelay`）保持方向与迭代次数对应的终点值 |
+| `'backwards'` | 在 `delay` 阶段应用当前方向的起点值，活动区间结束后恢复原值 |
 | `'both'` | 兼具 `forwards` 与 `backwards` |
 
 ### `direction` 说明
@@ -103,12 +103,42 @@ type AnimationOptions =
 | 属性 | 类型 | 说明 |
 |------|------|------|
 | `playState` | `'idle' \| 'running' \| 'paused' \| 'finished'` | 当前播放状态（只读） |
-| `currentTime` | `number` | 当前动画时间（ms）；可写入以跳转到指定时间 |
+| `currentTime` | `number` | 包含 `delay` 与 `endDelay` 的本地动画时间（ms）；可写入并立即求值 |
 | `playbackRate` | `number` | 播放速率；可在运行时修改 |
 | `finished` | `Promise<PNodeAnimation>` | 动画自然结束时 resolve；取消时 reject |
 | `ready` | `Promise<PNodeAnimation>` | 动画准备就绪时 resolve（本实现中立即 resolve） |
 | `onfinish` | `((event) => void) \| null` | 自然结束回调 |
 | `oncancel` | `((event) => void) \| null` | 取消回调 |
+
+### `currentTime` 与时间轴
+
+`currentTime = 0` 是开始延迟的起点；活动区间使用 `currentTime - delay` 计算进度。对于非负的延迟和有限迭代：
+
+- `0 ≤ currentTime < delay`：开始延迟，按 `backwards` / `both` 填充，否则恢复动画前的值。
+- `delay ≤ currentTime < delay + duration × iterations`：活动区间，按方向、迭代次数和缓动插值。
+- 活动区间结束后：按 `forwards` / `both` 填充终点，否则恢复动画前的值。`endDelay` 只延后自然完成，不延长插值区间。
+- 正向播放到 `delay + duration × iterations + endDelay` 时自然完成；反向播放到 `0` 时完成，此处按开始边界的 `backwards` / `both` 填充规则求值（包括 `delay = 0`）。
+
+例如，线性关键帧 `[{ x: 0 }, { x: 100 }]` 配合 `{ duration: 1000, delay: 500, endDelay: 200, fill: 'both' }`：
+
+| `currentTime` | `x` | 阶段 |
+|---|---|---|
+| `250` | `0` | 开始延迟 |
+| `500` | `0` | 活动区间起点 |
+| `750` | `25` | 活动区间 |
+| `1500` | `100` | 结束延迟起点 |
+| `1600` | `100` | 结束延迟 |
+| `1700` | `100` | 自然完成边界 |
+
+```ts
+anim.pause();
+anim.currentTime = 750; // 立即得到 x = 25
+anim.play();           // 从 750 ms 继续；无时间推进的 tick 不改变 x
+```
+
+写入负数仍按 `0` 处理。seek 立即按目标阶段的 `fill` 求值，即使动画已经暂停或完成；写入本身保持 `playState` 和同一个 `finished` Promise，不触发 `onfinish`。运行中的动画会在下一次 tick 检查完成边界（即使该帧时间增量为 `0`）；暂停时不会结算完成。已经完成的动画在 seek 后仍为 `'finished'`，`play()` 不会重新播放。
+
+时间坐标和填充规则参考 [Web Animations 的 local time](https://drafts.csswg.org/web-animations-1/#local-time) 与 [active time](https://drafts.csswg.org/web-animations-1/#calculating-the-active-time)。本实现保留上述 seek 生命周期行为，与完整 WAAPI 在 seek 时更新完成状态、重建 `finished` Promise 的行为不同。
 
 ### 方法
 
