@@ -1,15 +1,15 @@
-import { Ticker } from 'pixi.js';
 import type { PNode } from '@piant/core';
+import { Ticker } from 'pixi.js';
 import { interpolateKeyframes, normalizeKeyframes } from './interpolate';
 import type {
   AnimatableProps,
+  AnimationOptions,
   AnimationPlaybackEvent,
   KeyframeEffect,
   NormalizedKeyframe,
   PlayState,
   ResolvedOptions,
 } from './types';
-import type { AnimationOptions } from './types';
 
 /** Resolve raw options to a fully filled ResolvedOptions object. */
 function resolveOptions(opts: AnimationOptions | undefined): ResolvedOptions {
@@ -55,8 +55,14 @@ function captureInitialProps(node: PNode): AnimatableProps {
     borderTopRightRadius: node._layoutStyle.borderTopRightRadius,
     borderBottomRightRadius: node._layoutStyle.borderBottomRightRadius,
     borderBottomLeftRadius: node._layoutStyle.borderBottomLeftRadius,
-    width: typeof node._layoutStyle.width === 'number' ? node._layoutStyle.width : undefined,
-    height: typeof node._layoutStyle.height === 'number' ? node._layoutStyle.height : undefined,
+    width:
+      typeof node._layoutStyle.width === 'number'
+        ? node._layoutStyle.width
+        : undefined,
+    height:
+      typeof node._layoutStyle.height === 'number'
+        ? node._layoutStyle.height
+        : undefined,
   };
 }
 
@@ -102,10 +108,10 @@ function applyProps(node: PNode, props: AnimatableProps): void {
   const styleUpdate: Record<string, unknown> = {};
   let hasStyle = false;
   for (const key of styleKeys) {
-    // Use hasOwnProperty so that restore calls with undefined-valued keys (i.e.
+    // Check own properties so that restore calls with undefined-valued keys (i.e.
     // props that were unset initially) still call setStyle() and clear any
     // animated value — preventing stale values after fill:'none' or cancel().
-    if (Object.prototype.hasOwnProperty.call(props, key)) {
+    if (Object.hasOwn(props, key)) {
       styleUpdate[key] = props[key];
       hasStyle = true;
     }
@@ -271,6 +277,12 @@ export class PNodeAnimation {
 
     const { delay, duration, iterations, endDelay } = this._opts;
 
+    if (this._playbackRate < 0 && this._elapsed <= 0) {
+      this._elapsed = 0;
+      this._completeAnimation('start');
+      return;
+    }
+
     // Before active phase (delay)
     if (this._elapsed < delay) {
       if (this._opts.fill === 'backwards' || this._opts.fill === 'both') {
@@ -291,9 +303,8 @@ export class PNodeAnimation {
         return;
       }
       // In endDelay — apply fill='forwards'/'both' state
-      const finalProgress = this._getDirectedProgress(1, Math.ceil(iterations) - 1);
       if (this._opts.fill === 'forwards' || this._opts.fill === 'both') {
-        this._applyAtProgress(finalProgress);
+        this._applyAtProgress(this._getFinalDirectedProgress());
       }
       return;
     }
@@ -314,25 +325,31 @@ export class PNodeAnimation {
     } else {
       const totalActive = duration * iterations;
       const clamped = Math.min(activeElapsed, totalActive);
+      if (clamped >= totalActive) {
+        this._applyAtProgress(this._getFinalDirectedProgress());
+        return;
+      }
       iterIndex = Math.min(
         Math.floor(clamped / duration),
         Math.ceil(iterations) - 1,
       );
-      iterProgress =
-        iterIndex >= Math.ceil(iterations) - 1 && clamped >= totalActive
-          ? 1
-          : (clamped % duration) / duration;
+      iterProgress = (clamped % duration) / duration;
     }
 
     const progress = this._getDirectedProgress(iterProgress, iterIndex);
     this._applyAtProgress(progress);
   }
 
-  private _getDirectedProgress(iterProgress: number, iterIndex: number): number {
+  private _getDirectedProgress(
+    iterProgress: number,
+    iterIndex: number,
+  ): number {
     const dir = this._opts.direction;
     if (dir === 'reverse') return 1 - iterProgress;
-    if (dir === 'alternate') return iterIndex % 2 === 0 ? iterProgress : 1 - iterProgress;
-    if (dir === 'alternate-reverse') return iterIndex % 2 === 0 ? 1 - iterProgress : iterProgress;
+    if (dir === 'alternate')
+      return iterIndex % 2 === 0 ? iterProgress : 1 - iterProgress;
+    if (dir === 'alternate-reverse')
+      return iterIndex % 2 === 0 ? 1 - iterProgress : iterProgress;
     return iterProgress; // 'normal'
   }
 
@@ -341,15 +358,32 @@ export class PNodeAnimation {
     applyProps(this._node, values);
   }
 
-  private _completeAnimation(): void {
+  private _getFinalDirectedProgress(): number {
+    const { iterations } = this._opts;
+    if (iterations <= 0) return this._getDirectedProgress(0, 0);
+
+    const finiteIterations = iterations === Infinity ? 1 : iterations;
+    const finalIterIdx = Math.max(0, Math.ceil(finiteIterations) - 1);
+    const fractionalProgress = finiteIterations % 1;
+    const finalIterProgress = fractionalProgress === 0 ? 1 : fractionalProgress;
+    return this._getDirectedProgress(finalIterProgress, finalIterIdx);
+  }
+
+  private _completeAnimation(boundary: 'start' | 'end' = 'end'): void {
     this._detachTicker();
     this._playState = 'finished';
 
-    const { fill, direction, iterations } = this._opts;
-    if (fill === 'forwards' || fill === 'both') {
-      const finalIterIdx = Math.max(0, Math.ceil(iterations === Infinity ? 1 : iterations) - 1);
-      const finalProgress = this._getDirectedProgress(1, finalIterIdx);
-      this._applyAtProgress(finalProgress);
+    const { fill } = this._opts;
+    const shouldFill =
+      boundary === 'start'
+        ? fill === 'backwards' || fill === 'both'
+        : fill === 'forwards' || fill === 'both';
+    if (shouldFill) {
+      const progress =
+        boundary === 'start'
+          ? this._getDirectedProgress(0, 0)
+          : this._getFinalDirectedProgress();
+      this._applyAtProgress(progress);
     } else {
       this._restoreInitialProps();
     }
@@ -364,7 +398,8 @@ export class PNodeAnimation {
   private _restoreInitialProps(): void {
     applyProps(this._node, this._initialProps);
     // Always restore animation-specific overrides to their initial state
-    this._node._animAlpha = this._initialProps.alpha !== undefined ? this._initialProps.alpha : null;
+    this._node._animAlpha =
+      this._initialProps.alpha !== undefined ? this._initialProps.alpha : null;
     this._node._animTranslate.x = this._initialProps.x ?? 0;
     this._node._animTranslate.y = this._initialProps.y ?? 0;
     this._node.markDirty();

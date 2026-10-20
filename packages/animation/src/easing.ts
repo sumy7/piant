@@ -1,16 +1,16 @@
 import {
-  linear,
-  easeIn,
-  easeOut,
-  easeInOut,
-  cubicBezier,
-  circIn,
-  circOut,
-  circInOut,
-  backIn,
-  backOut,
-  backInOut,
   anticipate,
+  backIn,
+  backInOut,
+  backOut,
+  circIn,
+  circInOut,
+  circOut,
+  cubicBezier,
+  easeIn,
+  easeInOut,
+  easeOut,
+  linear,
 } from 'popmotion';
 
 export type EasingFunction = (t: number) => number;
