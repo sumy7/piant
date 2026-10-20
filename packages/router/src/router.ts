@@ -5,8 +5,8 @@ import type {
   GuardResult,
   RouteComponent,
   RouteMatch,
-  RouteState,
   RouterListener,
+  RouteState,
 } from './types';
 
 const DEFAULT_MODE = 'browser' as const;
@@ -66,24 +66,16 @@ class PiantRouter implements Router {
   }
 
   push(path: string) {
-    this.history.push(path);
-    this.beginNavigation(path);
+    void this.beginNavigation(path);
     return this.state;
   }
 
   replace(path: string) {
-    this.history.replace(path);
-    this.beginNavigation(path, { replace: true });
+    void this.beginNavigation(path, { replace: true });
     return this.state;
   }
 
   async navigate(path: string, options?: { replace?: boolean }) {
-    if (options?.replace) {
-      this.history.replace(path);
-    } else {
-      this.history.push(path);
-    }
-
     return this.beginNavigation(path, {
       replace: options?.replace,
     });
@@ -97,6 +89,7 @@ class PiantRouter implements Router {
   }
 
   destroy() {
+    this.navigationToken++;
     this.stopListeningHistory();
     this.listeners.clear();
     this.pendingLoaders.clear();
@@ -112,6 +105,10 @@ class PiantRouter implements Router {
   ) {
     const token = ++this.navigationToken;
     const fromState = this.state;
+    const historyUpdates: Array<{ path: string; replace: boolean }> =
+      options?.fromHistory
+        ? []
+        : [{ path, replace: options?.replace ?? false }];
 
     try {
       const next = await this.resolveWithGuards(
@@ -119,11 +116,23 @@ class PiantRouter implements Router {
         fromState,
         token,
         options?.redirectedFrom ?? null,
+        historyUpdates,
       );
 
-      if (!next) return this.state;
+      if (!next) {
+        if (token === this.navigationToken) {
+          if (options?.fromHistory) this.history.replace(fromState.fullPath);
+          if (this.state.loading)
+            this.preloadMatchedComponents(this.state, token);
+        }
+        return this.state;
+      }
       if (token !== this.navigationToken) return this.state;
 
+      for (const update of historyUpdates) {
+        if (update.replace) this.history.replace(update.path);
+        else this.history.push(update.path);
+      }
       this.state = next;
       this.emit(this.state);
       this.preloadMatchedComponents(this.state, token);
@@ -132,6 +141,7 @@ class PiantRouter implements Router {
     } catch (error) {
       if (token !== this.navigationToken) return this.state;
 
+      if (options?.fromHistory) this.history.replace(fromState.fullPath);
       this.state = {
         ...fromState,
         loading: false,
@@ -186,6 +196,7 @@ class PiantRouter implements Router {
     fromState: RouteState,
     token: number,
     redirectedFrom: string | null,
+    historyUpdates: Array<{ path: string; replace: boolean }>,
     redirectDepth = 0,
   ): Promise<RouteState | null> {
     if (redirectDepth > PiantRouter.MAX_REDIRECT_DEPTH) {
@@ -194,27 +205,25 @@ class PiantRouter implements Router {
 
     const next = this.resolve(path, redirectedFrom);
     const redirect = await this.detectRedirect(next, fromState);
+    if (redirect === false) return null;
     if (!redirect) {
       return next;
     }
 
     const targetPath = redirect.to;
     const redirected = redirectedFrom ?? next.fullPath;
-    if (redirect.replace) {
-      this.history.replace(targetPath);
-    } else {
-      this.history.push(targetPath);
-    }
-
     if (token !== this.navigationToken) {
       return null;
     }
+
+    historyUpdates.push({ path: targetPath, replace: redirect.replace });
 
     return this.resolveWithGuards(
       targetPath,
       fromState,
       token,
       redirected,
+      historyUpdates,
       redirectDepth + 1,
     );
   }
@@ -222,7 +231,7 @@ class PiantRouter implements Router {
   private async detectRedirect(
     to: RouteState,
     from: RouteState,
-  ): Promise<{ to: string; replace: boolean } | null> {
+  ): Promise<{ to: string; replace: boolean } | false | null> {
     for (const match of to.matches) {
       const route = match.route;
 
@@ -240,7 +249,8 @@ class PiantRouter implements Router {
       if (!route.beforeEnter) continue;
 
       const result = await route.beforeEnter({ to, from });
-      const redirect = normalizeGuardResult(result, from.fullPath || '/');
+      if (result === false) return false;
+      const redirect = normalizeGuardResult(result);
       if (redirect) return redirect;
     }
 
@@ -250,25 +260,27 @@ class PiantRouter implements Router {
   private preloadMatchedComponents(state: RouteState, token: number) {
     const jobs = state.matches
       .filter((match: RouteMatch) => !!match.route.loader)
-      .map((match: RouteMatch) => this.loadMatchComponent(match, token));
+      .map((match: RouteMatch) => this.loadMatchComponent(match));
 
     if (!jobs.length) return;
 
-    Promise.allSettled(jobs).then(() => {
+    Promise.allSettled(jobs).then((results) => {
       if (token !== this.navigationToken) return;
       const refreshed = this.resolve(
         this.state.fullPath,
         this.state.redirectedFrom,
       );
+      const failure = results.find((result) => result.status === 'rejected');
       this.state = {
         ...refreshed,
-        error: this.state.error,
+        loading: failure ? false : refreshed.loading,
+        error: failure ? toError(failure.reason) : null,
       };
       this.emit(this.state);
     });
   }
 
-  private loadMatchComponent(match: RouteMatch, token: number) {
+  private loadMatchComponent(match: RouteMatch) {
     if (this.componentCache.has(match.id)) {
       return Promise.resolve();
     }
@@ -279,7 +291,8 @@ class PiantRouter implements Router {
     const loader = match.route.loader;
     if (!loader) return Promise.resolve();
 
-    const task = loader()
+    const task = Promise.resolve()
+      .then(() => loader())
       .then(
         (
           loaded: Awaited<
@@ -290,15 +303,6 @@ class PiantRouter implements Router {
           this.componentCache.set(match.id, component);
         },
       )
-      .catch((error: unknown) => {
-        if (token !== this.navigationToken) return;
-        this.state = {
-          ...this.state,
-          loading: false,
-          error: toError(error),
-        };
-        this.emit(this.state);
-      })
       .finally(() => {
         this.pendingLoaders.delete(match.id);
       });
@@ -308,7 +312,9 @@ class PiantRouter implements Router {
   }
 
   private emit(state: RouteState) {
-    this.listeners.forEach((listener) => listener(state));
+    this.listeners.forEach((listener) => {
+      listener(state);
+    });
   }
 }
 
@@ -323,17 +329,9 @@ function normalizeLoadedComponent(
 }
 
 function normalizeGuardResult(
-  result: GuardResult,
-  fallbackPath: string,
+  result: Exclude<GuardResult, false>,
 ): { to: string; replace: boolean } | null {
   if (result === undefined || result === true) return null;
-
-  if (result === false) {
-    return {
-      to: fallbackPath,
-      replace: true,
-    };
-  }
 
   if (typeof result === 'string') {
     return {
