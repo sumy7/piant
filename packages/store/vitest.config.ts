@@ -12,7 +12,7 @@ export default defineConfig({
       exclude: ['node_modules', 'dist', '**/*.d.ts', 'rslib.config.ts'],
     },
     alias: {
-      '@': path.resolve(__dirname, './src'),
+      '@': path.resolve(import.meta.dirname, './src'),
     },
   },
 });
