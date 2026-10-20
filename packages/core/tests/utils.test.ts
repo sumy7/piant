@@ -19,9 +19,9 @@ describe('Vitest Setup', () => {
     expect(result).toBe(42);
   });
 
-  it('should work with ES modules', () => {
+  it('should work with ES modules', async () => {
     // This confirms ESM support is working
     const dynamicImport = import('vitest');
-    expect(dynamicImport).resolves.toBeDefined();
+    await expect(dynamicImport).resolves.toBeDefined();
   });
 });

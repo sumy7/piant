@@ -1,10 +1,19 @@
 import { Container, Sprite, Texture } from 'pixi.js';
-import { describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import {
   type InlineItem,
   type TextRenderSurface,
   Typesetter,
 } from '../src/elements/text';
+
+// happy-dom exposes OffscreenCanvas without a 2D context; use the DOM canvas stub.
+beforeAll(() => {
+  vi.stubGlobal('OffscreenCanvas', undefined);
+});
+
+afterAll(() => {
+  vi.unstubAllGlobals();
+});
 
 Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
   configurable: true,
