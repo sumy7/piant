@@ -1,9 +1,6 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  createTestKeystrokes,
-  setGlobalKeystrokes,
-} from '@rwh/keystrokes';
 import { root } from '@piant/core';
+import { createTestKeystrokes, setGlobalKeystrokes } from '@rwh/keystrokes';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useKeystroke } from '../src/useKeystroke';
 
 describe('useKeystroke', () => {

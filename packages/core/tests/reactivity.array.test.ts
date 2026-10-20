@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { indexArray, mapArray } from '../src/reactivity/array';
 import { root } from '../src/reactivity/effects';
 import { createState } from '../src/reactivity/hooks';
-import { indexArray, mapArray } from '../src/reactivity/array';
 
 describe('mapArray', () => {
   it('maps an array of items', () => {
@@ -87,8 +87,7 @@ describe('mapArray', () => {
 
   it('provides reactive index getter to mapFn', () => {
     root(() => {
-      const [get, set] = createState(['a', 'b', 'c']);
-      const indices: number[] = [];
+      const [get] = createState(['a', 'b', 'c']);
       const mapped = mapArray(get, (_v, getIdx) => {
         return getIdx();
       });

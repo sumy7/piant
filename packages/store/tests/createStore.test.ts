@@ -314,18 +314,20 @@ describe('createStore – static API methods', () => {
 describe('createStore – safe set/get during creator', () => {
   it('get() called during creator does not throw', () => {
     // Creator calls get() to derive an initial value – state is pre-initialized
-    const useStore = createStore((_set, get) => {
-      // get() returns the pre-initialized empty observable; no crash
-      const _early = get();
-      return { count: 0, ready: _early !== undefined };
-    });
+    const useStore = createStore<{ count: number; ready: boolean }>(
+      (_set, get) => {
+        // get() returns the pre-initialized empty observable; no crash
+        const _early = get();
+        return { count: 0, ready: _early !== undefined };
+      },
+    );
     expect(useStore.getState().count).toBe(0);
     expect(useStore.getState().ready).toBe(true);
   });
 
   it('set() called during creator does not throw', () => {
     // Creator calls set() as a side-effect during initialization
-    const useStore = createStore((set) => {
+    const useStore = createStore<{ count: number }>((set) => {
       // set() is safe even before the initial state object is returned
       set({ count: 5 });
       return { count: 0 };

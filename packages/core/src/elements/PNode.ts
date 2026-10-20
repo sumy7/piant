@@ -1,5 +1,5 @@
 import { Container, Graphics } from 'pixi.js';
-import Yoga from 'yoga-layout';
+import Yoga, { Edge } from 'yoga-layout';
 import { applyStyle } from './layout/applyStyle';
 import type { ViewStyles } from './layout/viewStyles';
 import type { PRoot } from './PRoot';
@@ -130,8 +130,8 @@ export class PNode {
     y: number,
     width: number,
     height: number,
+    radii = this.resolveBorderRadii(width, height),
   ) {
-    const radii = this.resolveBorderRadii(width, height);
     const hasAnyRadius =
       radii.topLeft > 0 ||
       radii.topRight > 0 ||
@@ -174,12 +174,74 @@ export class PNode {
   private drawBackground() {
     const width = this._layoutNode.getComputedWidth();
     const height = this._layoutNode.getComputedHeight();
+    const border = {
+      top: this._layoutNode.getComputedBorder(Edge.Top),
+      right: this._layoutNode.getComputedBorder(Edge.Right),
+      bottom: this._layoutNode.getComputedBorder(Edge.Bottom),
+      left: this._layoutNode.getComputedBorder(Edge.Left),
+    };
+    const hasBorder = Object.values(border).some((value) => value > 0);
+    const hasBorderColor =
+      this._layoutStyle.borderColor !== null &&
+      this._layoutStyle.borderColor !== undefined;
 
     this._viewBg.clear().beginPath();
-    this.drawRoundedRect(this._viewBg, 0, 0, width, height);
-    this._viewBg.fill({
-      color: this._layoutStyle.backgroundColor || 'transparent',
-    });
+    if (hasBorder && hasBorderColor) {
+      const outerRadii = this.resolveBorderRadii(width, height);
+      const innerWidth = Math.max(0, width - border.left - border.right);
+      const innerHeight = Math.max(0, height - border.top - border.bottom);
+      const innerRadii = {
+        topLeft: Math.max(
+          0,
+          outerRadii.topLeft - Math.max(border.top, border.left),
+        ),
+        topRight: Math.max(
+          0,
+          outerRadii.topRight - Math.max(border.top, border.right),
+        ),
+        bottomRight: Math.max(
+          0,
+          outerRadii.bottomRight - Math.max(border.bottom, border.right),
+        ),
+        bottomLeft: Math.max(
+          0,
+          outerRadii.bottomLeft - Math.max(border.bottom, border.left),
+        ),
+      };
+
+      this.drawRoundedRect(this._viewBg, 0, 0, width, height, outerRadii);
+      this._viewBg.fill({ color: this._layoutStyle.borderColor });
+
+      if (innerWidth > 0 && innerHeight > 0) {
+        this._viewBg.beginPath();
+        this.drawRoundedRect(
+          this._viewBg,
+          border.left,
+          border.top,
+          innerWidth,
+          innerHeight,
+          innerRadii,
+        );
+        this._viewBg.cut();
+        this._viewBg.beginPath();
+        this.drawRoundedRect(
+          this._viewBg,
+          border.left,
+          border.top,
+          innerWidth,
+          innerHeight,
+          innerRadii,
+        );
+        this._viewBg.fill({
+          color: this._layoutStyle.backgroundColor ?? 'transparent',
+        });
+      }
+    } else {
+      this.drawRoundedRect(this._viewBg, 0, 0, width, height);
+      this._viewBg.fill({
+        color: this._layoutStyle.backgroundColor ?? 'transparent',
+      });
+    }
 
     this._viewMask.clear();
     if (this._layoutStyle.overflow === 'hidden') {
@@ -263,7 +325,7 @@ export class PNode {
    */
   appendChild(child: PNode) {
     if (child._parent) {
-      child._parent.removeChild(child);
+      child._parent.detachChild(child);
     }
     this._children.push(child);
     this._layoutNode.insertChild(
@@ -300,36 +362,30 @@ export class PNode {
    * 替换子节点
    */
   replaceChild(newChild: PNode, oldChild: PNode) {
-    if (oldChild._parent !== this) {
+    if (oldChild._parent !== this || newChild === oldChild) {
       return;
     }
     if (newChild._parent) {
-      newChild._parent.removeChild(newChild);
+      newChild._parent.detachChild(newChild);
     }
 
     const index = this._children.indexOf(oldChild);
-    this._children.splice(index, 1, newChild);
-
-    this._layoutNode.removeChild(oldChild._layoutNode);
+    this.detachChild(oldChild);
+    this._children.splice(index, 0, newChild);
     this._layoutNode.insertChild(newChild._layoutNode, index);
 
-    oldChild._parent = null;
     newChild._parent = this;
-
-    oldChild._root = null;
 
     if (this._root) {
       newChild.bindToRoot(this._root);
       newChild.markDirty();
     }
+    oldChild.destroyRecursive();
   }
 
   insertBefore(newChild: PNode, refChild: PNode | null) {
     // Inserting a node before itself is a no-op (matches browser DOM semantics).
     if (newChild === refChild) return;
-    if (newChild._parent) {
-      newChild._parent.removeChild(newChild);
-    }
 
     if (!refChild) {
       this.appendChild(newChild);
@@ -338,6 +394,10 @@ export class PNode {
 
     if (refChild._parent !== this) {
       return;
+    }
+
+    if (newChild._parent) {
+      newChild._parent.detachChild(newChild);
     }
 
     const index = this._children.indexOf(refChild);
@@ -353,16 +413,35 @@ export class PNode {
 
   remove() {
     if (this._parent) {
-      const parent = this._parent;
-      const index = parent._children.indexOf(this);
-      if (index >= 0) {
-        parent._children.splice(index, 1);
-        parent._layoutNode.removeChild(this._layoutNode);
-      }
-      this.markDirty();
-      this._parent = null;
-      this._root = null;
+      this.detach();
       this.destroyRecursive();
+    }
+  }
+
+  /** @internal Detach for reconciliation without disposing a retained node. */
+  detach() {
+    this._parent?.detachChild(this);
+  }
+
+  private detachChild(child: PNode) {
+    if (child._parent !== this) return false;
+
+    const index = this._children.indexOf(child);
+    if (index < 0) return false;
+
+    const root = child._root;
+    this._children.splice(index, 1);
+    this._layoutNode.removeChild(child._layoutNode);
+    child._parent = null;
+    child.clearRoot();
+    root?.markDirty();
+    return true;
+  }
+
+  private clearRoot() {
+    this._root = null;
+    for (const child of this._children) {
+      child.clearRoot();
     }
   }
 

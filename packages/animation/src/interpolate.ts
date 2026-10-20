@@ -1,4 +1,6 @@
 import { mix } from 'popmotion';
+import type { EasingFunction } from './easing';
+import { parseEasing } from './easing';
 import type {
   AnimatableProps,
   Keyframe,
@@ -6,8 +8,6 @@ import type {
   NormalizedKeyframe,
   PropertyIndexedKeyframes,
 } from './types';
-import type { EasingFunction } from './easing';
-import { parseEasing } from './easing';
 
 /** Keys of AnimatableProps that accept numeric values */
 const NUMERIC_PROPS = new Set<keyof AnimatableProps>([
@@ -183,7 +183,7 @@ export function interpolateKeyframes(
 ): AnimatableProps {
   if (keyframes.length === 0) return {};
   if (keyframes.length === 1) {
-    const { offset, easing, ...props } = keyframes[0];
+    const { offset: _offset, easing: _easing, ...props } = keyframes[0];
     return props;
   }
 

@@ -12,6 +12,7 @@ import { children as $children, effect } from '../reactivity/effects';
 import { splitProps } from '../reactivity/props';
 import type { StyleValue } from '../styleSheet';
 import { StyleSheet } from '../styleSheet';
+import { bindStyle } from './bindStyle';
 import type { ComponentChild, ComponentValue, RefCallback } from './types';
 
 type TextElementLike = {
@@ -188,9 +189,7 @@ export function Text(props: TextProps) {
 
     props.ref?.(element);
 
-    effect(() => {
-      element.setStyle(getTextViewStyles());
-    });
+    bindStyle<TextStyles>(element, getTextViewStyles);
 
     effect(() => {
       const nodes = collectTextViewNodes(children(), getTextViewStyles());

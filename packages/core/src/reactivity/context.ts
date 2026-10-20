@@ -36,7 +36,7 @@ export function lookup(
 ): any {
   if (owner && owner.context && owner.context[key] !== undefined) {
     return owner.context[key];
-  } else if (owner && owner.owner) {
+  } else if (owner?.owner) {
     return lookup(owner.owner, key, defaultValue);
   } else {
     return defaultValue;

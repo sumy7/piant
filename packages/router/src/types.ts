@@ -58,9 +58,7 @@ export interface RouteState {
   components: Record<string, RouteComponent>;
 }
 
-export interface RouterListener {
-  (state: RouteState): void;
-}
+export type RouterListener = (state: RouteState) => void
 
 export type RouterMode = 'browser' | 'memory';
 

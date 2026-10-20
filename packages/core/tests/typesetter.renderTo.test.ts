@@ -1,9 +1,9 @@
 import { Container, Sprite, Texture } from 'pixi.js';
 import { describe, expect, it } from 'vitest';
 import {
-  Typesetter,
   type InlineItem,
   type TextRenderSurface,
+  Typesetter,
 } from '../src/elements/text';
 
 Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
@@ -44,9 +44,7 @@ describe('Typesetter renderTo', () => {
     };
   };
 
-  // Temporary: text surface currently recreates Sprite on each render to ensure
-  // width/height updates follow texture changes in runtime rendering.
-  it.skip('reuses render objects across repeated renders', () => {
+  it('reuses render objects across repeated renders', () => {
     const imageSprite = new Sprite(Texture.WHITE);
     imageSprite.width = 24;
     imageSprite.height = 24;
@@ -77,6 +75,28 @@ describe('Typesetter renderTo', () => {
     for (let i = 0; i < first.length; i++) {
       expect(second[i]).toBe(first[i]);
     }
+  });
+
+  it('updates cached sprite bounds and canvas texture dimensions without replacing them', () => {
+    const typesetter = new Typesetter([{ type: 'text', content: 'Resize' }]);
+    const container = new Container();
+    const surface = createSurface();
+    const sprite = surface.sprite;
+    const texture = sprite.texture;
+    typesetter.flow(80);
+    typesetter.renderTo(container, surface, { width: 80, height: 20 });
+    expect(sprite.getBounds().width).toBe(80);
+
+    typesetter.flow(160);
+    typesetter.renderTo(container, surface, { width: 160, height: 40 });
+
+    expect(surface.sprite).toBe(sprite);
+    expect(surface.texture).toBe(texture);
+    expect(texture.source.pixelWidth).toBe(surface.canvas.width);
+    expect(texture.source.pixelHeight).toBe(surface.canvas.height);
+    expect(sprite.getBounds().width).toBe(160);
+    expect(sprite.getBounds().height).toBe(40);
+    expect(container.children).toEqual([sprite]);
   });
 
   it('keeps renderTo benchmark stable and without child growth', () => {
@@ -153,6 +173,108 @@ describe('Typesetter renderTo', () => {
 
     expect(drawCalls.length).toBeGreaterThan(0);
     expect(drawCalls[0]?.y).toBe(14);
+  });
+
+  it('positions text immediately after the native inline image box', () => {
+    const image = new Sprite(Texture.WHITE);
+    const typesetter = new Typesetter(
+      [
+        { type: 'text', content: 'A' },
+        { type: 'image', source: image, width: 24, height: 20 },
+        { type: 'text', content: 'B' },
+      ],
+      { lineHeight: 20 },
+    );
+    const surface = createSurface();
+    const drawCalls: Array<{ text: string; x: number }> = [];
+    surface.ctx.fillText = ((text: string, x: number) => {
+      drawCalls.push({ text, x });
+    }) as CanvasRenderingContext2D['fillText'];
+    const container = new Container();
+
+    typesetter.flow(40);
+    typesetter.renderTo(container, surface);
+
+    expect(drawCalls).toEqual([
+      { text: 'A', x: 0 },
+      { text: 'B', x: 32 },
+    ]);
+    const imageNode = container.children.find(
+      (node) => node !== surface.sprite,
+    );
+    expect(imageNode?.x).toBe(8);
+    expect(imageNode?.width).toBe(24);
+  });
+
+  it('draws text after preserved tabs at pretext tab stops', () => {
+    const typesetter = new Typesetter(
+      [
+        { type: 'text', content: 'A\tB' },
+        { type: 'text', content: '\tC', fontWeight: 'bold' },
+      ],
+      { lineHeight: 20, whiteSpace: 'pre-wrap' },
+    );
+    const surface = createSurface();
+    const drawCalls: Array<{ text: string; x: number }> = [];
+    surface.ctx.fillText = ((text: string, x: number) => {
+      drawCalls.push({ text, x });
+    }) as CanvasRenderingContext2D['fillText'];
+
+    expect(typesetter.flow(200)).toEqual({ width: 136, height: 20 });
+    typesetter.renderTo(new Container(), surface);
+
+    expect(drawCalls).toEqual([
+      { text: 'A', x: 0 },
+      { text: 'B', x: 64 },
+      { text: 'C', x: 128 },
+    ]);
+  });
+
+  it('keeps inline images atomic when trimming a clamped line', () => {
+    const image = new Sprite(Texture.WHITE);
+    const typesetter = new Typesetter(
+      [
+        { type: 'text', content: 'A' },
+        { type: 'image', source: image, width: 24, height: 20 },
+        { type: 'text', content: ' long overflow text' },
+      ],
+      { lineHeight: 20, lineClamp: 1, textOverflow: 'ellipsis' },
+    );
+    const surface = createSurface();
+    const drawCalls: string[] = [];
+    surface.ctx.fillText = ((text: string) => {
+      drawCalls.push(text);
+    }) as CanvasRenderingContext2D['fillText'];
+    const container = new Container();
+
+    expect(typesetter.flow(32).height).toBe(20);
+    typesetter.renderTo(container, surface);
+
+    expect(drawCalls).toEqual(['A', '…']);
+    expect(container.children).toEqual([surface.sprite]);
+  });
+
+  it('renders a text ellipsis when a clamped line contains only images', () => {
+    const image = new Sprite(Texture.WHITE);
+    const typesetter = new Typesetter(
+      [
+        { type: 'image', source: image, width: 24, height: 24 },
+        { type: 'image', source: image, width: 24, height: 24 },
+      ],
+      { lineHeight: 20, lineClamp: 1, textOverflow: 'ellipsis' },
+    );
+    const surface = createSurface();
+    const drawCalls: string[] = [];
+    surface.ctx.fillText = ((text: string) => {
+      drawCalls.push(text);
+    }) as CanvasRenderingContext2D['fillText'];
+    const container = new Container();
+
+    expect(typesetter.flow(24)).toEqual({ width: 8, height: 20 });
+    typesetter.renderTo(container, surface);
+
+    expect(drawCalls).toEqual(['…']);
+    expect(container.children).toEqual([surface.sprite]);
   });
 
   it('draws ellipsis on the last visible line when clamped', () => {

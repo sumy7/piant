@@ -1,9 +1,9 @@
 import { Show, StyleSheet, Text, View } from '@piant/core';
 import { useKey, useKeyPress, useKeystroke } from '@piant/hooks';
 import BoardView from './BoardView';
+import { useGameState } from './gameState';
 import NextPieceView from './NextPieceView';
 import ScorePanel from './ScorePanel';
-import { useGameState } from './gameState';
 
 const styles = StyleSheet.create({
   root: {

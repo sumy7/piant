@@ -60,8 +60,7 @@ export function reconcileArrays(parentNode: PNode, a: PNode[], b: PNode[]) {
       if (index != null) {
         if (bStart < index && index < bEnd) {
           let i = aStart,
-            sequence = 1,
-            t: number | undefined;
+            sequence = 1;
 
           while (++i < aEnd && i < bEnd) {
             const t = map.get(a[i]);
@@ -77,7 +76,11 @@ export function reconcileArrays(parentNode: PNode, a: PNode[], b: PNode[]) {
               parentNode.insertBefore(b[bStart++], node);
             }
           } else {
-            parentNode.replaceChild(b[bStart++], a[aStart++]);
+            // Both nodes are retained in b. Move the next node into position
+            // and detach the old one until it is placed later.
+            const oldChild = a[aStart++];
+            parentNode.insertBefore(b[bStart++], oldChild);
+            oldChild.detach();
           }
         } else {
           aStart++;

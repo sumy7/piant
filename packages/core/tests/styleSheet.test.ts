@@ -237,10 +237,10 @@ describe('StyleSheet', () => {
 
     it('child overrides all parents', () => {
       const styles = StyleSheet.create({
-        a: { color: 'red' } as any,
-        b: { color: 'blue' } as any,
-        c: StyleSheet.extend(['a', 'b'], { color: 'green' } as any),
-      } as any);
+        a: { color: 'red' },
+        b: { color: 'blue' },
+        c: StyleSheet.extend<{ color: string }>(['a', 'b'], { color: 'green' }),
+      });
       expect(styles.c.color).toBe('green');
     });
 

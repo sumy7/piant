@@ -5,8 +5,8 @@ export type {
   PersistOptions,
   SetState,
   StateCreator,
-  StoreApi,
   StorageAdapter,
+  StoreApi,
   Subscribe,
   UseStore,
 } from './types';

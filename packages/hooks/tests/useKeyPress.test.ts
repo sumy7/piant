@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
 import { root } from '@piant/core';
+import { describe, expect, it } from 'vitest';
 import { useKeyPress } from '../src/useKeyPress';
 
 describe('useKeyPress', () => {

@@ -123,4 +123,49 @@ describe('router phase-2 features', () => {
     const state = router.getState();
     expect(state.error?.message).toBe('lazy failed');
   });
+
+  it('reports a reused lazy loader rejection after navigating away and back', async () => {
+    let rejectLoader!: (error: Error) => void;
+    const pending = new Promise<() => string>((_resolve, reject) => {
+      rejectLoader = reject;
+    });
+    const loader = vi.fn(() => pending);
+    const router = createRouter({
+      mode: 'memory',
+      routes: [{ path: '/' }, { path: '/lazy', loader }],
+    });
+    await router.navigate('/lazy');
+    await router.navigate('/');
+    await router.navigate('/lazy');
+    rejectLoader(new Error('lazy failed after return'));
+    await waitFor(() => !!router.getState().error);
+
+    expect(loader).toHaveBeenCalledTimes(1);
+    expect(router.getState().error?.message).toBe('lazy failed after return');
+    expect(router.getState().loading).toBe(false);
+    router.destroy();
+  });
+
+  it('continues loading the active route when another navigation is cancelled', async () => {
+    let resolveLoader!: (component: () => string) => void;
+    const pending = new Promise<() => string>((resolve) => {
+      resolveLoader = resolve;
+    });
+    const router = createRouter({
+      mode: 'memory',
+      routes: [
+        { path: '/' },
+        { path: '/lazy', loader: () => pending },
+        { path: '/blocked', beforeEnter: () => false },
+      ],
+    });
+    await router.navigate('/lazy');
+    await router.navigate('/blocked');
+    resolveLoader(() => 'loaded');
+    await waitFor(() => !router.getState().loading);
+    expect(router.getState().path).toBe('/lazy');
+    expect(router.getState().loading).toBe(false);
+    expect(router.getState().error).toBeNull();
+    router.destroy();
+  });
 });

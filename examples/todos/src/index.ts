@@ -1,5 +1,5 @@
-import { initDevtools } from '@pixi/devtools';
 import { PRoot, render } from '@piant/core';
+import { initDevtools } from '@pixi/devtools';
 import { Application } from 'pixi.js';
 import { App } from './App';
 

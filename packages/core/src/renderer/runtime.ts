@@ -116,7 +116,7 @@ function normalizeIncomingArray(
   let dynamic = false;
   for (let i = 0, len = array.length; i < len; i++) {
     let item = array[i];
-    const prev = current && current[i];
+    const prev = current?.[i];
     if (item == null || item === true || item === false) {
       // matches null, undefined, true or false skip
     } else if (typeof item === 'object' && item instanceof PNode) {

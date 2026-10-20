@@ -1,8 +1,8 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { normalizeKeyframes, interpolateKeyframes } from '../src/interpolate';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { parseEasing } from '../src/easing';
+import { interpolateKeyframes, normalizeKeyframes } from '../src/interpolate';
 import { PNodeAnimation } from '../src/PNodeAnimation';
-import type { Keyframe, NormalizedKeyframe } from '../src/types';
+import type { NormalizedKeyframe } from '../src/types';
 
 // ── Mock pixi.js Ticker ───────────────────────────────────────────────────
 
@@ -234,7 +234,11 @@ describe('PNodeAnimation', () => {
 
   it('starts in running state immediately', () => {
     const node = createMockNode();
-    const anim = new PNodeAnimation(node as any, [{ alpha: 0 }, { alpha: 1 }], 300);
+    const anim = new PNodeAnimation(
+      node as any,
+      [{ alpha: 0 }, { alpha: 1 }],
+      300,
+    );
     expect(anim.playState).toBe('running');
   });
 
@@ -255,8 +259,8 @@ describe('PNodeAnimation', () => {
     tick(500);
     // ease-in-out(0.5) ≈ 0.5; just ensure animation ran and value changed from null
     expect(node._animAlpha).not.toBeNull();
-    expect((node._animAlpha as number)).toBeGreaterThan(0);
-    expect((node._animAlpha as number)).toBeLessThan(1);
+    expect(node._animAlpha as number).toBeGreaterThan(0);
+    expect(node._animAlpha as number).toBeLessThan(1);
   });
 
   it('fill: forwards keeps final value on completion', () => {
@@ -285,15 +289,21 @@ describe('PNodeAnimation', () => {
   it('fill: none restores initially-undefined opacity style on completion', () => {
     const node = createMockNode();
     // opacity is NOT set initially
-    const anim = new PNodeAnimation(node as any, [{ opacity: 0 }, { opacity: 1 }], {
-      duration: 100,
-      fill: 'none',
-    });
+    const anim = new PNodeAnimation(
+      node as any,
+      [{ opacity: 0 }, { opacity: 1 }],
+      {
+        duration: 100,
+        fill: 'none',
+      },
+    );
     tick(200);
     expect(anim.playState).toBe('finished');
     // setStyle should have been called with opacity: undefined to restore
     const calls = (node.setStyle as ReturnType<typeof vi.fn>).mock.calls;
-    const restoreCall = calls.find((c: any[]) => Object.prototype.hasOwnProperty.call(c[0], 'opacity'));
+    const restoreCall = calls.find((c: any[]) =>
+      Object.hasOwn(c[0], 'opacity'),
+    );
     expect(restoreCall).toBeDefined();
     expect(restoreCall![0].opacity).toBeUndefined();
   });
@@ -301,7 +311,11 @@ describe('PNodeAnimation', () => {
   it('cancel() sets state to idle and restores initial alpha', () => {
     const node = createMockNode();
     node._animAlpha = 0.8;
-    const anim = new PNodeAnimation(node as any, [{ alpha: 0 }, { alpha: 1 }], 500);
+    const anim = new PNodeAnimation(
+      node as any,
+      [{ alpha: 0 }, { alpha: 1 }],
+      500,
+    );
     // Suppress the expected rejection before calling cancel()
     anim.finished.catch(() => {});
     tick(100);
@@ -312,16 +326,26 @@ describe('PNodeAnimation', () => {
 
   it('cancel() rejects the finished promise', async () => {
     const node = createMockNode();
-    const anim = new PNodeAnimation(node as any, [{ alpha: 0 }, { alpha: 1 }], 1000);
+    const anim = new PNodeAnimation(
+      node as any,
+      [{ alpha: 0 }, { alpha: 1 }],
+      1000,
+    );
     // Attach rejection handler BEFORE calling cancel() to avoid unhandled rejection
-    const rejection = expect(anim.finished).rejects.toThrow('Animation cancelled');
+    const rejection = expect(anim.finished).rejects.toThrow(
+      'Animation cancelled',
+    );
     anim.cancel();
     await rejection;
   });
 
   it('pause() stops advancing the animation', () => {
     const node = createMockNode();
-    const anim = new PNodeAnimation(node as any, [{ alpha: 0 }, { alpha: 1 }], 1000);
+    const anim = new PNodeAnimation(
+      node as any,
+      [{ alpha: 0 }, { alpha: 1 }],
+      1000,
+    );
     tick(250);
     const alphaAtPause = node._animAlpha ?? 0;
     anim.pause();
@@ -332,13 +356,17 @@ describe('PNodeAnimation', () => {
 
   it('play() resumes after pause', () => {
     const node = createMockNode();
-    const anim = new PNodeAnimation(node as any, [{ alpha: 0 }, { alpha: 1 }], 1000);
+    const anim = new PNodeAnimation(
+      node as any,
+      [{ alpha: 0 }, { alpha: 1 }],
+      1000,
+    );
     tick(250);
     anim.pause();
     const alphaAtPause = node._animAlpha ?? 0;
     anim.play();
     tick(250);
-    expect((node._animAlpha as number)).toBeGreaterThan(alphaAtPause);
+    expect(node._animAlpha as number).toBeGreaterThan(alphaAtPause);
   });
 
   it('direction: reverse plays backwards (alpha starts near 1)', () => {
@@ -349,13 +377,121 @@ describe('PNodeAnimation', () => {
     });
     tick(1);
     // At the very start of reversed animation, alpha ≈ 1
-    expect((node._animAlpha as number)).toBeGreaterThan(0.9);
+    expect(node._animAlpha as number).toBeGreaterThan(0.9);
   });
+
+  it('reverse() finishes at the start boundary and detaches the ticker', async () => {
+    const node = createMockNode();
+    node._animAlpha = 0.7;
+    const anim = new PNodeAnimation(node as any, [{ alpha: 0 }, { alpha: 1 }], {
+      duration: 100,
+      fill: 'none',
+    });
+
+    tick(40);
+    expect(node._animAlpha).toBeCloseTo(0.4, 5);
+
+    anim.reverse();
+    tick(40);
+
+    expect(anim.playState).toBe('finished');
+    expect(anim.currentTime).toBe(0);
+    expect(node._animAlpha).toBeCloseTo(0.7, 5);
+    expect(_tickerListeners).toHaveLength(0);
+    await expect(anim.finished).resolves.toBe(anim);
+  });
+
+  it.each([
+    ['forwards', 0.7],
+    ['both', 0],
+  ] as const)(
+    'reverse() from the start respects fill: %s',
+    async (fill, expectedAlpha) => {
+      const node = createMockNode();
+      node._animAlpha = 0.7;
+      const anim = new PNodeAnimation(
+        node as any,
+        [{ alpha: 0 }, { alpha: 1 }],
+        {
+          duration: 100,
+          fill,
+        },
+      );
+
+      anim.reverse();
+      tick(1);
+
+      expect(anim.playState).toBe('finished');
+      expect(anim.currentTime).toBe(0);
+      expect(node._animAlpha).toBeCloseTo(expectedAlpha, 5);
+      expect(_tickerListeners).toHaveLength(0);
+      await expect(anim.finished).resolves.toBe(anim);
+    },
+  );
+
+  it.each([
+    ['normal', 0.25],
+    ['reverse', 0.75],
+    ['alternate', 0.75],
+    ['alternate-reverse', 0.25],
+  ] as const)(
+    'keeps the fractional iteration endpoint for direction: %s',
+    (direction, expectedAlpha) => {
+      const node = createMockNode();
+      const anim = new PNodeAnimation(
+        node as any,
+        [{ alpha: 0 }, { alpha: 1 }],
+        {
+          duration: 100,
+          iterations: 1.25,
+          direction,
+          fill: 'forwards',
+        },
+      );
+
+      tick(125);
+
+      expect(anim.playState).toBe('finished');
+      expect(node._animAlpha).toBeCloseTo(expectedAlpha, 5);
+      expect(_tickerListeners).toHaveLength(0);
+    },
+  );
+
+  it.each([
+    ['normal', 0.25],
+    ['reverse', 0.75],
+    ['alternate', 0.75],
+    ['alternate-reverse', 0.25],
+  ] as const)(
+    'seeks to the fractional endpoint for direction: %s',
+    async (direction, expected) => {
+      const node = createMockNode();
+      const anim = new PNodeAnimation(
+        node as any,
+        [{ alpha: 0 }, { alpha: 1 }],
+        {
+          duration: 100,
+          iterations: 1.25,
+          direction,
+        },
+      );
+      anim.pause();
+      anim.currentTime = 125;
+      expect(node._animAlpha).toBeCloseTo(expected, 5);
+      const cancelled = expect(anim.finished).rejects.toThrow('Animation cancelled');
+      anim.cancel();
+      await cancelled;
+    },
+  );
 
   it('fires onfinish callback when animation ends', () => {
     const node = createMockNode();
     const onfinish = vi.fn();
-    const anim = new PNodeAnimation(node as any, [{ alpha: 0 }, { alpha: 1 }], 100);
+    const anim = new PNodeAnimation(
+      node as any,
+      [{ alpha: 0 }, { alpha: 1 }],
+      100,
+    );
     anim.onfinish = onfinish;
     tick(200);
     expect(onfinish).toHaveBeenCalledOnce();
@@ -363,7 +499,11 @@ describe('PNodeAnimation', () => {
 
   it('finished promise resolves on natural completion', async () => {
     const node = createMockNode();
-    const anim = new PNodeAnimation(node as any, [{ alpha: 0 }, { alpha: 1 }], 100);
+    const anim = new PNodeAnimation(
+      node as any,
+      [{ alpha: 0 }, { alpha: 1 }],
+      100,
+    );
     tick(200);
     await expect(anim.finished).resolves.toBe(anim);
   });

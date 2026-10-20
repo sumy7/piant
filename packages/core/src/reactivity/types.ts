@@ -2,9 +2,7 @@ export type Fn<T = void> = () => T;
 export type RootFn<T> = (dispose: () => void) => T;
 export type EffectFn<Prev, Next extends Prev = Prev> = (v: Prev) => Next;
 export type UpdateFn<T> = (value: T) => T;
-export type Getter<T> = {
-  (): T;
-};
+export type Getter<T> = () => T;
 
 export type Setter<T> = {
   (update: UpdateFn<T>): T;

@@ -122,10 +122,7 @@ describe('Input', () => {
   });
 
   it('removes event listeners from the input element on cleanup', () => {
-    const addSpy = vi.spyOn(
-      HTMLInputElement.prototype,
-      'addEventListener',
-    );
+    const addSpy = vi.spyOn(HTMLInputElement.prototype, 'addEventListener');
     const removeSpy = vi.spyOn(
       HTMLInputElement.prototype,
       'removeEventListener',
@@ -160,7 +157,11 @@ describe('Input', () => {
   it('forwards ref to the PInput element', () => {
     root(() => {
       let captured: PInput | null = null;
-      Input({ ref: (el) => (captured = el) });
+      Input({
+        ref: (el) => {
+          captured = el;
+        },
+      });
       expect(captured).toBeInstanceOf(PInput);
     });
   });

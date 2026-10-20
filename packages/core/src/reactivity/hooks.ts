@@ -49,7 +49,7 @@ export function createSelector<T, U extends T>(
   source: () => T,
   fn: (a: U, b: T) => boolean = (a, b) => a === b,
 ) {
-  let subs = new Map();
+  const subs = new Map();
   let v: T;
   effect((p?: U) => {
     v = source();

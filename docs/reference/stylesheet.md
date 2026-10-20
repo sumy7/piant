@@ -257,8 +257,8 @@ interface TextLayoutStyle {
   letterSpacing: number;
   textAlign: 'left' | 'center' | 'right';
   textTransform: 'none' | 'uppercase' | 'lowercase' | 'capitalize';
-  whiteSpace: 'normal' | 'nowrap' | string;
-  wordBreak: 'break-word' | 'normal' | string;
+  whiteSpace: 'normal' | 'pre-wrap' | string;
+  wordBreak: 'break-word' | 'normal' | 'keep-all' | string;
   textOverflow?: 'clip' | 'ellipsis' | string;
   lineClamp?: number;
   verticalAlign: 'baseline' | 'middle' | 'top' | 'bottom';

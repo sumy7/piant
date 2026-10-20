@@ -86,6 +86,41 @@ describe('persist middleware – basic', () => {
     expect(useStore.getState().count).toBe(42);
   });
 
+  it('does not overwrite stored state with set() calls during creation', () => {
+    const storage = createMemoryStorage();
+    storage.setItem('counter', JSON.stringify({ count: 42 }));
+
+    const useStore = createStore<{ count: number }>(
+      persist(
+        (set) => {
+          set({ count: 1 });
+          return { count: 0 };
+        },
+        { name: 'counter', storage },
+      ),
+    );
+
+    expect(useStore.getState().count).toBe(42);
+    expect(JSON.parse(storage.getItem('counter')!).count).toBe(42);
+  });
+
+  it('keeps creator initialization when no stored state exists', () => {
+    const storage = createMemoryStorage();
+
+    const useStore = createStore<{ count: number }>(
+      persist(
+        (set) => {
+          set({ count: 1 });
+          return { count: 0 };
+        },
+        { name: 'counter', storage },
+      ),
+    );
+
+    expect(useStore.getState().count).toBe(0);
+    expect(storage.getItem('counter')).toBeNull();
+  });
+
   it('subsequent stores using the same storage key share persisted state', () => {
     const storage = createMemoryStorage();
 
@@ -287,6 +322,7 @@ describe('persist middleware – resilience', () => {
     expect(useStore.getState().count).toBe(42);
     // setState should not throw even without storage
     expect(() => useStore.setState({ count: 99 })).not.toThrow();
+    expect(window.localStorage.getItem('no-storage')).toBeNull();
   });
 
   it('falls back gracefully when stored JSON is corrupt', () => {
@@ -299,6 +335,32 @@ describe('persist middleware – resilience', () => {
 
     // Should fall back to creator default, not throw
     expect(useStore.getState().count).toBe(0);
+  });
+
+  it('ignores errors while accessing the default localStorage', () => {
+    const descriptor = Object.getOwnPropertyDescriptor(window, 'localStorage');
+    Object.defineProperty(window, 'localStorage', {
+      configurable: true,
+      get: () => {
+        throw new DOMException('Access denied', 'SecurityError');
+      },
+    });
+
+    try {
+      const useStore = createStore(
+        persist(() => ({ count: 0 }), { name: 'inaccessible-storage' }),
+      );
+
+      expect(useStore.getState().count).toBe(0);
+      expect(() => useStore.setState({ count: 1 })).not.toThrow();
+      expect(useStore.getState().count).toBe(1);
+    } finally {
+      if (descriptor) {
+        Object.defineProperty(window, 'localStorage', descriptor);
+      } else {
+        Reflect.deleteProperty(window, 'localStorage');
+      }
+    }
   });
 });
 

@@ -1,5 +1,5 @@
-import { defineConfig } from '@rslib/core';
 import { createRequire } from 'node:module';
+import { defineConfig } from '@rslib/core';
 
 const require = createRequire(import.meta.url);
 const pkg = require('./package.json');

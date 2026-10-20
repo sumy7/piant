@@ -1,4 +1,4 @@
-import { ScrollView, StyleSheet, Text, View, createState } from '@piant/core';
+import { createState, ScrollView, StyleSheet, Text, View } from '@piant/core';
 import { AnimationDemo } from './AnimationDemo';
 import { TransitionDemo } from './TransitionDemo';
 import { TransitionGroupDemo } from './TransitionGroupDemo';

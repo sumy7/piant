@@ -44,6 +44,9 @@ if (!('animate' in PNode.prototype)) {
 
 // ── Public exports ────────────────────────────────────────────────────────
 
+export type { EasingFunction } from './easing';
+export { parseEasing } from './easing';
+export { interpolateKeyframes, normalizeKeyframes } from './interpolate';
 export { PNodeAnimation } from './PNodeAnimation';
 export type {
   AnimatableProps,
@@ -56,9 +59,6 @@ export type {
   PropertyIndexedKeyframes,
   ResolvedOptions,
 } from './types';
-export { parseEasing } from './easing';
-export type { EasingFunction } from './easing';
-export { normalizeKeyframes, interpolateKeyframes } from './interpolate';
 
 /**
  * Standalone helper: animate a PNode without the prototype method.

@@ -6,8 +6,9 @@ import { bindEventEffects, EVENT_PROPS } from '../events';
 import { createState } from '../reactivity';
 import { cleanup, effect } from '../reactivity/effects';
 import { splitProps } from '../reactivity/props';
-import { StyleSheet } from '../styleSheet';
 import type { StyleValue } from '../styleSheet';
+import { StyleSheet } from '../styleSheet';
+import { bindStyle } from './bindStyle';
 import type { RefCallback } from './types';
 
 export type CustomViewProps = {
@@ -42,9 +43,7 @@ export function CustomView(props: CustomViewProps) {
     element._view.off('sizeChange', onSizeChange);
   });
 
-  effect(() => {
-    element.setStyle(StyleSheet.flatten(styleProps.style) || {});
-  });
+  bindStyle<ViewStyles>(element, () => StyleSheet.flatten(styleProps.style));
   effect(() => {
     const { width, height } = size();
     onDrawProps.onDraw?.(element._graphic, width, height);

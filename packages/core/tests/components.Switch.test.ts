@@ -64,7 +64,7 @@ describe('Switch', () => {
   it('calls non-keyed child function with a getter for the condition value', () => {
     root(() => {
       const sentinel = 'child-rendered';
-      let getterValue: unknown = undefined;
+      let getterValue: unknown ;
 
       // Use a class instance so MobX deepEnhancer doesn't wrap function
       // properties as zero-length actions (only plain objects are converted).
@@ -75,7 +75,7 @@ describe('Switch', () => {
         ) {}
       }
 
-      const childFn = function (getVal: () => unknown) {
+      const childFn = (getVal: () => unknown) => {
         getterValue = getVal;
         return sentinel;
       };

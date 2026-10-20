@@ -1,8 +1,8 @@
 import type { Container } from 'pixi.js';
 import { Ticker } from 'pixi.js';
-import { PText } from './PText';
 import type { ViewStyles } from './layout/viewStyles';
-import { PNode } from './PNode';
+import type { PNode } from './PNode';
+import { PText } from './PText';
 import { PView } from './PView';
 
 const layoutTicker = Ticker.shared;

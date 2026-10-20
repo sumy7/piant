@@ -1,4 +1,4 @@
-import { Container } from 'pixi.js';
+import { Container, EventBoundary, FederatedWheelEvent } from 'pixi.js';
 import { afterEach, describe, expect, it } from 'vitest';
 import { PRoot } from '../src/elements/PRoot';
 import { PScrollView } from '../src/elements/PScrollView';
@@ -9,6 +9,14 @@ function createScrollRoot() {
     width: 100,
     height: 100,
   });
+}
+
+function createWheelEvent(deltaX: number, deltaY: number) {
+  const event = new FederatedWheelEvent(new EventBoundary());
+  event.deltaX = deltaX;
+  event.deltaY = deltaY;
+  event.deltaMode = FederatedWheelEvent.DOM_DELTA_PIXEL;
+  return event;
 }
 
 /**
@@ -92,7 +100,7 @@ describe('PScrollView', () => {
     expect(scrollView.horizontal).toBe(false);
     expect(scrollView._trackpad.yAxis.max).toBe(-180);
     expect(scrollView._trackpad.xAxis.max).toBe(0);
-    scrollView.scrollContentHolder._view.emit('wheel', { deltaY: 40 });
+    scrollView.scrollContentHolder._view.emit('wheel', createWheelEvent(0, 40));
     scrollView.update();
 
     expect(scrollView.scrollY).toBe(-40);
@@ -115,10 +123,7 @@ describe('PScrollView', () => {
     expect(scrollView.horizontal).toBe(true);
     expect(scrollView._trackpad.xAxis.max).toBe(-160);
     expect(scrollView._trackpad.yAxis.max).toBe(0);
-    scrollView.scrollContentHolder._view.emit('wheel', {
-      deltaX: 30,
-      deltaY: 0,
-    });
+    scrollView.scrollContentHolder._view.emit('wheel', createWheelEvent(30, 0));
     scrollView.update();
 
     expect(scrollView.scrollX).toBe(-30);
