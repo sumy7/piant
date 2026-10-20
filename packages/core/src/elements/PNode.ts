@@ -432,6 +432,10 @@ export class PNode {
     const root = child._root;
     this._children.splice(index, 1);
     this._layoutNode.removeChild(child._layoutNode);
+    // Cleanup may release textures before the next layout/render tick.
+    if (child._view.parent === this._viewContent) {
+      this._viewContent.removeChild(child._view);
+    }
     child._parent = null;
     child.clearRoot();
     root?.markDirty();

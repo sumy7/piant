@@ -10,6 +10,45 @@ function createRoot() {
 }
 
 describe('PNode child lifecycle', () => {
+  it('detaches removed render subtrees before destroying their resources', () => {
+    const root = createRoot();
+    const child = new PView();
+    const nested = new PView();
+    child.appendChild(nested);
+    root.appendChild(child);
+    root.doLayout();
+    expect(child._view.parent).toBe(root._viewContent);
+
+    const destroy = vi.spyOn(nested, 'destroy').mockImplementation(() => {
+      expect(child._view.parent).toBeNull();
+      expect(root._viewContent.children).toEqual([]);
+    });
+
+    root.removeChild(child);
+
+    expect(destroy).toHaveBeenCalledTimes(1);
+    expect(root._isDirty).toBe(true);
+    expect(root._viewContent.children).toEqual([]);
+    root.destroy();
+  });
+
+  it('detaches replaced render subtrees before the next layout pass', () => {
+    const root = createRoot();
+    const previous = new PView();
+    const replacement = new PView();
+    root.appendChild(previous);
+    root.doLayout();
+
+    root.replaceChild(replacement, previous);
+
+    expect(previous._view.parent).toBeNull();
+    expect(root._viewContent.children).not.toContain(previous._view);
+    root.doLayout();
+    expect(root._viewContent.children).toEqual([replacement._view]);
+    root.removeAllChildren();
+    root.destroy();
+  });
+
   it('preserves every retained input during all four-node reorderings', () => {
     const permutations = (items: number[]): number[][] =>
       items.length === 0
