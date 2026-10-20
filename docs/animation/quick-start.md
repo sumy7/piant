@@ -15,48 +15,67 @@ import '@piant/animation';
 
 ## 1. 淡入 / 淡出
 
-通过 `alpha` 关键帧实现透明度动画：
+通过 `alpha` 关键帧实现透明度动画。使用 `ref` 获取 Piant 节点；点击事件的 `target` 是底层 Pixi 对象，不应直接调用 Piant 的 `.animate()`：
 
 ```tsx
-import { View } from '@piant/core';
+import { onCleanup, type PNode, View } from '@piant/core';
+import '@piant/animation';
+import type { PNodeAnimation } from '@piant/animation';
 
 export function FadeDemo() {
-  function handleClick(el: any) {
-    // el 是 PNode 实例
-    el.animate(
+  let node: PNode | undefined;
+  let animation: PNodeAnimation | undefined;
+  onCleanup(() => animation?.cancel());
+
+  function handleClick() {
+    animation?.cancel();
+    animation = node?.animate(
       [{ alpha: 1 }, { alpha: 0 }, { alpha: 1 }],
       { duration: 1000, easing: 'ease-in-out' },
     );
+    animation?.finished.catch(() => {});
   }
 
   return (
     <View
       style={{ width: 100, height: 100, backgroundColor: '#4f46e5' }}
-      onClick={(e) => handleClick(e.target)}
+      ref={(el) => { node = el; }}
+      onClick={handleClick}
     />
   );
 }
 ```
+
+<LiveExample example="animation" title="点击播放淡入动画" />
 
 ## 2. 位移动画
 
 `x` / `y` 属性是叠加在 Flexbox 布局上的**偏移量**，不会影响其他节点的布局：
 
 ```tsx
-import { View } from '@piant/core';
+import { onCleanup, type PNode, View } from '@piant/core';
+import '@piant/animation';
+import type { PNodeAnimation } from '@piant/animation';
 
 export function SlideDemo() {
-  function handleClick(el: any) {
-    el.animate(
+  let node: PNode | undefined;
+  let animation: PNodeAnimation | undefined;
+  onCleanup(() => animation?.cancel());
+
+  function handleClick() {
+    animation?.cancel();
+    animation = node?.animate(
       [{ x: 0 }, { x: 200 }],
       { duration: 600, easing: 'ease-out', fill: 'forwards' },
     );
+    animation?.finished.catch(() => {});
   }
 
   return (
     <View
       style={{ width: 80, height: 80, backgroundColor: '#10b981' }}
-      onClick={(e) => handleClick(e.target)}
+      ref={(el) => { node = el; }}
+      onClick={handleClick}
     />
   );
 }

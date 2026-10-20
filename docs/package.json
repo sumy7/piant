@@ -6,9 +6,23 @@
   "scripts": {
     "dev": "vitepress dev",
     "build": "vitepress build",
-    "preview": "vitepress preview"
+    "preview": "vitepress preview",
+    "test": "vitest run --config .vitepress/vitest.config.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "devDependencies": {
-    "vitepress": "^1.6.3"
+    "@babel/core": "^7.28.4",
+    "@piant/animation": "workspace:*",
+    "@piant/babel-preset-piant": "workspace:*",
+    "@piant/core": "workspace:*",
+    "@piant/router": "workspace:*",
+    "@piant/store": "workspace:*",
+    "@types/babel__core": "^7.20.5",
+    "happy-dom": "^20.8.9",
+    "pixi.js": "^8.17.1",
+    "vite": "^8.0.3",
+    "vitepress": "^1.6.3",
+    "vitest": "^4.1.2",
+    "vue": "^3.5.32"
   }
 }

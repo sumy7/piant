@@ -33,6 +33,8 @@ function Toggle() {
 </Show>
 ```
 
+<LiveExample example="show" title="切换条件渲染" />
+
 ## 访问条件值
 
 当 `children` 是一个接受参数的函数时，可以访问条件值（narrowed 类型）：
