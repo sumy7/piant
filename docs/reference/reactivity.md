@@ -130,7 +130,7 @@ isSelected(item.id) // true/false，只在选中状态变化时更新
 
 ## onMount
 
-在组件首次挂载后执行一次。
+在当前同步渲染结束后的微任务中执行一次，节点创建、`ref` 赋值和节点树插入容器均已完成。回调不追踪依赖，并保留所属 owner 的上下文、错误处理与清理能力；owner 提前清理时取消执行。不保证下一帧绘制或布局已完成。
 
 ```ts
 function onMount(fn: () => void): void;
