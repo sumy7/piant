@@ -124,7 +124,7 @@ export class PNode {
     return value;
   }
 
-  private drawRoundedRect(
+  protected drawRoundedRect(
     graphics: Graphics,
     x: number,
     y: number,
