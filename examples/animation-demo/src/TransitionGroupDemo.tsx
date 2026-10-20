@@ -1,5 +1,12 @@
 import '@piant/animation';
-import { For, StyleSheet, Text, TransitionGroup, View, createState } from '@piant/core';
+import {
+  createState,
+  For,
+  StyleSheet,
+  Text,
+  TransitionGroup,
+  View,
+} from '@piant/core';
 
 const COLORS = [
   '#6366f1',

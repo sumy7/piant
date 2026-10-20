@@ -1,4 +1,4 @@
-import { StyleSheet, View, Text, createState } from '@piant/core';
+import { createState, StyleSheet, Text, View } from '@piant/core';
 
 export function App() {
   const [count, setCount] = createState(0);

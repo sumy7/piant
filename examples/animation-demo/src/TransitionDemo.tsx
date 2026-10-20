@@ -1,5 +1,12 @@
 import '@piant/animation';
-import { Show, StyleSheet, Text, Transition, View, createState } from '@piant/core';
+import {
+  createState,
+  Show,
+  StyleSheet,
+  Text,
+  Transition,
+  View,
+} from '@piant/core';
 
 const MODES = ['out-in', 'in-out', 'parallel'] as const;
 type Mode = (typeof MODES)[number];

@@ -1,5 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { root } from '@piant/core';
+import { describe, expect, it, vi } from 'vitest';
 import { useKey } from '../src/useKey';
 
 describe('useKey', () => {

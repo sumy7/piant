@@ -1,7 +1,7 @@
 import { createState, onTick } from '@piant/core';
 import {
-  BOARD_COLS,
-  BOARD_ROWS,
+  type Board,
+  type CellColor,
   calcDropInterval,
   calcLevel,
   calcScore,
@@ -10,11 +10,9 @@ import {
   getGhostPiece,
   isValidPosition,
   lockPiece,
+  type Piece,
   randomTetromino,
   rotatePiece,
-  type Board,
-  type CellColor,
-  type Piece,
 } from './gameLogic';
 
 export type GameStatus = 'idle' | 'playing' | 'paused' | 'over';
@@ -70,21 +68,6 @@ export function useGameState() {
     const s = state();
     if (s.status === 'playing') setState({ ...s, status: 'paused' });
     else if (s.status === 'paused') setState({ ...s, status: 'playing' });
-  }
-
-  function spawnNext(): GameState | null {
-    const s = state();
-    if (!s.next) return null;
-    const next = randomTetromino();
-    if (!isValidPosition(s.board, s.next)) {
-      return { ...s, status: 'over' };
-    }
-    return {
-      ...s,
-      current: s.next,
-      next,
-      ghost: getGhostPiece(s.board, s.next),
-    };
   }
 
   function lockAndClear(s: GameState): GameState {

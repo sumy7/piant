@@ -1,6 +1,6 @@
 const babel = require('@babel/core');
 const preset = require('.');
-const assert = require('assert');
+const assert = require('node:assert');
 
 const { code } = babel.transformSync('const v = <div a b={2} />;', {
   presets: [preset],

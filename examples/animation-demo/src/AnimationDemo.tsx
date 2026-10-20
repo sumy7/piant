@@ -1,5 +1,5 @@
 import '@piant/animation';
-import { StyleSheet, Text, View, createState } from '@piant/core';
+import { createState, StyleSheet, Text, View } from '@piant/core';
 
 const styles = StyleSheet.create({
   root: {

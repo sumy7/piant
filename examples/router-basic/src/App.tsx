@@ -1,7 +1,7 @@
 import { Match, Show, StyleSheet, Switch, Text, View } from '@piant/core';
 import {
-  RouterProvider,
   createRouter,
+  RouterProvider,
   useNavigate,
   useRoute,
 } from '@piant/router';

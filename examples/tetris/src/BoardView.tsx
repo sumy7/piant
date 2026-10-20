@@ -1,6 +1,6 @@
 import { For, StyleSheet, View } from '@piant/core';
-import { BOARD_COLS, BOARD_ROWS, CELL_SIZE } from './gameLogic';
 import type { Board, Piece } from './gameLogic';
+import { BOARD_COLS, BOARD_ROWS, CELL_SIZE } from './gameLogic';
 
 interface BoardProps {
   board: Board;
@@ -90,7 +90,7 @@ const BoardView = (props: BoardProps) => {
                       style={{
                         ...styles.filledCell,
                         backgroundColor: cell.isGhost
-                          ? cell.color + '55'
+                          ? `${cell.color}55`
                           : cell.color,
                       }}
                     />

@@ -1,13 +1,13 @@
+import { onCleanup } from '@piant/core';
 import {
+  type BrowserKeyComboEvent,
+  type BrowserKeyEvent,
   bindKey,
   bindKeyCombo,
+  type Handler,
   unbindKey,
   unbindKeyCombo,
-  type Handler,
-  type BrowserKeyEvent,
-  type BrowserKeyComboEvent,
 } from '@rwh/keystrokes';
-import { onCleanup } from '@piant/core';
 
 export type KeystrokeHandler = Handler<BrowserKeyEvent>;
 export type KeyComboHandler = Handler<BrowserKeyComboEvent>;
