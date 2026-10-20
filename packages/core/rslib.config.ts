@@ -23,17 +23,6 @@ export default defineConfig({
       dts: true,
       format: 'esm',
     },
-    {
-      source: {
-        entry: {
-          index: ['./src/index.ts'],
-        },
-        tsconfigPath: './tsconfig.build.json',
-      },
-      bundle: true,
-      dts: false,
-      format: 'cjs',
-    },
   ],
   output: {
     target: 'web',

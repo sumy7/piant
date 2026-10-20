@@ -4,7 +4,7 @@
 
 - 使用 TypeScript 开发，优先保持现有代码风格与命名习惯，不做无关重构。
 - Lint 使用 Biome：`pnpm lint`（`biome check`）。
-- Biome formatter 在本仓库默认关闭；需要统一格式时使用 `pnpm format`（Prettier + heading-case）。
+- Biome formatter 在本仓库默认关闭；需要统一格式时使用 `pnpm format`（Prettier）。
 - 文件命名遵循 Biome 规则：`camelCase`、`PascalCase` 或 `export` 风格。
 
 ## Architecture
@@ -25,6 +25,7 @@
 
 ## Build and Test
 
+- 仓库开发环境要求 Node.js `^22.18.0 || ^24.11.0 || >=26.0.0`；各发布包的消费者要求以各自 `engines` 为准。
 - 安装依赖：`pnpm install`
 - 根目录构建（Nx）：`pnpm build`
 - 根目录 Lint：`pnpm lint`

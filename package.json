@@ -1,6 +1,16 @@
 {
   "name": "piant-monorepo",
+  "description": "基于 PixiJS、Yoga 和细粒度响应式状态管理的声明式 Canvas UI 框架",
   "private": true,
+  "license": "MIT",
+  "homepage": "https://piant.sumygg.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sumy7/piant.git"
+  },
+  "bugs": {
+    "url": "https://github.com/sumy7/piant/issues"
+  },
   "workspaces": [
     "packages/*",
     "scripts/*"
@@ -12,19 +22,20 @@
     "pages:build": "node scripts/buildPages.mjs",
     "docs:build": "pnpm --filter @piant/monorepo-docs build",
     "docs:dev": "pnpm --filter @piant/monorepo-docs dev",
-    "format": "prettier --write . && heading-case --write",
+    "format": "prettier --write .",
     "lint": "biome check",
     "sort-package-json": "pnpx sort-package-json \"./package.json\" \"packages/*/package.json\" \"packages/compat/*/package.json\""
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.15",
     "@changesets/cli": "^2.31.1",
-    "@rollup/plugin-typescript": "^12.3.0",
     "@types/node": "^22.20.5",
+    "@vitest/coverage-v8": "5.0.5",
     "cross-env": "^10.1.0",
     "nx": "^23.3.0",
     "prettier": "^3.9.10",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "5.0.5"
   },
   "packageManager": "pnpm@10.34.7",
   "engines": {

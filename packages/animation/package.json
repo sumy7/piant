@@ -1,13 +1,29 @@
 {
   "name": "@piant/animation",
-  "version": "0.0.2-alpha.0",
+  "version": "0.1.0",
+  "description": "Piant 节点动画库，提供关键帧、缓动和播放时间轴控制",
+  "keywords": [
+    "piant",
+    "pixijs",
+    "animation",
+    "keyframes",
+    "easing"
+  ],
+  "homepage": "https://piant.sumygg.com/animation/introduction",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sumy7/piant.git",
+    "directory": "packages/animation"
+  },
+  "bugs": {
+    "url": "https://github.com/sumy7/piant/issues"
+  },
   "license": "MIT",
   "type": "module",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": "./dist/index.js"
     }
   },
   "types": "./dist/index.d.ts",
@@ -25,17 +41,18 @@
     "popmotion": "^11.0.5"
   },
   "peerDependencies": {
-    "@piant/core": "workspace:*",
-    "pixi.js": ">=8.0.0"
+    "@piant/core": "^0.1.0",
+    "pixi.js": "^8.22.0"
   },
   "devDependencies": {
     "@piant/core": "workspace:*",
     "@rslib/core": "1.0.3",
-    "@vitest/ui": "^5.0.5",
+    "@vitest/coverage-v8": "5.0.5",
+    "@vitest/ui": "5.0.5",
     "happy-dom": "^21.0.3",
     "pixi.js": "^8.22.0",
     "typescript": "^5.9.3",
-    "vitest": "^5.0.5"
+    "vitest": "5.0.5"
   },
   "engines": {
     "node": ">=18.12.0"

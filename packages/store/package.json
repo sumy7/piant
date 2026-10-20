@@ -1,6 +1,23 @@
 {
   "name": "@piant/store",
-  "version": "0.0.2-alpha.0",
+  "version": "0.1.0",
+  "description": "基于 MobX 的 Piant 状态管理库，支持类型化动作、持久化和状态组合",
+  "keywords": [
+    "piant",
+    "mobx",
+    "state-management",
+    "store",
+    "persistence"
+  ],
+  "homepage": "https://piant.sumygg.com/store/introduction",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sumy7/piant.git",
+    "directory": "packages/store"
+  },
+  "bugs": {
+    "url": "https://github.com/sumy7/piant/issues"
+  },
   "license": "MIT",
   "type": "module",
   "exports": {
@@ -22,15 +39,16 @@
     "test:coverage": "vitest run --coverage"
   },
   "peerDependencies": {
-    "mobx": ">=6.0.0"
+    "mobx": "^6.16.1"
   },
   "devDependencies": {
     "@rslib/core": "1.0.3",
-    "@vitest/ui": "^5.0.5",
+    "@vitest/coverage-v8": "5.0.5",
+    "@vitest/ui": "5.0.5",
     "happy-dom": "^21.0.3",
     "mobx": "^6.16.1",
     "typescript": "^5.9.3",
-    "vitest": "^5.0.5"
+    "vitest": "5.0.5"
   },
   "engines": {
     "node": ">=18.12.0"

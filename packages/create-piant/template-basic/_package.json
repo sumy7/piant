@@ -7,13 +7,13 @@
     "preview": "rsbuild preview"
   },
   "dependencies": {
-    "@piant/core": "^0.0.2-alpha.0",
+    "@piant/core": "^0.1.0",
     "pixi.js": "^8.22.0"
   },
   "devDependencies": {
     "@rsbuild/core": "^2.2.14",
     "@rsbuild/plugin-babel": "^2.1.0",
-    "@piant/babel-preset-piant": "^0.0.2-alpha.0",
+    "@piant/babel-preset-piant": "^0.1.0",
     "typescript": "^5.9.3"
   },
   "engines": {

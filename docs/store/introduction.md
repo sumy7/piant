@@ -11,11 +11,11 @@
 
 ## 适用场景
 
-| 场景 | 推荐方案 |
-|------|----------|
-| 单组件局部状态 | `createState`（`@piant/core`） |
-| 跨组件 / 跨页面共享状态 | `@piant/store` |
-| 复杂异步数据流 | `@piant/store` + 自定义异步 action |
+| 场景                    | 推荐方案                           |
+| ----------------------- | ---------------------------------- |
+| 单组件局部状态          | `createState`（`@piant/core`）     |
+| 跨组件 / 跨页面共享状态 | `@piant/store`                     |
+| 复杂异步数据流          | `@piant/store` + 自定义异步 action |
 
 ## 与 `createState` 的区别
 
@@ -24,11 +24,10 @@
 ## 安装
 
 ```bash
-pnpm add @piant/store
+pnpm add @piant/store "mobx@^6.16.1"
 ```
 
-> `@piant/store` 以 `mobx` 作为 peerDependency，使用前请确保已安装 `mobx@>=6`。
-> 如果你的项目已经使用了 `@piant/core`，mobx 已经作为其依赖被安装。
+> `@piant/store` 的 MobX peer 兼容范围为 `^6.16.1`，请在应用中显式安装。
 
 ## 下一步
 

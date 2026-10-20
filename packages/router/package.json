@@ -1,13 +1,29 @@
 {
   "name": "@piant/router",
-  "version": "0.0.2-alpha.0",
+  "version": "0.1.0",
+  "description": "Piant 路由库，支持声明式路由、导航守卫和懒加载",
+  "keywords": [
+    "piant",
+    "router",
+    "routing",
+    "navigation",
+    "spa"
+  ],
+  "homepage": "https://piant.sumygg.com/router/introduction",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sumy7/piant.git",
+    "directory": "packages/router"
+  },
+  "bugs": {
+    "url": "https://github.com/sumy7/piant/issues"
+  },
   "license": "MIT",
   "type": "module",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": "./dist/index.js"
     }
   },
   "types": "./dist/index.d.ts",
@@ -22,14 +38,16 @@
     "test:coverage": "vitest run --coverage"
   },
   "peerDependencies": {
-    "@piant/core": "workspace:*"
+    "@piant/core": "^0.1.0"
   },
   "devDependencies": {
+    "@piant/core": "workspace:*",
     "@rslib/core": "1.0.3",
-    "@vitest/ui": "^5.0.5",
+    "@vitest/coverage-v8": "5.0.5",
+    "@vitest/ui": "5.0.5",
     "happy-dom": "^21.0.3",
     "typescript": "^5.9.3",
-    "vitest": "^5.0.5"
+    "vitest": "5.0.5"
   },
   "engines": {
     "node": ">=18.12.0"

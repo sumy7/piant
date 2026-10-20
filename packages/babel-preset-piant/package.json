@@ -1,6 +1,23 @@
 {
   "name": "@piant/babel-preset-piant",
-  "version": "0.0.2-alpha.0",
+  "version": "0.1.0",
+  "description": "将 JSX 编译为 Piant 声明式 UI 的 Babel 预设",
+  "keywords": [
+    "piant",
+    "babel",
+    "babel-preset",
+    "jsx",
+    "compiler"
+  ],
+  "homepage": "https://piant.sumygg.com/guide/installation",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sumy7/piant.git",
+    "directory": "packages/babel-preset-piant"
+  },
+  "bugs": {
+    "url": "https://github.com/sumy7/piant/issues"
+  },
   "license": "MIT",
   "main": "index.js",
   "files": [

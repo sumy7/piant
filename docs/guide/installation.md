@@ -31,8 +31,8 @@ pnpm dev
 
 > **可用模板**
 >
-> | 模板 | 说明 |
-> |------|------|
+> | 模板    | 说明                                  |
+> | ------- | ------------------------------------- |
 > | `basic` | 基础应用模板（rsbuild + @piant/core） |
 
 ---
@@ -43,20 +43,18 @@ pnpm dev
 
 ```bash
 # 使用 pnpm
-pnpm add @piant/core
+pnpm add @piant/core "pixi.js@^8.22.0"
 
 # 使用 npm
-npm install @piant/core
+npm install @piant/core "pixi.js@^8.22.0"
 
 # 使用 yarn
-yarn add @piant/core
+yarn add @piant/core "pixi.js@^8.22.0"
 ```
 
-pixi.js 是 `@piant/core` 的直接依赖，会随 `@piant/core` 一起自动安装。但由于应用代码会直接从 `pixi.js` 导入（如 `Application`、`Graphics`、`Sprite` 等），建议也在项目中显式安装：
+`pixi.js` 是 `@piant/core` 的 peer 依赖，兼容范围为 `^8.22.0`，需要由应用显式安装。应用和 Piant 使用同一份 PixiJS。
 
-```bash
-pnpm add pixi.js
-```
+`@piant/core`、`@piant/animation`、`@piant/hooks` 和 `@piant/router` 仅提供 ESM 入口，应用代码使用 `import` 导入。
 
 ## 配置 JSX 转换
 
@@ -103,10 +101,10 @@ export default defineConfig({
 });
 ```
 
-### 手动配置 babel.config.js
+### 手动配置 babel.config.cjs
 
 ```js
-// babel.config.js
+// babel.config.cjs
 module.exports = {
   presets: ['@piant/babel-preset-piant'],
 };
@@ -127,11 +125,11 @@ module.exports = {
 
 ## 版本要求
 
-| 依赖 | 最低版本 |
+| 依赖 | 版本要求 |
 |------|---------|
 | Node.js（应用工具链） | ^20.19.0 或 >=22.12.0 |
 | Node.js（本仓库开发） | ^22.18.0 或 ^24.11.0 或 >=26.0.0 |
-| pixi.js | >= 8.0.0 |
+| pixi.js | ^8.22.0 |
 | TypeScript | >= 5.0（可选）|
 
 ## Monorepo 中的使用
@@ -149,7 +147,8 @@ packages:
 ```json
 {
   "dependencies": {
-    "@piant/core": "workspace:*"
+    "@piant/core": "workspace:*",
+    "pixi.js": "^8.22.0"
   }
 }
 ```

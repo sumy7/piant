@@ -5,10 +5,11 @@
   </picture>
   <p>基于 PixiJS 的画布布局引擎 · A Canvas Layout Engine Powered by PixiJS</p>
 
-  [![npm version](https://img.shields.io/npm/v/@piant/core.svg)](https://www.npmjs.com/package/@piant/core)
-  [![npm downloads](https://img.shields.io/npm/dm/@piant/core.svg)](https://www.npmjs.com/package/@piant/core)
-  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-  [![Node.js Version](https://img.shields.io/node/v/@piant/core)](https://nodejs.org/)
+[![npm version](https://img.shields.io/npm/v/@piant/core.svg)](https://www.npmjs.com/package/@piant/core)
+[![npm downloads](https://img.shields.io/npm/dm/@piant/core.svg)](https://www.npmjs.com/package/@piant/core)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node.js Version](https://img.shields.io/node/v/@piant/core)](https://nodejs.org/)
+
 </div>
 
 ---
@@ -29,10 +30,12 @@ Piant 是一个基于 [PixiJS](https://pixijs.com/) 的高性能画布（Canvas�
 ## 安装
 
 ```bash
-npm install @piant/core pixi.js
+npm install @piant/core "pixi.js@^8.22.0"
 # 或
-pnpm add @piant/core pixi.js
+pnpm add @piant/core "pixi.js@^8.22.0"
 ```
+
+`@piant/core` 的 PixiJS peer 依赖为 `^8.22.0`，需要由应用显式安装。`@piant/core`、`@piant/animation`、`@piant/hooks` 和 `@piant/router` 仅提供 ESM 入口，应用代码使用 `import` 导入。
 
 ## 使用方式
 
@@ -128,6 +131,8 @@ export function App() {
 
 ## 开发
 
+仓库开发环境要求 Node.js `^22.18.0 || ^24.11.0 || >=26.0.0`，用于运行当前构建、测试和文档工具；各发布包的 Node.js 要求见各自的 `engines`。
+
 ```bash
 # 安装依赖
 pnpm install
@@ -163,6 +168,8 @@ pnpm changeset version
 # 发布
 pnpm changeset publish
 ```
+
+所有公开包当前统一为 `0.1.0`，已退出 alpha 预发布模式。依赖 core 的包使用 `^0.1.0` 作为 peer 兼容范围，并通过 `onlyUpdatePeerDependentsWhenOutOfRange` 避免范围内的 core 更新触发 major；未来 core 进入新的 minor 系列时，需要先验证兼容性，再更新范围并添加对应 changeset。本地开发依赖仍使用 `workspace:*`。
 
 ## 贡献指南
 

@@ -12,24 +12,24 @@
 
 ## 可动画属性
 
-| 类别 | 属性 |
-|------|------|
-| 位移 | `x`、`y` |
-| 缩放 | `scale`、`scaleX`、`scaleY` |
-| 旋转 | `rotation`（弧度） |
-| 透明度 | `alpha`、`opacity` |
+| 类别     | 属性                                                                                                                                  |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| 位移     | `x`、`y`                                                                                                                              |
+| 缩放     | `scale`、`scaleX`、`scaleY`                                                                                                           |
+| 旋转     | `rotation`（弧度）                                                                                                                    |
+| 透明度   | `alpha`、`opacity`                                                                                                                    |
 | 视觉样式 | `backgroundColor`、`borderRadius`、`borderTopLeftRadius`、`borderTopRightRadius`、`borderBottomRightRadius`、`borderBottomLeftRadius` |
-| 尺寸 | `width`、`height` |
+| 尺寸     | `width`、`height`                                                                                                                     |
 
 > **`alpha` vs `opacity`**：`alpha` 直接操作 Pixi Container 的 alpha 属性（动画结束后恢复），`opacity` 通过 `setStyle` 触发布局更新。两者均可动画，建议优先使用 `alpha`。
 
 ## 安装
 
 ```bash
-pnpm add @piant/animation
+pnpm add @piant/animation @piant/core "pixi.js@^8.22.0"
 ```
 
-> `@piant/animation` 以 `@piant/core` 和 `pixi.js` 作为 peerDependency，请确保已安装。
+> Peer 依赖为 `@piant/core ^0.1.0` 和 `pixi.js ^8.22.0`。本包仅提供 ESM 入口，使用 `import` 导入。
 
 ## 引入方式
 
