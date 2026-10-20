@@ -74,22 +74,22 @@ const icon = new Graphics().svg(iconSvg);
 
 ## 文本样式属性
 
-| 属性            | 类型                                                   | 默认值         | 说明                                 |
-| --------------- | ------------------------------------------------------ | -------------- | ------------------------------------ |
-| `fontSize`      | `number`                                               | `16`           | 字体大小（像素）                     |
-| `fontFamily`    | `string`                                               | `'Arial'`      | 字体族                               |
-| `fontWeight`    | `'normal' \| 'bold' \| string`                         | `'normal'`     | 字体粗细                             |
-| `fontStyle`     | `'normal' \| 'italic'`                                 | `'normal'`     | 字体风格                             |
-| `color`         | `ColorSource`                                          | `'#000000'`    | 文字颜色                             |
-| `lineHeight`    | `number \| string`                                     | `20`           | 行高（像素或倍数字符串如 `'1.5x'`）  |
+| 属性            | 类型                                                   | 默认值         | 说明                                                          |
+| --------------- | ------------------------------------------------------ | -------------- | ------------------------------------------------------------- |
+| `fontSize`      | `number`                                               | `16`           | 字体大小（像素）                                              |
+| `fontFamily`    | `string`                                               | `'Arial'`      | 字体族                                                        |
+| `fontWeight`    | `'normal' \| 'bold' \| string`                         | `'normal'`     | 字体粗细                                                      |
+| `fontStyle`     | `'normal' \| 'italic'`                                 | `'normal'`     | 字体风格                                                      |
+| `color`         | `ColorSource`                                          | `'#000000'`    | 文字颜色                                                      |
+| `lineHeight`    | `number \| string`                                     | `20`           | 行高（像素或倍数字符串如 `'1.5x'`）                           |
 | `letterSpacing` | `number`                                               | `0`            | 字间距（像素）；由 pretext 在断行时原生计算，渲染时逐字符绘制 |
-| `textAlign`     | `'left' \| 'center' \| 'right'`                        | `'left'`       | 文本对齐                             |
-| `textTransform` | `'none' \| 'uppercase' \| 'lowercase' \| 'capitalize'` | `'none'`       | 文本变换                             |
-| `whiteSpace`    | `'normal' \| 'nowrap'`                                 | `'normal'`     | 空白字符处理                         |
-| `wordBreak`     | `'normal' \| 'break-all' \| 'break-word'`              | `'break-word'` | 换行规则                             |
-| `textOverflow`  | `'clip' \| 'ellipsis'`                                 | `'clip'`       | 超出可见行时的截断策略               |
-| `lineClamp`     | `number`                                               | `0`            | 最大可见行数；`0` 或未设置表示不限制 |
-| `verticalAlign` | `'baseline' \| 'middle' \| 'top' \| 'bottom'`          | `'baseline'`   | 垂直对齐（用于 Img）                 |
+| `textAlign`     | `'left' \| 'center' \| 'right'`                        | `'left'`       | 文本对齐                                                      |
+| `textTransform` | `'none' \| 'uppercase' \| 'lowercase' \| 'capitalize'` | `'none'`       | 文本变换                                                      |
+| `whiteSpace`    | `'normal' \| 'pre-wrap'`                               | `'normal'`     | 折叠空白，或保留空格、制表符和换行                            |
+| `wordBreak`     | `'normal' \| 'keep-all' \| 'break-word'`               | `'break-word'` | `keep-all` 保持中日韩词组；其余使用默认断行                   |
+| `textOverflow`  | `'clip' \| 'ellipsis'`                                 | `'clip'`       | 超出可见行时的截断策略                                        |
+| `lineClamp`     | `number`                                               | `0`            | 最大可见行数；`0` 或未设置表示不限制                          |
+| `verticalAlign` | `'baseline' \| 'middle' \| 'top' \| 'bottom'`          | `'baseline'`   | 垂直对齐（用于 Img）                                          |
 
 ### textOverflow + lineClamp
 

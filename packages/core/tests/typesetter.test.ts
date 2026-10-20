@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Typesetter, type InlineItem } from '../src/elements/text';
+import { type InlineItem, Typesetter } from '../src/elements/text';
 
 Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
   configurable: true,
@@ -56,6 +56,77 @@ describe('Typesetter', () => {
     expect(narrow.height).toBeGreaterThan(0);
     expect(wide.width).toBeGreaterThan(0);
     expect(wide.height).toBeGreaterThan(0);
+  });
+
+  it('measures an inline image at its exact width without a placeholder glyph', () => {
+    const typesetter = new Typesetter(
+      [{ type: 'image', width: 24, height: 24 }],
+      { lineHeight: 20 },
+    );
+
+    expect(typesetter.flow(100)).toEqual({ width: 24, height: 24 });
+  });
+
+  it('fits adjacent text and an image exactly on one line', () => {
+    const typesetter = new Typesetter(
+      [
+        { type: 'text', content: 'A' },
+        { type: 'image', width: 24, height: 20 },
+        { type: 'text', content: 'B' },
+      ],
+      { lineHeight: 20 },
+    );
+
+    expect(typesetter.flow(40)).toEqual({ width: 40, height: 20 });
+    expect(typesetter.flow(32).height).toBe(40);
+  });
+
+  it('preserves spaces and hard breaks across styled runs with pre-wrap', () => {
+    const typesetter = new Typesetter(
+      [
+        { type: 'text', content: 'A  ' },
+        { type: 'text', content: 'B\nC', fontWeight: 'bold' },
+      ],
+      { lineHeight: 20, whiteSpace: 'pre-wrap' },
+    );
+
+    expect(typesetter.flow(100)).toEqual({ width: 32, height: 40 });
+  });
+
+  it('keeps CJK words together across styled runs with keep-all', () => {
+    const typesetter = new Typesetter(
+      [
+        { type: 'text', content: 'A 甲乙' },
+        { type: 'text', content: '丙丁', fontWeight: 'bold' },
+      ],
+      { lineHeight: 20, wordBreak: 'keep-all' },
+    );
+
+    expect(typesetter.flow(40)).toEqual({ width: 32, height: 40 });
+  });
+
+  it('wraps a word split across styled runs as one word', () => {
+    const typesetter = new Typesetter(
+      [
+        { type: 'text', content: 'A ab' },
+        { type: 'text', content: 'cd', fontWeight: 'bold' },
+      ],
+      { lineHeight: 20 },
+    );
+
+    expect(typesetter.flow(40)).toEqual({ width: 32, height: 40 });
+  });
+
+  it('keeps punctuation at the start of a styled run with its preceding word', () => {
+    const typesetter = new Typesetter(
+      [
+        { type: 'text', content: 'A word' },
+        { type: 'text', content: ', end', fontWeight: 'bold' },
+      ],
+      { lineHeight: 20 },
+    );
+
+    expect(typesetter.flow(48)).toEqual({ width: 40, height: 60 });
   });
 
   it('uses max lineHeight for each line box', () => {

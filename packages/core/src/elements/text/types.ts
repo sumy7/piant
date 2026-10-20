@@ -1,4 +1,4 @@
-import { type Sprite, type Texture } from 'pixi.js';
+import type { Sprite, Texture } from 'pixi.js';
 
 export type TextAlign = 'left' | 'center' | 'right';
 export type VerticalAlign = 'top' | 'middle' | 'bottom' | 'baseline';
@@ -15,8 +15,8 @@ export type TextLayoutStyle = {
   fontStyle: 'normal' | 'italic' | 'oblique' | string;
   letterSpacing: number;
   textTransform: 'none' | 'uppercase' | 'lowercase' | 'capitalize';
-  whiteSpace: 'normal' | 'nowrap' | string;
-  wordBreak: 'break-word' | 'normal' | string;
+  whiteSpace: 'normal' | 'pre-wrap' | string;
+  wordBreak: 'break-word' | 'normal' | 'keep-all' | string;
   textAlign: TextAlign;
   textOverflow?: 'clip' | 'ellipsis' | string;
   lineClamp?: number;

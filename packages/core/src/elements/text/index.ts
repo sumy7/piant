@@ -2,13 +2,13 @@ import {
   materializeRichInlineLineRange,
   type PreparedRichInline,
   prepareRichInline,
+  type RichInlineBox,
   type RichInlineFragment,
   type RichInlineItem,
-  type RichInlineLine,
   type RichInlineLineRange,
   walkRichInlineLineRanges,
 } from '@chenglou/pretext/rich-inline';
-import { type Container, Sprite, Texture, TextureSource } from 'pixi.js';
+import { type Container, Sprite, Texture, type TextureSource } from 'pixi.js';
 import type {
   ImageSource,
   InlineBaseStyle,
@@ -23,6 +23,16 @@ type LineBox = {
   y: number;
   height: number;
   baselineOffset: number;
+};
+
+type RenderFragment = Pick<
+  RichInlineFragment,
+  'itemIndex' | 'text' | 'gapBefore' | 'occupiedWidth'
+> & { isEllipsis?: boolean };
+
+type RenderLine = {
+  fragments: RenderFragment[];
+  width: number;
 };
 
 const DEFAULT_TEXT_STYLE: TextLayoutStyle = {
@@ -42,15 +52,13 @@ const DEFAULT_TEXT_STYLE: TextLayoutStyle = {
   lineClamp: 0,
 };
 
-const IMAGE_PLACEHOLDER = '\uFFFC';
-const IMAGE_PLACEHOLDER_FONT = 'normal 1px Arial';
-
 export class Typesetter {
   private _contents: InlineItem[] = [];
   private _styles: TextLayoutStyle = DEFAULT_TEXT_STYLE;
   private _prepared: PreparedRichInline | null = null;
+  private _preparedItemIndices: number[] = [];
   private _cachedWidth: number | null = null;
-  private _cachedLines: RichInlineLine[] = [];
+  private _cachedLines: RenderLine[] = [];
   private _cachedLineBoxes: LineBox[] = [];
   private _cachedStats: { lineCount: number; maxLineWidth: number } | null =
     null;
@@ -133,7 +141,7 @@ export class Typesetter {
           continue;
         }
 
-        if (sourceItem.type === 'image') {
+        if (sourceItem.type === 'image' && !fragment.isEllipsis) {
           const source = this.resolveImageSource(sourceItem);
           if (source) {
             const style = this.resolveItemStyle(sourceItem);
@@ -156,7 +164,7 @@ export class Typesetter {
             nextChildren.push(imageSlot.sprite);
           }
         } else {
-          const renderedText = fragment.text.replace(/\u200B/g, '');
+          const renderedText = fragment.text.replace(/[\u200B\t]/g, '');
           if (renderedText.length > 0) {
             const style = this.resolveItemStyle(sourceItem);
             const metrics = this.getTextMetrics(renderedText, style);
@@ -207,29 +215,41 @@ export class Typesetter {
   private ensurePrepared(): PreparedRichInline {
     if (this._prepared) return this._prepared;
 
-    const items: RichInlineItem[] = this._contents.map((item) => {
+    const items: Array<RichInlineItem | RichInlineBox> = [];
+    this._preparedItemIndices = [];
+
+    for (const [itemIndex, item] of this._contents.entries()) {
       if (item.type === 'image') {
         const source = this.resolveImageSource(item);
-        return {
-          // Keep a measurable placeholder for rich-inline, but shrink font so
-          // image layout effectively depends on extraWidth.
-          text: IMAGE_PLACEHOLDER,
-          font: IMAGE_PLACEHOLDER_FONT,
-          break: 'never',
-          extraWidth: this.resolveImageWidth(item, source),
-        };
+        items.push({ width: this.resolveImageWidth(item, source) });
+        this._preparedItemIndices.push(itemIndex);
+        continue;
       }
 
       const style = this.resolveItemStyle(item);
-      return {
-        text: this.applyTextTransform(item.content ?? '', style.textTransform),
-        font: this.toFont(style),
-        letterSpacing: style.letterSpacing,
-        extraWidth: 0,
-      };
-    });
+      const text = this.applyTextTransform(
+        item.content ?? '',
+        style.textTransform,
+      );
+      // Keep tabs in their own fragments so the renderer advances by pretext's
+      // tab-stop width instead of asking Canvas to paint a tab as a space.
+      const runs =
+        this._styles.whiteSpace === 'pre-wrap' ? text.split(/(\t)/) : [text];
+      for (const run of runs) {
+        items.push({
+          text: run,
+          font: this.toFont(style),
+          letterSpacing: style.letterSpacing,
+        });
+        this._preparedItemIndices.push(itemIndex);
+      }
+    }
 
-    this._prepared = prepareRichInline(items);
+    this._prepared = prepareRichInline(items, {
+      whiteSpace:
+        this._styles.whiteSpace === 'pre-wrap' ? 'pre-wrap' : 'normal',
+      wordBreak: this._styles.wordBreak === 'keep-all' ? 'keep-all' : 'normal',
+    });
     return this._prepared;
   }
 
@@ -237,9 +257,20 @@ export class Typesetter {
     if (this._cachedWidth === width && this._cachedStats) return;
 
     const prepared = this.ensurePrepared();
-    let lines: RichInlineLine[] = [];
+    let lines: RenderLine[] = [];
     walkRichInlineLineRanges(prepared, width, (range: RichInlineLineRange) => {
-      lines.push(materializeRichInlineLineRange(prepared, range));
+      const line = materializeRichInlineLineRange(prepared, range);
+      lines.push({
+        width: line.width,
+        fragments: line.fragments.map(
+          ({ itemIndex, text, gapBefore, occupiedWidth }) => ({
+            itemIndex: this._preparedItemIndices[itemIndex]!,
+            text,
+            gapBefore,
+            occupiedWidth,
+          }),
+        ),
+      });
     });
 
     const lineClamp = this.resolveLineClamp();
@@ -283,10 +314,7 @@ export class Typesetter {
     return Math.floor(clamp);
   }
 
-  private applyEllipsisToLine(
-    line: RichInlineLine,
-    maxWidth: number,
-  ): RichInlineLine {
+  private applyEllipsisToLine(line: RenderLine, maxWidth: number): RenderLine {
     if (!Number.isFinite(maxWidth) || maxWidth <= 0) {
       return line;
     }
@@ -314,8 +342,7 @@ export class Typesetter {
       text: ellipsisText,
       gapBefore: 0,
       occupiedWidth: ellipsisWidth,
-      start: line.end,
-      end: line.end,
+      isEllipsis: true,
     });
 
     return {
@@ -325,7 +352,7 @@ export class Typesetter {
     };
   }
 
-  private getEllipsisItemIndex(line: RichInlineLine): number {
+  private getEllipsisItemIndex(line: RenderLine): number {
     for (let i = line.fragments.length - 1; i >= 0; i--) {
       const fragment = line.fragments[i]!;
       const sourceItem = this._contents[fragment.itemIndex];
@@ -338,10 +365,10 @@ export class Typesetter {
   }
 
   private trimLineToWidth(
-    line: RichInlineLine,
+    line: RenderLine,
     maxWidth: number,
-  ): RichInlineFragment[] {
-    const result: RichInlineFragment[] = [];
+  ): RenderFragment[] {
+    const result: RenderFragment[] = [];
     let consumedWidth = 0;
 
     for (const fragment of line.fragments) {
@@ -358,7 +385,7 @@ export class Typesetter {
       }
 
       const sourceItem = this._contents[fragment.itemIndex];
-      if (sourceItem?.type !== 'text') {
+      if (sourceItem?.type !== 'text' || fragment.text === '\t') {
         break;
       }
 
@@ -376,7 +403,8 @@ export class Typesetter {
           this.resolveItemStyle(sourceItem),
         ).width;
         result.push({
-          ...fragment,
+          itemIndex: fragment.itemIndex,
+          gapBefore: fragment.gapBefore,
           text: clippedText,
           occupiedWidth: clippedWidth,
         });
@@ -417,7 +445,7 @@ export class Typesetter {
     return text.slice(0, low);
   }
 
-  private measureLineFragmentsWidth(fragments: RichInlineFragment[]): number {
+  private measureLineFragmentsWidth(fragments: RenderFragment[]): number {
     return fragments.reduce(
       (total, fragment) => total + fragment.gapBefore + fragment.occupiedWidth,
       0,
@@ -571,7 +599,7 @@ export class Typesetter {
     return Math.max(1, last.y + last.height);
   }
 
-  private buildLineBoxes(lines: RichInlineLine[]): LineBox[] {
+  private buildLineBoxes(lines: RenderLine[]): LineBox[] {
     const result: LineBox[] = [];
     let y = 0;
 
@@ -587,7 +615,7 @@ export class Typesetter {
         const resolvedStyleLineHeight =
           this.getResolvedLineHeightForStyle(style);
 
-        if (sourceItem.type === 'image') {
+        if (sourceItem.type === 'image' && !fragment.isEllipsis) {
           const imageSource = this.resolveImageSource(sourceItem);
           const imageHeight = this.resolveImageHeight(sourceItem, imageSource);
           const inlineBoxHeight = Math.max(

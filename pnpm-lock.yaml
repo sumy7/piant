@@ -294,8 +294,8 @@ importers:
   packages/core:
     dependencies:
       '@chenglou/pretext':
-        specifier: 0.0.7
-        version: 0.0.7
+        specifier: 1.0.0
+        version: 1.0.0
       mobx:
         specifier: ^6.15.0
         version: 6.15.0
@@ -806,8 +806,8 @@ packages:
   '@changesets/write@0.4.0':
     resolution: {integrity: sha512-CdTLvIOPiCNuH71pyDu3rA+Q0n65cmAbXnwWH84rKGiFumFzkmHNT8KHTMEchcxN+Kl8I54xGUhJ7l3E7X396Q==}
 
-  '@chenglou/pretext@0.0.7':
-    resolution: {integrity: sha512-FV5hj3fGqpBlzbANUbR+s+6XuNRrghVVyuNs33zdH2SzU7MvK+7GlW6xREjDCreixKbexEn7OEkDgAFeWuu5Hg==}
+  '@chenglou/pretext@1.0.0':
+    resolution: {integrity: sha512-BxKiDMxWJhyzL8asvcgg3T9YnUU7OUFsKO8oRaR2SYAPX4Sh2wM9gqTBjrBaZ4fnl84cEQ8czC0Q1M83z3chsA==}
 
   '@docsearch/css@3.8.2':
     resolution: {integrity: sha512-y05ayQFyUmCXze79+56v/4HpycYF3uFqB78pLPrSV5ZKAlDuIAAJNhaRi8tTdRNXh05yxX/TyNnzD6LwSM89vQ==}
@@ -3838,7 +3838,7 @@ snapshots:
       human-id: 4.1.2
       prettier: 2.8.8
 
-  '@chenglou/pretext@0.0.7': {}
+  '@chenglou/pretext@1.0.0': {}
 
   '@docsearch/css@3.8.2': {}
 
