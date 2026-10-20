@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { createContext, useContext } from '../src/reactivity/context';
 import { root } from '../src/reactivity/effects';
 import { handleError } from '../src/reactivity/errors';
 import {
@@ -113,11 +114,11 @@ describe('onCleanup', () => {
 });
 
 describe('onMount', () => {
-  it('runs on mount without tracking reactive reads', () => {
-    root(() => {
-      const [get, set] = createState(0);
-      let mountRuns = 0;
-      let effectRuns = 0;
+  it('runs after initialization without tracking reactive reads', async () => {
+    const [get, set] = createState(0);
+    let mountRuns = 0;
+    let effectRuns = 0;
+    const dispose = root((dispose) => {
 
       onMount(() => {
         mountRuns++;
@@ -131,9 +132,73 @@ describe('onMount', () => {
 
       set(1);
 
-      expect(mountRuns).toBe(1); // onMount only runs once
+      expect(mountRuns).toBe(0);
       expect(effectRuns).toBe(2); // effect re-runs on state change
+      return dispose;
     });
+    await Promise.resolve();
+    expect(mountRuns).toBe(1);
+    set(2);
+    await Promise.resolve();
+    expect(mountRuns).toBe(1);
+    expect(effectRuns).toBe(3);
+    dispose();
+  });
+
+  it('cancels a pending callback when its root is disposed', async () => {
+    const mount = vi.fn();
+    root((dispose) => {
+      onMount(mount);
+      dispose();
+    });
+    await Promise.resolve();
+    expect(mount).not.toHaveBeenCalled();
+  });
+
+  it('restores context and owns cleanup and effects created in the callback', async () => {
+    const context = createContext('default');
+    const [value, setValue] = createState(0);
+    const cleanup = vi.fn();
+    const values: number[] = [];
+    let mountedContext: string | undefined;
+    const dispose = root((dispose) => {
+      context.Provider({
+        value: 'provided',
+        get children() {
+          onMount(() => {
+            mountedContext = useContext(context);
+            onCleanup(cleanup);
+            createEffect(() => values.push(value()));
+          });
+          return null;
+        },
+      });
+      return dispose;
+    });
+    await Promise.resolve();
+    expect(mountedContext).toBe('provided');
+    expect(values).toEqual([0]);
+    setValue(1);
+    expect(values).toEqual([0, 1]);
+    dispose();
+    expect(cleanup).toHaveBeenCalledTimes(1);
+    setValue(2);
+    expect(values).toEqual([0, 1]);
+  });
+
+  it('routes deferred errors to the registering owner', async () => {
+    const error = new Error('mount-error');
+    const handler = vi.fn();
+    const dispose = root((dispose) => {
+      onError(handler);
+      onMount(() => {
+        throw error;
+      });
+      return dispose;
+    });
+    await Promise.resolve();
+    expect(handler).toHaveBeenCalledExactlyOnceWith(error);
+    dispose();
   });
 });
 

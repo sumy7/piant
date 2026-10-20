@@ -127,7 +127,7 @@ function ListItem({ id }: { id: string }) {
 
 ## onMount
 
-`onMount` 在组件挂载（首次渲染完成）后执行一次，常用于初始化操作。
+`onMount` 在当前同步渲染结束后的微任务中执行一次，此时节点已创建、`ref` 已赋值、节点树已插入渲染容器。回调不追踪响应式依赖；所属 owner 提前清理时会取消执行。此时不保证下一帧绘制或布局已完成，详见[生命周期钩子](./lifecycle.md#onmount)。
 
 ```tsx
 import { onMount } from '@piant/core';
