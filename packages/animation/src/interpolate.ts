@@ -1,3 +1,4 @@
+import { Color, type ColorSource } from 'pixi.js';
 import { mix } from 'popmotion';
 import type { EasingFunction } from './easing';
 import { parseEasing } from './easing';
@@ -28,55 +29,25 @@ const NUMERIC_PROPS = new Set<keyof AnimatableProps>([
   'opacity',
 ]);
 
-/**
- * Mix (linearly interpolate) two CSS/hex colour strings.
- * Supports #rrggbb, #rgb and rgb(r,g,b) formats.
- * Falls back to `from` on parse error.
- */
-function mixColorStrings(from: string, to: string, t: number): string {
-  const fa = parseColorToRgba(from);
-  const ta = parseColorToRgba(to);
-  if (!fa || !ta) return t >= 0.5 ? to : from;
-  const r = Math.round(mix(fa[0], ta[0], t));
-  const g = Math.round(mix(fa[1], ta[1], t));
-  const b = Math.round(mix(fa[2], ta[2], t));
-  const a = mix(fa[3], ta[3], t);
-  return a === 1
-    ? `rgb(${r},${g},${b})`
-    : `rgba(${r},${g},${b},${a.toFixed(3)})`;
+/** Use independent Pixi Colors so parsing never mutates caller or shared state. */
+function normalizeColor(color: ColorSource): number[] {
+  try {
+    const rgba = new Color(color).toArray();
+    if (rgba.every(Number.isFinite)) return rgba;
+  } catch (cause) {
+    throw new TypeError('Invalid backgroundColor: expected a valid PixiJS ColorSource.', { cause });
+  }
+  throw new TypeError('Invalid backgroundColor: RGBA channels must be finite.');
 }
 
-function hexToRgba(hex: string): [number, number, number, number] | null {
-  let h = hex.replace('#', '');
-  if (h.length === 3) {
-    h = h
-      .split('')
-      .map((c) => c + c)
-      .join('');
-  }
-  if (h.length !== 6) return null;
-  const n = Number.parseInt(h, 16);
-  return [(n >> 16) & 255, (n >> 8) & 255, n & 255, 1];
-}
-
-function parseColorToRgba(
-  color: unknown,
-): [number, number, number, number] | null {
-  if (typeof color !== 'string') return null;
-  const c = color.trim();
-  if (c.startsWith('#')) return hexToRgba(c);
-  const rgbaMatch = c.match(
-    /^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)(?:\s*,\s*([\d.]+))?\s*\)$/,
-  );
-  if (rgbaMatch) {
-    return [
-      Number(rgbaMatch[1]),
-      Number(rgbaMatch[2]),
-      Number(rgbaMatch[3]),
-      rgbaMatch[4] !== undefined ? Number(rgbaMatch[4]) : 1,
-    ];
-  }
-  return null;
+/** Interpolate RGBA, retaining byte-rounded RGB and full alpha precision. */
+function mixColors(from: ColorSource, to: ColorSource, t: number): number[] {
+  const fa = normalizeColor(from);
+  const ta = normalizeColor(to);
+  return fa.map((channel, index) => {
+    const value = Math.max(0, Math.min(1, mix(channel, ta[index], t)));
+    return index === 3 ? value : Math.round(value * 255) / 255;
+  });
 }
 
 /**
@@ -132,14 +103,21 @@ export function normalizeKeyframes(effect: KeyframeEffect, defaultEasing = 'line
     ? effect
     : propertyIndexedToKeyframes(effect);
 
-  if (raw.length === 0) return [];
-  if (raw.length === 1) {
+  // Validate even single/missing-endpoint colors before attaching a ticker,
+  // and snapshot mutable ColorSource inputs as normalized RGBA arrays.
+  const frames = raw.map((frame) => frame.backgroundColor === undefined ? frame : {
+    ...frame,
+    backgroundColor: normalizeColor(frame.backgroundColor),
+  });
+
+  if (frames.length === 0) return [];
+  if (frames.length === 1) {
     // Single keyframe — treat as "to" (offset = 1)
-    return [{ ...raw[0], offset: raw[0].offset ?? 1, easing: raw[0].easing ?? defaultEasing }];
+    return [{ ...frames[0], offset: frames[0].offset ?? 1, easing: frames[0].easing ?? defaultEasing }];
   }
 
   // Fill in missing offsets
-  const result: NormalizedKeyframe[] = raw.map((kf) => ({
+  const result: NormalizedKeyframe[] = frames.map((kf) => ({
     ...kf,
     offset: kf.offset ?? -1, // sentinel
     easing: kf.easing ?? defaultEasing,
@@ -240,8 +218,8 @@ export function interpolateKeyframes(
 
     if (NUMERIC_PROPS.has(propKey) && typeof fromVal === 'number' && typeof toVal === 'number') {
       (result as Record<string, unknown>)[key] = mix(fromVal, toVal, segProgress);
-    } else if (key === 'backgroundColor' && typeof fromVal === 'string' && typeof toVal === 'string') {
-      (result as Record<string, unknown>)[key] = mixColorStrings(fromVal, toVal, segProgress);
+    } else if (propKey === 'backgroundColor' && from.backgroundColor !== undefined && to.backgroundColor !== undefined) {
+      result.backgroundColor = mixColors(from.backgroundColor, to.backgroundColor, segProgress);
     } else {
       // Non-interpolatable: use from until halfway, then to
       (result as Record<string, unknown>)[key] = segProgress < 0.5 ? fromVal : toVal;

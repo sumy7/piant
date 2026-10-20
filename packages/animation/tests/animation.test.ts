@@ -8,7 +8,8 @@ import type { NormalizedKeyframe } from '../src/types';
 
 const _tickerListeners: Array<(t: { deltaMS: number }) => void> = [];
 
-vi.mock('pixi.js', () => ({
+vi.mock('pixi.js', async (importOriginal) => ({
+  ...await importOriginal<typeof import('pixi.js')>(),
   Ticker: {
     shared: {
       add: vi.fn((fn: (t: { deltaMS: number }) => void) => {
