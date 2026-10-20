@@ -21,7 +21,7 @@ export type AnimatableProps = {
   rotation?: number;
   /** Alpha (0–1); overrides the opacity layout style during the animation */
   alpha?: number;
-  /** Background color */
+  /** PixiJS ColorSource; interpolates RGBA channels, rejects invalid colors. */
   backgroundColor?: ColorSource;
   /** Border radius in px */
   borderRadius?: number;

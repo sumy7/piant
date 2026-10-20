@@ -181,6 +181,29 @@ type AnimatableProps = {
 };
 ```
 
+`backgroundColor` 使用 PixiJS `Color` 解析，支持数值 RGB（`0x000000`–`0xffffff`）、
+Pixi 支持的颜色字符串（如名称、hex、RGB(A)、HSL(A)）、RGB(A)/HSL(A)/HSV(A) 对象、
+`Color` 实例，以及 3 或 4 通道数组。普通数组和 `Float32Array` 使用 0–1 通道；
+`Uint8Array` 和 `Uint8ClampedArray` 使用 0–255 通道（包括 alpha）。不同形式可混用。
+对象形式的 RGB 通道为 0–255，alpha 为 0–1。
+
+颜色先复制并归一化为 RGBA，再按当前段的缓动逐通道插值；RGB 四舍五入到 8 位通道，
+alpha 连续插值。超出范围的缓动结果会将颜色通道限制在 0–1，其他数值属性仍可超调。
+中间颜色以归一化 RGBA 数组传给 `setStyle()`，保留透明度；不会修改传入的数组、对象、
+`Color` 实例或 `Color.shared`。颜色通道直接线性插值，不做 gamma 校正或预乘 alpha。
+创建动画时，Pixi 无法解析或归一化后含非有限通道的颜色会抛出带 `backgroundColor` 提示的
+`TypeError`，不会静默切换到另一端颜色。
+
+```ts
+node.animate(
+  [{ backgroundColor: 0xff0000 }, { backgroundColor: [0, 0, 1, 0.5] }],
+  { duration: 1000, fill: 'forwards' },
+);
+// 中点：紫色（RGB 128, 0, 128），alpha 为 0.75
+```
+
+输入格式遵循 [PixiJS ColorSource](https://pixijs.download/v8.17.1/docs/color.ColorSource.html)。
+
 ---
 
 ## 支持的缓动名称
