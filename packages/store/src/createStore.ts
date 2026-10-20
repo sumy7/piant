@@ -43,7 +43,7 @@ export function createStore<T extends object>(
   // Pre-initialize `state` to an empty observable so that `set` and `get`
   // calls inside the creator (e.g. for derived defaults or side effects)
   // are safe and never operate on `undefined`.
-  let state = observable({}) as unknown as T;
+  const state = observable({}) as unknown as T;
 
   // Build a shared mutable api object so middleware can override setState.
   // Using `as` here because subscribe is wired up after `state` is initialised.

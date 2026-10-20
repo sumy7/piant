@@ -20,6 +20,30 @@ import type { GetState, SetState, StateCreator, StoreApi } from '../types';
  * );
  * ```
  */
+// The inference overload types the callback against the initial-state slice so
+// its return type can be inferred without a circular T & A context. The third
+// type parameter reserves the two-argument generic form for the full-state
+// overload below.
+export function combine<
+  T extends object,
+  A extends object,
+  _Inferred extends true,
+>(
+  initialState: T,
+  actionsCreator: (
+    set: SetState<T>,
+    get: GetState<T>,
+    api: StoreApi<T>,
+  ) => A,
+): StateCreator<T & A>;
+export function combine<T extends object, A extends object>(
+  initialState: T,
+  actionsCreator: (
+    set: SetState<T & A>,
+    get: GetState<T & A>,
+    api: StoreApi<T & A>,
+  ) => A,
+): StateCreator<T & A>;
 export function combine<T extends object, A extends object>(
   initialState: T,
   actionsCreator: (

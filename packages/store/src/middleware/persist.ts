@@ -65,9 +65,11 @@ export function persist<T extends object>(
     skipHydration = false,
   } = options;
 
+  const hasExplicitStorage = Object.hasOwn(options, 'storage');
+
   // Resolve storage lazily so this works in SSR / non-browser environments.
   const getStorage = (): typeof options.storage => {
-    if (options.storage !== undefined) return options.storage;
+    if (hasExplicitStorage) return options.storage;
     if (typeof window !== 'undefined' && window.localStorage) {
       return window.localStorage;
     }
@@ -75,9 +77,9 @@ export function persist<T extends object>(
   };
 
   const saveToStorage = (getState: GetState<T>) => {
-    const storage = getStorage();
-    if (!storage) return;
     try {
+      const storage = getStorage();
+      if (!storage) return;
       const toSave = partialize(getState());
       storage.setItem(name, serialize(toSave));
     } catch {
@@ -86,12 +88,14 @@ export function persist<T extends object>(
   };
 
   return (baseSet, get, api: StoreApi<T>) => {
+    let hydrationComplete = false;
+
     // Replace api.setState so that ALL state updates — including external
     // calls to useStore.setState — go through our persistence logic.
     const originalSetState = baseSet;
     const patchedSetState: SetState<T> = (partial) => {
       originalSetState(partial);
-      saveToStorage(get);
+      if (hydrationComplete) saveToStorage(get);
     };
     api.setState = patchedSetState;
 
@@ -100,20 +104,21 @@ export function persist<T extends object>(
 
     // Rehydrate from storage synchronously during store creation.
     if (!skipHydration) {
-      const storage = getStorage();
-      if (storage) {
-        try {
+      try {
+        const storage = getStorage();
+        if (storage) {
           const raw = storage.getItem(name);
           if (raw !== null) {
             const restored = deserialize(raw);
             Object.assign(initialState, restored);
             onRehydrateStorage?.(initialState);
           }
-        } catch {
-          // Corrupt / missing storage – start with creator's defaults.
         }
+      } catch {
+        // Corrupt / missing storage – start with creator's defaults.
       }
     }
+    hydrationComplete = true;
 
     return initialState;
   };

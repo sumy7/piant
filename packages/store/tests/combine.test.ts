@@ -1,5 +1,5 @@
 import { autorun } from 'mobx';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, expectTypeOf, it } from 'vitest';
 import { createStore } from '../src/createStore';
 import { combine } from '../src/middleware/combine';
 
@@ -13,6 +13,12 @@ describe('combine middleware', () => {
     );
 
     const state = useStore.getState();
+    expectTypeOf(state).toMatchTypeOf<{
+      count: number;
+      name: string;
+      increment: () => void;
+      setName: (name: string) => void;
+    }>();
     expect(state.count).toBe(0);
     expect(state.name).toBe('piant');
     expect(typeof state.increment).toBe('function');
@@ -104,5 +110,28 @@ describe('combine middleware', () => {
     useStore.getState().addPoints(5);
     useStore.setState({ score: 100 });
     expect(useStore.getState().score).toBe(100);
+  });
+
+  it('supports explicitly typed full-state actions', () => {
+    interface Actions {
+      increment: () => void;
+      incrementFromState: () => void;
+    }
+
+    const useStore = createStore(
+      combine<{ count: number }, Actions>(
+        { count: 0 },
+        (set, get) => ({
+          increment: () => set((state) => ({ count: state.count + 1 })),
+          incrementFromState: () => get().increment(),
+        }),
+      ),
+    );
+
+    expectTypeOf(useStore.getState()).toEqualTypeOf<
+      { count: number } & Actions
+    >();
+    useStore.getState().incrementFromState();
+    expect(useStore.getState().count).toBe(1);
   });
 });

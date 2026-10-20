@@ -34,6 +34,10 @@ store.getText();   // 'hello'
 
 ## 签名
 
+不指定类型参数时，`A` 从动作创建器的返回值推断；创建器中的 `set`、`get`、`api` 基于初始数据 `T`，最终 store 同时包含 `T & A`。这样可自动推断 `increment` 等动作的类型。
+
+如果动作需要通过 `get()` 调用其他动作，显式使用 `combine<T, A>(...)`，创建器即可访问完整的 `T & A`：
+
 ```ts
 function combine<T extends object, A extends object>(
   initialState: T,
@@ -44,9 +48,26 @@ function combine<T extends object, A extends object>(
 | 参数 | 类型 | 说明 |
 |------|------|------|
 | `initialState` | `T` | 纯数据对象，作为 store 的初始数据字段 |
-| `actionsCreator` | `(set, get, api) => A` | 返回动作方法集合的函数；`set`/`get`/`api` 类型为 `T & A` |
+| `actionsCreator` | `(set, get, api) => A` | 返回动作方法集合；自动推断时基于 `T`，显式指定 `T, A` 时基于 `T & A` |
 
 返回值是一个 `StateCreator<T & A>`，可直接传给 `createStore` 或与其他 middleware 组合。
+
+```ts
+type CounterActions = {
+  increment: () => void;
+  incrementTwice: () => void;
+};
+
+const useCounter = createStore(
+  combine<{ count: number }, CounterActions>({ count: 0 }, (set, get) => ({
+    increment: () => set((state) => ({ count: state.count + 1 })),
+    incrementTwice: () => {
+      get().increment();
+      get().increment();
+    },
+  })),
+);
+```
 
 ## 与 `persist` 组合
 
