@@ -4,7 +4,9 @@ Piant 提供了一组生命周期钩子，用于在组件的不同阶段执行�
 
 ## onMount
 
-`onMount` 在组件首次挂载（渲染完成）后执行一次，用于执行初始化逻辑。
+`onMount` 在当前同步渲染结束后的微任务中执行一次，此时节点已创建、`ref` 已赋值，节点树已插入渲染容器，可用于执行初始化逻辑。如果所属 owner 在回调执行前已清理（例如分支移除或调用 render 返回的 disposer），回调会被取消。
+
+这不代表 PixiJS 已完成下一帧绘制或 Yoga 布局；需要读取布局尺寸时，应等待布局完成。
 
 ```tsx
 import { onMount, View } from '@piant/core';
@@ -98,7 +100,9 @@ function AnimatedView() {
     ↓
 effect / createEffect 注册（立即执行一次）
     ↓
-onMount 执行（一次）
+节点创建、ref 赋值、节点树插入容器（同步）
+    ↓
+onMount 执行（微任务，一次；提前清理则取消）
     ↓
 状态更新 → effect 重新执行 → onCleanup 清理旧副作用
     ↓

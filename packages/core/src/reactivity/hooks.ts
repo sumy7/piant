@@ -2,7 +2,7 @@ import type { IObservableValue } from 'mobx';
 import { observable, runInAction, untracked } from 'mobx';
 import { cleanup, effect, memo } from './effects';
 import { SYMBOL_ERRORS } from './errors';
-import { getOwner } from './owner';
+import { getOwner, runWithOwner } from './owner';
 import type { Fn, Getter, Setter, UpdateFn } from './types';
 
 export function createState<T>(
@@ -35,7 +35,17 @@ export function onCleanup(fn: Fn) {
 }
 
 export function onMount(fn: Fn) {
-  effect(() => untracked(() => fn()));
+  effect(() => {
+    const owner = getOwner();
+    let active = true;
+    cleanup(() => {
+      active = false;
+    });
+    // Let synchronous rendering assign refs and attach the complete tree first.
+    queueMicrotask(() => {
+      if (active) runWithOwner(owner, () => untracked(fn));
+    });
+  });
 }
 
 export function onError(fn: (error: any) => void) {
