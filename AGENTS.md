@@ -50,6 +50,12 @@
 - 修改 `Text` 相关逻辑时，避免在 JSX 内部写复杂内联条件/插值表达式；优先先计算再传值，以减少不必要的响应式副作用。
 - 变更 API 或行为时，优先补充/更新 `packages/core/tests` 下对应 Vitest 用例。
 
+## Git and Merge Requests
+
+- 分支名统一使用 `feature-YYYYMMDD-short-description`，不使用默认的 `codex/` 前缀。日期按 `Asia/Shanghai` 时区生成，简短描述使用小写英文单词并以连字符连接，例如 `feature-20261021-fix-color-interpolation`。
+- MR（包括 GitHub PR）标题按 Conventional Commits 格式编写：`<type>: <message>`，例如 `fix: interpolate background colors`；类型根据变更内容选择 `feat`、`fix`、`chore`、`docs` 等。
+- 引用的 Linear 问题编号写在 MR 说明中，例如 `关联问题：COD-145`，不要把 `COD-ID` 放在 MR 标题中。
+
 ## Docs Map (Link, Don’t Embed)
 
 - 项目与定位：`docs/guide/introduction.md`
