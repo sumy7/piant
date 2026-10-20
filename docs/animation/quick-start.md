@@ -15,7 +15,7 @@ import '@piant/animation';
 
 ## 1. 淡入 / 淡出
 
-通过 `alpha` 关键帧实现透明度动画。使用 `ref` 获取 Piant 节点；点击事件的 `target` 是底层 Pixi 对象，不应直接调用 Piant 的 `.animate()`：
+通过 `alpha` 关键帧实现透明度动画。点击事件的 `target` 是 Pixi 对象；使用 `View` 的 `ref` 获取 Piant 节点，再调用 `.animate()`：
 
 ```tsx
 import { onCleanup, type PNode, View } from '@piant/core';
@@ -38,8 +38,8 @@ export function FadeDemo() {
 
   return (
     <View
-      style={{ width: 100, height: 100, backgroundColor: '#4f46e5' }}
       ref={(el) => { node = el; }}
+      style={{ width: 100, height: 100, backgroundColor: '#4f46e5' }}
       onClick={handleClick}
     />
   );
@@ -73,8 +73,8 @@ export function SlideDemo() {
 
   return (
     <View
-      style={{ width: 80, height: 80, backgroundColor: '#10b981' }}
       ref={(el) => { node = el; }}
+      style={{ width: 80, height: 80, backgroundColor: '#10b981' }}
       onClick={handleClick}
     />
   );
