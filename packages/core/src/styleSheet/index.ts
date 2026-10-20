@@ -1,12 +1,17 @@
-import type { ImageStyles, ViewStyles } from '../elements/layout/viewStyles';
+import type { ImageStyles } from '../elements/layout/viewStyles';
 import type { TextStyles } from '../elements/text/textStyles';
 import composeStyles from './composeStyles';
 import flatten from './flattenStyle';
 import type {
+  ParentList,
   ResolvedStyleSheet,
   StyleEntry,
+  StyleParents,
   StyleReference,
-  StyleValue,
+  StyleSheetDefinition,
+  ValidateDefinition,
+  ValidateParents,
+  ValidateStyle,
 } from './types';
 
 export type {
@@ -60,38 +65,85 @@ function resolveEntry<T extends object>(
   return { ...merged, ...entry.style };
 }
 
+type BuiltinStyles = ImageStyles & TextStyles;
+
+// Prevent the compatibility overload from inferring a permissive custom schema
+// when a default call contains an invalid built-in property.
+declare const unspecifiedStyle: unique symbol;
+type UnspecifiedStyle = { readonly [unspecifiedStyle]: true };
+
+type StyleSheetCreator<TStyle extends object> = <
+  const T extends Record<string, object>,
+>(
+  obj: T & ValidateDefinition<TStyle, T>,
+) => ResolvedStyleSheet<T, TStyle>;
+
+function createStyleSheet<const T extends Record<string, object>>(
+  obj: T & ValidateDefinition<BuiltinStyles, T>,
+): ResolvedStyleSheet<T, BuiltinStyles>;
+function createStyleSheet<TStyle extends object>(): StyleSheetCreator<TStyle>;
 function createStyleSheet<
-  T extends Record<string, StyleEntry<ViewStyles | ImageStyles | TextStyles>>,
->(obj: T): ResolvedStyleSheet<T>;
-function createStyleSheet<
-  TStyle extends object = object,
-  T extends Record<string, StyleEntry<TStyle>> = Record<
-    string,
-    StyleEntry<TStyle>
+  TStyle extends object = UnspecifiedStyle,
+  T extends StyleSheetDefinition<NoInfer<TStyle>> = StyleSheetDefinition<
+    NoInfer<TStyle>
   >,
->(obj: T): ResolvedStyleSheet<T>;
-function createStyleSheet<
-  TStyle extends object = object,
-  T extends Record<string, StyleEntry<TStyle>> = Record<
-    string,
-    StyleEntry<TStyle>
-  >,
->(obj: T): ResolvedStyleSheet<T> {
-  const result = {} as ResolvedStyleSheet<T>;
+>(
+  obj: TStyle extends UnspecifiedStyle ? never : T,
+): ResolvedStyleSheet<T, TStyle>;
+function createStyleSheet(obj?: StyleSheetDefinition<object>): unknown {
+  if (obj === undefined) return createStyleSheet;
+  const result: Record<string, object> = {};
   for (const key in obj) {
     const entry = obj[key]!;
     if (isStyleRef(entry)) {
-      (result as Record<string, unknown>)[key] = resolveEntry(
-        entry,
-        obj,
-        new Set([key]),
-        [key],
-      );
+      result[key] = resolveEntry(entry, obj, new Set([key]), [key]);
     } else {
-      (result as Record<string, unknown>)[key] = entry;
+      result[key] = entry;
     }
   }
   return result;
+}
+
+type StyleExtender<TStyle extends object> = <
+  const Parents extends string | object,
+  const Override extends object = Record<never, never>,
+>(
+  parents: Parents & ValidateParents<TStyle, Parents>,
+  override?: Override & ValidateStyle<TStyle, Override>,
+) => StyleReference<
+  TStyle,
+  ParentList<Parents, TStyle>,
+  Extract<Override, Partial<TStyle>>
+>;
+
+function extendStyle<
+  const Parents extends string | object,
+  const Override extends object = Record<never, never>,
+>(
+  parents: Parents & ValidateParents<BuiltinStyles, Parents>,
+  override?: Override & ValidateStyle<BuiltinStyles, Override>,
+): StyleReference<
+  BuiltinStyles,
+  ParentList<Parents, BuiltinStyles>,
+  Extract<Override, Partial<BuiltinStyles>>
+>;
+function extendStyle<TStyle extends object>(): StyleExtender<TStyle>;
+function extendStyle<TStyle extends object = UnspecifiedStyle>(
+  parents: TStyle extends UnspecifiedStyle
+    ? never
+    : StyleParents<NoInfer<TStyle>>,
+  override?: Partial<NoInfer<TStyle>>,
+): StyleReference<TStyle>;
+function extendStyle(
+  parents?: StyleParents<object>,
+  override: object = {},
+): unknown {
+  if (parents === undefined) return extendStyle;
+  return {
+    __isStyleRef: true,
+    parents: Array.isArray(parents) ? parents : [parents],
+    style: override,
+  };
 }
 
 /**
@@ -160,6 +212,9 @@ export const StyleSheet = {
    * in the returned type. Entries may be plain style objects or `StyleReference`
    * values created with `StyleSheet.extend` — the latter are resolved eagerly so
    * the returned object always contains plain style objects ready for use.
+   * Built-in style keys and values are validated by default. For a custom schema
+   * with exact key and inheritance inference, use `StyleSheet.create<T>()({...})`.
+   * The existing `StyleSheet.create<T>({...})` form retains its wider result type.
    *
    * Circular inheritance chains are detected at creation time: the circular
    * edge is skipped and a warning is logged so the issue is visible during
@@ -203,19 +258,7 @@ export const StyleSheet = {
    * When multiple parents are provided, they are merged left-to-right (later
    * parents override earlier ones), and the child's own properties are applied last.
    */
-  extend<T extends object = ViewStyles>(
-    parents: string | Array<string | Partial<T>> | Partial<T>,
-    override: Partial<T> = {} as Partial<T>,
-  ): StyleReference<T> {
-    const parentArr: Array<string | Partial<T>> = Array.isArray(parents)
-      ? (parents as Array<string | Partial<T>>)
-      : [parents as string | Partial<T>];
-    return {
-      __isStyleRef: true,
-      parents: parentArr,
-      style: override,
-    };
-  },
+  extend: extendStyle,
 
   /**
    * Resolves any `StyleValue` — a plain object, an array (including nested
@@ -235,9 +278,5 @@ export const StyleSheet = {
    * const resolved = StyleSheet.resolve([styles.base, isActive && styles.active, props.style]);
    * ```
    */
-  resolve<T extends object = ViewStyles>(
-    style: StyleValue<T>,
-  ): Partial<T> | undefined {
-    return flatten(style) as Partial<T> | undefined;
-  },
+  resolve: flatten,
 };

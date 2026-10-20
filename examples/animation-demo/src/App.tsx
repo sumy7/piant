@@ -92,9 +92,9 @@ const styles = StyleSheet.create({
 export function App() {
   const [activeTab, setActiveTab] = createState<Tab>('transition');
 
-  const transitionContent = TransitionDemo({});
-  const transitionGroupContent = TransitionGroupDemo({});
-  const animationContent = AnimationDemo({});
+  const transitionContent = TransitionDemo();
+  const transitionGroupContent = TransitionGroupDemo();
+  const animationContent = AnimationDemo();
 
   return (
     <View style={styles.root}>

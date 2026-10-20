@@ -1,8 +1,12 @@
 import { effect } from '../reactivity/effects';
 
-type StyleTarget = {
-  _layoutStyle: object;
-  setStyle(style: any): void;
+type StylePatch<T extends object> = {
+  [Key in keyof T]?: T[Key] | undefined;
+};
+
+type StyleTarget<T extends object> = {
+  _layoutStyle: Partial<T>;
+  setStyle(style: Partial<T>): void;
 };
 
 /**
@@ -11,8 +15,8 @@ type StyleTarget = {
  * restored from the style state that existed before the binding was installed.
  */
 export function bindStyle<T extends object>(
-  element: StyleTarget,
-  resolveStyle: () => Partial<T> | undefined,
+  element: StyleTarget<T>,
+  resolveStyle: () => StylePatch<T> | undefined,
 ): void {
   const defaults = { ...element._layoutStyle } as Record<string, unknown>;
   let previous = { ...defaults };
@@ -40,7 +44,7 @@ export function bindStyle<T extends object>(
       }
     }
 
-    element.setStyle(patch);
+    element.setStyle(patch as Partial<T>);
     previous = { ...next };
   });
 }
