@@ -1,54 +1,58 @@
 # API 参考总览
 
-本节提供 `@piant/core` 包所有公共 API 的快速查阅。
+本节按用途导航 `@piant/core` 主入口的公共导出。以下清单覆盖主入口的运行时导出与显式导出的类型名；各 API 的详细说明见对应参考页或指南。`@piant/hooks`、`@piant/animation`、`@piant/router`、`@piant/store` 是独立包，不属于 core 导出。
 
-## 导出内容
+## 组件
 
-```ts
-// 组件
-export { View } from './components/View';
-export { Image } from './components/Image';
-export { ScrollView } from './components/ScrollView';
-export { Text, Span, Img } from './components/Text';
-export { CustomView } from './components/CustomView';
+| 导出 | 文档 |
+|------|------|
+| `View`、`Image`、`Text`、`Span`、`Img`、`ScrollView`、`CustomView` | [组件 API](/reference/components) |
+| `Input` | [Input API](/reference/components#input)、[指南与在线示例](/guide/components/input) |
+| `Show`、`For`、`Index`、`Switch`、`Match`、`Dynamic`、`ErrorBoundary` | [控制流组件 API](/reference/components#show) |
+| `Transition`、`TransitionGroup` | [过渡组件 API](/reference/components#transition-与-transitiongroup)、[完整指南](/guide/control-flow/transition) |
 
-// 控制流组件
-export { Show } from './components/Show';
-export { For, Index } from './components/For';
-export { Switch, Match } from './components/Switch';
-export { Dynamic } from './components/Dynamic';
-export { ErrorBoundary } from './components/ErrorBoundary';
+组件类型：`InputProps`、`TextProps`、`TransitionProps`、`TransitionEvents`、`TransitionGroupProps`。
 
-// 根节点
-export { PRoot } from './elements/PRoot';
+## 响应式与生命周期
 
-// 响应式 API
-export {
-  createState,
-  createEffect,
-  createMemo,
-  onMount,
-  onCleanup,
-  onError,
-  createSelector,
-} from './reactivity/hooks';
-export { createContext, useContext } from './reactivity/context';
-export { memo } from './reactivity/effects';
+| 导出 | 用途 |
+|------|------|
+| `createState`、`createEffect`、`createMemo`、`createSelector` | [响应式原语](/reference/reactivity) |
+| `createContext`、`useContext` | [上下文](/reference/reactivity#createcontext) |
+| `onMount`、`onCleanup`、`onError` | [生命周期钩子](/guide/lifecycle) |
+| `onTick` | [逐帧回调](/guide/lifecycle#ontick) |
+| `root`、`memo` | 底层响应式作用域与 memo；常规组件使用 `render` 和 `createMemo` |
+| `lookup` | 底层上下文查找；常规组件使用 `useContext` |
 
-// 渲染器
-export { render } from './renderer';
+响应式类型：`Context`、`Fn`、`RootFn`、`EffectFn`、`UpdateFn`、`Getter`、`Setter`、`EffectOptions`、`MemoOptions`。
 
-// 样式
-export { StyleSheet } from './styleSheet';
+## 渲染与节点
 
-// 钩子
-export { onTick } from './hooks/onTick';
-```
+| 导出 | 用途 |
+|------|------|
+| `render`、`PRoot` | [挂载与清理边界](/reference/renderer)；`render` 返回 disposer |
+| `PNode` | 底层节点基类，也是 `render` 的挂载参数类型 |
+| `PScrollView` | [滚动节点与方法](/guide/components/scrollview) |
+| `createComponent`、`dynamicProperty`、`mergeProps` | JSX 编译辅助函数，通常由 Babel 预设生成调用 |
 
-## 快速导航
+滚动类型：`ScrollAlignment`、`ScrollIntoViewOptions`。
 
-- [组件 API](/reference/components) — View、Image、Text 等组件的 Props 总表
-- [响应式 API](/reference/reactivity) — createState、createEffect 等响应式原语
-- [渲染 API](/reference/renderer) — render、PRoot
-- [样式 API](/reference/stylesheet) — StyleSheet、ViewStyles 类型
-- [Router 文档](/router/introduction) — @piant/router 的接入方式与 API
+`PInput`、`PView`、`PText` 等节点类没有从主入口直接导出。组件的 `ref` 参数可自动推导对应节点类型，无需深层导入。
+
+## 样式与事件类型
+
+| 导出 | 文档 |
+|------|------|
+| `StyleSheet` | [样式 API](/reference/stylesheet) |
+| `LayoutStyles`、`VisualStyles`、`ViewStyles`、`ImageStyles`、`TextStyles`、`TextViewStyles` | [样式指南](/guide/styling/stylesheet) |
+| `StyleValue`、`StyleObject`、`StyleEntry`、`StyleReference`、`StyleSheetDefinition`、`ResolvedStyleSheet` | [样式类型](/reference/stylesheet) |
+| `PixiEventHandler`、`PixiEventProp`、`PixiEventProps` | [事件 Props](/reference/components#事件-props-pixieventprops) |
+
+类型使用 `import type { ... } from '@piant/core'` 导入。`@piant/core/jsx-runtime` 提供 JSX 类型入口，JSX 转换仍需配置 [Babel 预设](/guide/installation)。
+
+## 其他包
+
+- [Animation](/animation/introduction) — `@piant/animation`
+- [Router](/router/introduction) — `@piant/router`
+- [Store](/store/introduction) — `@piant/store`
+- [Hooks](/hooks/introduction) — `@piant/hooks` 键盘交互

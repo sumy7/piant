@@ -62,7 +62,9 @@ useKey('Escape', () => console.log('ESC'));
 
 ### 事件目标默认为 `window`
 
-`useKey` 和 `useKeyPressEvent` 默认将事件监听器附加到 `window`。可通过 `opts.target` 指定其他 DOM 元素。
+`useKey` 默认将事件监听器附加到 `window`，可通过第三个参数的 `opts.target` 指定其他 `EventTarget`。
+
+`useKeyPressEvent` 只接受 `key`、`keydown`、`keyup` 三个参数，内部使用 `useKey` 的默认 `window` 目标，不接受 `opts.target`。需要在自定义目标上分别处理按下和松开时，使用两次 `useKey`，分别设置 `event: 'keydown'` 和 `event: 'keyup'`。没有 `window` 时，`useKeyPressEvent` 不注册监听器；`useKey` 在未提供自定义目标时也不注册监听器。
 
 ## 下一步
 
