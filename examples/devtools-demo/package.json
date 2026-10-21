@@ -1,0 +1,23 @@
+{
+  "name": "@piant/examples-devtools-demo",
+  "description": "Piant DevTools：元素树、选中高亮、只读状态与动画观测。",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "rsbuild dev --open",
+    "build": "rsbuild build",
+    "preview": "rsbuild preview"
+  },
+  "dependencies": {
+    "@piant/animation": "workspace:*",
+    "@piant/core": "workspace:*",
+    "@piant/devtools": "workspace:*",
+    "pixi.js": "^8.22.0"
+  },
+  "devDependencies": {
+    "@piant/babel-preset-piant": "workspace:*",
+    "@rsbuild/core": "2.2.14",
+    "@rsbuild/plugin-babel": "2.1.0",
+    "typescript": "^5.9.3"
+  }
+}

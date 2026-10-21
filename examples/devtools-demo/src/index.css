@@ -1,0 +1,18 @@
+body {
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+  background: #0f172a;
+}
+
+.unmount {
+  position: fixed;
+  bottom: 18px;
+  left: 24px;
+  padding: 10px 16px;
+  border: 1px solid #64748b;
+  border-radius: 8px;
+  color: #f8fafc;
+  background: #334155;
+  cursor: pointer;
+}

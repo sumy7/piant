@@ -53,6 +53,7 @@ export default defineConfig({
             { text: 'Canvas 布局', link: '/guide/canvas-layout' },
             { text: 'JSX 语法', link: '/guide/jsx' },
             { text: '响应式系统', link: '/guide/reactivity' },
+            { text: 'DevTools', link: '/guide/devtools' },
           ],
         },
         {

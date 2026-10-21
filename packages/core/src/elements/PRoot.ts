@@ -11,6 +11,10 @@ export type PRootDebugOptions = {
   textRendering: boolean;
 };
 
+export type PRootObservation =
+  | { readonly type: 'layout'; readonly duration: number }
+  | { readonly type: 'destroy' };
+
 const DEFAULT_DEBUG_OPTIONS: PRootDebugOptions = {
   textRendering: false,
 };
@@ -18,9 +22,15 @@ const DEFAULT_DEBUG_OPTIONS: PRootDebugOptions = {
 export class PRoot extends PView {
   _isDirty = true;
   _debugOptions: PRootDebugOptions = { ...DEFAULT_DEBUG_OPTIONS };
+  private observers?: Set<(event: PRootObservation) => void>;
+  private destroyed = false;
+
+  get isDestroyed(): boolean {
+    return this.destroyed;
+  }
 
   constructor(
-    renderContainer: Container,
+    private readonly renderContainer: Container,
     styles: ViewStyles = {},
     debugOptions: Partial<PRootDebugOptions> = {},
   ) {
@@ -30,6 +40,7 @@ export class PRoot extends PView {
     this.setStyle(styles);
     this.setDebugOptions(debugOptions);
     layoutTicker.add(this.doLayout, this);
+    renderContainer.on('destroyed', this.destroy, this);
   }
 
   setDebugOptions(options: Partial<PRootDebugOptions> = {}) {
@@ -59,10 +70,34 @@ export class PRoot extends PView {
     this._isDirty = true;
   }
 
+  /** Observe completed layouts until unsubscribed or the root is destroyed. */
+  observe(listener: (event: PRootObservation) => void): () => void {
+    if (this.destroyed) return () => {};
+    this.observers ??= new Set();
+    this.observers.add(listener);
+    return () => {
+      this.observers?.delete(listener);
+    };
+  }
+
+  private notifyObservers(event: PRootObservation) {
+    if (!this.observers?.size) return;
+    for (const listener of [...this.observers]) {
+      if (!this.observers.has(listener)) continue;
+      try {
+        listener(event);
+      } catch (error) {
+        // Optional diagnostics must not interrupt rendering or teardown.
+        console.error('[piant] Root observer failed.', error);
+      }
+    }
+  }
+
   doLayout() {
-    if (!this._isDirty) {
+    if (this.destroyed || !this._isDirty) {
       return;
     }
+    const started = this.observers?.size ? performance.now() : undefined;
     this._isDirty = false;
     this.applyDebugOptionsToTree();
     this._layoutNode.calculateLayout(
@@ -70,10 +105,21 @@ export class PRoot extends PView {
       this._layoutStyle.height as number,
     );
     this.applyLayout();
+    if (started !== undefined) {
+      this.notifyObservers({
+        type: 'layout',
+        duration: performance.now() - started,
+      });
+    }
   }
 
   destroy() {
+    if (this.destroyed) return;
+    this.destroyed = true;
+    this.renderContainer.off('destroyed', this.destroy, this);
     layoutTicker.remove(this.doLayout, this);
+    this.notifyObservers({ type: 'destroy' });
+    this.observers?.clear();
     super.destroy();
   }
 }
