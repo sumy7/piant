@@ -3,15 +3,15 @@
 ## `createStore`
 
 ```ts
-function createStore<T extends object>(creator: StateCreator<T>): UseStore<T>
+function createStore<T extends object>(creator: StateCreator<T>): UseStore<T>;
 ```
 
 创建一个 MobX-backed store，返回一个 **store hook**。
 
 ### 参数
 
-| 参数 | 类型 | 说明 |
-|------|------|------|
+| 参数      | 类型              | 说明                                              |
+| --------- | ----------------- | ------------------------------------------------- |
 | `creator` | `StateCreator<T>` | 初始化函数，接收 `set` 和 `get`，返回初始状态对象 |
 
 ### 返回值
@@ -195,6 +195,42 @@ interface Subscribe<T> {
 
 ---
 
+## `createStoreHistory`
+
+```ts
+function createStoreHistory<T extends object>(
+  store: StoreApi<T>,
+  options?: StoreHistoryOptions,
+): StoreHistory | null;
+```
+
+显式创建 Store 数据历史记录器。`options.enabled` 必须为 `true`；否则返回 `null`，不读取或订阅 Store。仅创建业务 Store 不会自动记录。
+
+| 选项         | 默认值    | 说明                          |
+| ------------ | --------- | ----------------------------- |
+| `enabled`    | 未启用    | 显式设为 `true` 才开始记录。  |
+| `name`       | `'Store'` | 在调试面板显示的来源名称。    |
+| `maxEntries` | `100`     | 保存记录上限，限制在 2–1000。 |
+
+### `StoreHistory`
+
+| 成员                  | 行为                                                                    |
+| --------------------- | ----------------------------------------------------------------------- |
+| `name`                | 记录器名称。                                                            |
+| `snapshot()`          | 返回冻结的数据快照 `{ entries, currentId, disposed }`，不暴露业务对象。 |
+| `subscribe(listener)` | 历史变化时通知，返回取消订阅函数。                                      |
+| `restore(id)`         | 恢复可恢复记录并返回 `true`；记录无效、不可恢复或已销毁时返回 `false`。 |
+| `clear()`             | 清除旧历史，以当前实际状态创建新初始记录；ID 不复用。                   |
+| `dispose()`           | 幂等停止记录、恢复和通知，释放订阅。                                    |
+
+每条 `StoreHistoryEntry` 包含 `id`、`timestamp`（`Date.now()` 毫秒）、`state`、`restorable` 及可选 `reason`。记录数据排除顶层 action，恢复保留 action 与 observable 根身份。无法无损恢复的值只展示原因，不允许恢复。
+
+Restore 本身不追加历史；恢复后新的业务变化会丢弃恢复点之后的记录并建立分支。与 `persist` 组合时，恢复沿用更新管道并写入存储，仍遵循 `partialize` / `serialize`。它不撤销请求或外部副作用。
+
+完整接入与生命周期见 [Store 历史与恢复](/devtools/store-history)。面板是单独安装的 `@piant/devtools`，不会自动发现记录器；收起或卸载面板不代替记录器的 `dispose()`。
+
+---
+
 ## 类型导出一览
 
 ```ts
@@ -203,6 +239,11 @@ import type {
   SetState,
   StateCreator,
   StoreApi,
+  StoreHistory,
+  StoreHistoryEntry,
+  StoreHistoryOptions,
+  StoreHistorySnapshot,
+  StoreSnapshotValue,
   Subscribe,
   UseStore,
 } from '@piant/store';

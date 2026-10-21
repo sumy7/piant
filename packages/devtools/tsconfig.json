@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "target": "ES2023",
+    "isolatedModules": true,
+    "moduleResolution": "bundler",
+    "module": "ESNext",
+    "lib": ["ESNext", "ESNext.Intl", "DOM"]
+  },
+  "include": ["./src", "rslib.config.ts", "vitest.config.ts"]
+}

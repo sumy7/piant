@@ -16,8 +16,22 @@ export default defineConfig({
   },
 
   head: [
-    ['link', { rel: 'icon', href: '/piant-logo-light.svg', media: '(prefers-color-scheme: light)' }],
-    ['link', { rel: 'icon', href: '/piant-logo-dark.svg', media: '(prefers-color-scheme: dark)' }],
+    [
+      'link',
+      {
+        rel: 'icon',
+        href: '/piant-logo-light.svg',
+        media: '(prefers-color-scheme: light)',
+      },
+    ],
+    [
+      'link',
+      {
+        rel: 'icon',
+        href: '/piant-logo-dark.svg',
+        media: '(prefers-color-scheme: dark)',
+      },
+    ],
   ],
 
   themeConfig: {
@@ -32,6 +46,7 @@ export default defineConfig({
       { text: 'Animation', link: '/animation/introduction' },
       { text: 'Router', link: '/router/introduction' },
       { text: 'Store', link: '/store/introduction' },
+      { text: 'Devtools', link: '/devtools/introduction' },
       { text: 'Hooks', link: '/hooks/introduction' },
       { text: '参考', link: '/reference/overview' },
     ],
@@ -53,6 +68,7 @@ export default defineConfig({
             { text: 'Canvas 布局', link: '/guide/canvas-layout' },
             { text: 'JSX 语法', link: '/guide/jsx' },
             { text: '响应式系统', link: '/guide/reactivity' },
+            { text: 'DevTools', link: '/guide/devtools' },
           ],
         },
         {
@@ -150,12 +166,21 @@ export default defineConfig({
           ],
         },
       ],
+      '/devtools/': [
+        {
+          text: 'Piant Devtools',
+          items: [
+            { text: '简介', link: '/devtools/introduction' },
+            { text: '快速开始', link: '/devtools/quick-start' },
+            { text: 'Store 历史与恢复', link: '/devtools/store-history' },
+            { text: 'API 与调试边界', link: '/guide/devtools' },
+          ],
+        },
+      ],
       '/hooks/': [
         {
           text: 'Hooks 指南',
-          items: [
-            { text: '简介', link: '/hooks/introduction' },
-          ],
+          items: [{ text: '简介', link: '/hooks/introduction' }],
         },
         {
           text: 'Hooks',

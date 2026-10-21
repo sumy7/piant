@@ -56,6 +56,16 @@ yarn add @piant/core "pixi.js@^8.22.0"
 
 `@piant/core`、`@piant/animation`、`@piant/hooks` 和 `@piant/router` 仅提供 ESM 入口，应用代码使用 `import` 导入。
 
+## 可选：安装 Piant Devtools
+
+调试面板是独立包，按需单独安装：
+
+```bash
+pnpm add -D @piant/devtools
+```
+
+仅安装或导入不会自动启用。应用需在开发条件内动态导入并调用 `attachDevtools({ enabled: true, ... })`；业务 `@piant/core` / `@piant/store` 不依赖调试包，创建 Store 也不会自动记录历史。生产构建需静态移除开发分支，默认包入口包含真实实现。接入步骤见 [Piant Devtools 快速开始](/devtools/quick-start)。
+
 ## 配置 JSX 转换
 
 Piant 使用自定义 JSX 转换，需要安装 Babel 预设：
@@ -125,12 +135,12 @@ module.exports = {
 
 ## 版本要求
 
-| 依赖 | 版本要求 |
-|------|---------|
-| Node.js（应用工具链） | ^20.19.0 或 >=22.12.0 |
+| 依赖                  | 版本要求                         |
+| --------------------- | -------------------------------- |
+| Node.js（应用工具链） | ^20.19.0 或 >=22.12.0            |
 | Node.js（本仓库开发） | ^22.18.0 或 ^24.11.0 或 >=26.0.0 |
-| pixi.js | ^8.22.0 |
-| TypeScript | >= 5.0（可选）|
+| pixi.js               | ^8.22.0                          |
+| TypeScript            | >= 5.0（可选）                   |
 
 ## Monorepo 中的使用
 

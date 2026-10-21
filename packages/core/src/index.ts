@@ -17,7 +17,7 @@ export { TransitionGroup, type TransitionGroupProps } from './components/Transit
 export { View } from './components/View';
 export type { ImageStyles, LayoutStyles, ViewStyles, VisualStyles } from './elements/layout/viewStyles';
 export { PNode } from './elements/PNode';
-export { PRoot } from './elements/PRoot';
+export { PRoot, type PRootObservation } from './elements/PRoot';
 export {
   PScrollView,
   type ScrollAlignment,

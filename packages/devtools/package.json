@@ -1,0 +1,66 @@
+{
+  "name": "@piant/devtools",
+  "version": "0.0.0",
+  "description": "Optional Piant element inspector and development diagnostics",
+  "keywords": [
+    "piant",
+    "devtools",
+    "inspector"
+  ],
+  "homepage": "https://piant.sumygg.com/guide/devtools",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sumy7/piant.git",
+    "directory": "packages/devtools"
+  },
+  "bugs": {
+    "url": "https://github.com/sumy7/piant/issues"
+  },
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "rslib build",
+    "dev": "rslib build -w",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:types": "tsc --noEmit -p tsconfig.test.json"
+  },
+  "peerDependencies": {
+    "@piant/core": "^0.1.1",
+    "pixi.js": "^8.22.0"
+  },
+  "devDependencies": {
+    "@piant/core": "workspace:*",
+    "@piant/store": "workspace:*",
+    "@rslib/core": "1.0.3",
+    "@vitest/coverage-v8": "5.0.5",
+    "@vitest/ui": "5.0.5",
+    "happy-dom": "^21.0.3",
+    "pixi.js": "^8.22.0",
+    "typescript": "^5.9.3",
+    "vitest": "5.0.5"
+  },
+  "engines": {
+    "node": ">=18.12.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "sideEffects": false,
+  "dependencies": {
+    "@tanstack/devtools-ui": "0.7.1",
+    "solid-js": "1.9.17"
+  }
+}

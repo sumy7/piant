@@ -73,11 +73,11 @@ MVP 范围：
 
 MVP 范围：
 
-- [ ] 创建包目录：`packages/devtools`
-- [ ] 提供运行时调试开关（开发环境）
-- [ ] 树结构面板：查看组件/元素层级
-- [ ] 选中节点高亮 + 基础样式信息
-- [ ] 状态快照（只读）
+- [x] 创建包目录：`packages/devtools`
+- [x] 提供运行时调试开关（开发环境）
+- [x] 树结构面板：查看组件/元素层级
+- [x] 选中节点高亮 + 基础样式信息
+- [x] 状态快照（只读）
 
 增强项（第二阶段）：
 
@@ -87,9 +87,17 @@ MVP 范围：
 
 验收标准：
 
-- [ ] 在示例项目中可接入并展示核心调试信息
-- [ ] 不影响生产构建体积（可按环境剔除）
-- [ ] 文档包含接入方式与限制说明
+- [x] 在示例项目中可接入并展示核心调试信息
+- [x] 不影响生产构建体积（可按环境剔除）
+- [x] 文档包含接入方式与限制说明
+
+进展备注（2026-10-21，COD-133）：
+
+- 已实现元素树（不含函数组件所有权追踪）、选中高亮、样式/布局、显式只读状态源，并基于 `@tanstack/devtools-ui` 提供一期页面内嵌的单层 Piant 底部面板，保留 Elements、State、Performance、Animations 四个功能页。
+- Piant 自管入口、停靠、拖动高度与主题，不再挂载 TanStack 工作台；收起后保留面板浏览状态、暂停自动采样并清除高亮，Disconnect 或应用销毁时清理会话。仅保存高度与主题，每次接入遵循 `defaultOpen`。独立窗口、浏览器扩展或远程协议仍属后续范围，上方对应增强项保留未勾选。
+- 已提供有界布局更新时间线、CPU 布局耗时、Ticker 帧间隔与布局次数；上方增强项保留未勾选以区分完整渲染追踪/性能分析与当前基础观测，不将这些值等同于 GPU 渲染耗时。
+- 已提供显式注册动画的 `playState` / `currentTime`、running 观测帧数与帧间隔总和；不自动捕获所有动画或测量动画引擎执行耗时。动画调试增强项仍保留后续范围。
+- 接入与限制见 [DevTools 指南](docs/guide/devtools.md)，真实示例见 `examples/devtools-demo`。Store 历史与恢复（COD-134）已实现，见 [Piant Devtools](docs/devtools/introduction.md)；模板集成（COD-140）仍独立跟踪。
 
 ### 4. 新包：@piant/state（状态管理）
 
@@ -103,7 +111,7 @@ MVP 范围：
 增强项（第二阶段）：
 
 - [x] middleware 机制（`combine`、`persist`）
-- [ ] devtools 集成（状态快照与时间旅行基础能力）
+- [x] devtools 集成（显式启用的状态历史、预览与恢复，见 [Store 历史指南](docs/devtools/store-history.md)）
 - [x] async action 与错误恢复模式（[指南与在线示例](docs/store/async-actions.md)，含重试恢复、最新请求优先与取消回归验证）
 
 验收标准：
@@ -120,6 +128,11 @@ MVP 范围：
 - 已实现 `persist` middleware：基于 `api.setState` 拦截机制，所有状态更新（含外部调用）均同步至 storage；支持 `partialize`、自定义 `serialize`/`deserialize`、`skipHydration`、`onRehydrateStorage` 回调
 - 已完成 42 个测试（`createStore`、`combine`、`persist` 及组合场景）并全部通过
 - `examples/todos` 已迁移为使用 `@piant/store` 管理 todo 列表
+
+进展备注（2026-10-22，COD-134）：
+
+- 新增 `createStoreHistory`，显式启用后记录有界数据快照，支持预览、恢复、分支与清理；保留 Store actions 和 observable 根身份，并兼容 `combine` / `persist`。
+- `@piant/devtools` 作为独立可选包安装并显式接入，在 State 页操作手动注册的历史。面板与记录器分开清理，不改变普通 Store 的默认行为。
 
 ### 4.1 新包：@piant/animation（基于 motion 的动画能力）
 

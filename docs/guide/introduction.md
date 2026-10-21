@@ -27,6 +27,8 @@ Piant 是一个 monorepo，包含以下主要包：
 - `@piant/core`：核心运行时，包含组件、响应式系统、渲染器和样式模块
 - `@piant/babel-preset-piant`：Babel 预设，用于将 JSX 语法转换为运行时调用
 - `@piant/router`：轻量路由能力，提供路径匹配、导航与路由上下文
+- `@piant/store`：基于 MobX 的共享状态、持久化与可选历史记录
+- [`@piant/devtools`](/devtools/introduction)：单独安装并显式启用的页面内嵌调试面板
 
 ## 下一步
 
