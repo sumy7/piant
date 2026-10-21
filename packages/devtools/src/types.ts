@@ -14,6 +14,8 @@ export type AnimationInspection = {
 export type DevtoolsOptions = {
   /** Opt in explicitly; false/omitted creates no panel or subscriptions. */
   enabled?: boolean;
+  /** Initial TanStack shell visibility; persisted shell settings take precedence. */
+  defaultOpen?: boolean;
   root: PRoot;
   app: Application;
   mount?: HTMLElement;

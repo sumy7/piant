@@ -9,13 +9,17 @@ import './index.css';
   await app.init({ background: '#0f172a', resizeTo: window });
   document.body.appendChild(app.canvas);
 
-  const root = new PRoot(app.stage, { width: app.screen.width, height: app.screen.height });
+  const root = new PRoot(app.stage, {
+    width: app.screen.width,
+    height: app.screen.height,
+  });
   const demo = createDemo();
   const dispose = render(demo.App, root);
   let tools: DevtoolsSession | null = null;
   let destroyed = false;
 
-  const resize = () => root.setStyle({ width: app.screen.width, height: app.screen.height });
+  const resize = () =>
+    root.setStyle({ width: app.screen.width, height: app.screen.height });
   window.addEventListener('resize', resize);
 
   const destroy = () => {
@@ -44,6 +48,8 @@ import './index.css';
     if (!destroyed) {
       tools = attachDevtools({
         enabled: true,
+        // Phase one uses the in-page TanStack Devtools dock. Saved user settings take priority.
+        defaultOpen: true,
         root,
         app,
         getState: demo.getState,

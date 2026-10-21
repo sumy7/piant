@@ -1,6 +1,7 @@
+import { TanStackDevtoolsCore } from '@tanstack/devtools';
 import type { DevtoolsSnapshot } from './types';
 
-export function createPanel(
+function createInspector(
   mount: HTMLElement,
   select: (id: number) => void,
   refresh: () => void,
@@ -10,11 +11,11 @@ export function createPanel(
   host.setAttribute('aria-label', 'Piant DevTools');
   host.dataset.piantDevtools = '';
   host.style.cssText =
-    'position:fixed;right:12px;top:12px;width:min(360px,calc(100vw - 24px));max-height:85vh;z-index:2147483647;color:#e2e8f0;background:#0f172a;border:1px solid #64748b;border-radius:8px;box-shadow:0 8px 24px #0006;font:12px/1.5 monospace;';
+    'display:block;height:100%;min-height:0;font:12px/1.5 monospace;';
   const shadow = host.attachShadow({ mode: 'open' });
   shadow.innerHTML = `<style>
-    *{box-sizing:border-box} header{display:flex;align-items:center;gap:8px;padding:10px;border-bottom:1px solid #475569} strong{flex:1} button{font:inherit;color:inherit;background:#1e293b;border:1px solid #475569;border-radius:4px;cursor:pointer;padding:4px 8px} button:focus-visible{outline:2px solid #38bdf8} main{padding:10px;max-height:calc(85vh - 52px);overflow:auto} h2,summary{font-size:12px;margin:8px 0;color:#7dd3fc} nav{max-height:220px;overflow:auto} nav button{display:block;width:100%;text-align:left;margin:2px 0} nav button[aria-pressed=true]{border-color:#38bdf8;background:#164e63} pre{white-space:pre-wrap;overflow-wrap:anywhere;margin:4px 0} p{margin:6px 0;color:#94a3b8}
-    </style><header><strong>Piant DevTools</strong><button type="button" id="refresh">Refresh</button><button type="button" id="close" aria-label="Close Piant DevTools">×</button></header><main><h2>PNode element tree</h2><p>Rendered elements · not component ownership</p><nav aria-label="PNode element tree"></nav><p id="limit"></p><h2>Selection · style / layout</h2><pre id="selection"></pre><h2>Read-only state</h2><pre id="state"></pre><details open><summary>Performance · layout / frame intervals</summary><pre id="stats"></pre><pre id="timeline"></pre></details><details open><summary>Registered animations</summary><pre id="animations"></pre></details></main>`;
+    *{box-sizing:border-box}:host{color:#e2e8f0;background:#0f172a}:host([data-theme=light]){color:#0f172a;background:#f8fafc}:host([data-theme=light]) button{background:#e2e8f0;border-color:#94a3b8} header{display:flex;align-items:center;gap:8px;padding:10px;border-bottom:1px solid #475569} strong{flex:1} button{font:inherit;color:inherit;background:#1e293b;border:1px solid #475569;border-radius:4px;cursor:pointer;padding:4px 8px} button:focus-visible{outline:2px solid #38bdf8} main{padding:10px;height:calc(100% - 50px);overflow:auto;display:grid;grid-template-columns:minmax(160px,1fr) minmax(200px,2fr);gap:16px} h2,summary{font-size:12px;margin:8px 0;color:#7dd3fc} section{min-width:0} nav{max-height:100%;overflow:auto} nav button{display:block;width:100%;text-align:left;margin:2px 0} nav button[aria-pressed=true]{border-color:#38bdf8;background:#164e63} pre{white-space:pre-wrap;overflow-wrap:anywhere;margin:4px 0} p{margin:6px 0;color:#94a3b8}
+    </style><header><strong>Piant DevTools</strong><button type="button" id="refresh">Refresh</button><button type="button" id="close" aria-label="Disconnect Piant DevTools">Disconnect</button></header><main><section><h2>PNode element tree</h2><p>Rendered elements · not component ownership</p><nav aria-label="PNode element tree"></nav><p id="limit"></p></section><section><h2>Selection · style / layout</h2><pre id="selection"></pre><h2>Read-only state</h2><pre id="state"></pre><details open><summary>Performance · layout / frame intervals</summary><pre id="stats"></pre><pre id="timeline"></pre></details><details open><summary>Registered animations</summary><pre id="animations"></pre></details></section></main>`;
   const refreshButton = shadow.getElementById('refresh')!;
   const closeButton = shadow.getElementById('close')!;
   refreshButton.addEventListener('click', refresh);
@@ -66,6 +67,74 @@ export function createPanel(
       closeButton.removeEventListener('click', close);
       shadow.replaceChildren();
       host.remove();
+    },
+  };
+}
+
+/** Use the framework-independent TanStack shell, docked in the current page. */
+export function createPanel(
+  mount: HTMLElement,
+  select: (id: number) => void,
+  refresh: () => void,
+  disconnect: () => void,
+  onActiveChange: (active: boolean) => void,
+  defaultOpen = true,
+) {
+  const host = mount.ownerDocument.createElement('div');
+  host.dataset.piantDevtoolsHost = '';
+  mount.appendChild(host);
+  let inspector: ReturnType<typeof createInspector> | undefined;
+  let snapshot: DevtoolsSnapshot | undefined;
+  let removed = false;
+  const release = () => {
+    onActiveChange(false);
+    inspector?.remove();
+    inspector = undefined;
+  };
+  const devtools = new TanStackDevtoolsCore({
+    config: {
+      defaultOpen,
+      hideUntilHover: false,
+      triggerMode: 'fixed',
+      position: 'bottom-right',
+      panelLocation: 'bottom',
+    },
+    eventBusConfig: { connectToServerBus: false },
+    plugins: [
+      {
+        id: 'piant',
+        name: 'Piant',
+        defaultOpen: true,
+        render(element, props) {
+          if (removed) return;
+          if (inspector?.host.parentElement !== element) {
+            release();
+            inspector = createInspector(element, select, refresh, disconnect);
+          }
+          inspector.host.dataset.theme = props.theme;
+          onActiveChange(props.devtoolsOpen);
+          if (snapshot) inspector.render(snapshot);
+        },
+        destroy: release,
+      },
+    ],
+  });
+  devtools.mount(host);
+  return {
+    render(value: DevtoolsSnapshot) {
+      snapshot = value;
+      inspector?.render(value);
+    },
+    remove() {
+      if (removed) return;
+      removed = true;
+      try {
+        // Also cancels the shell's pending asynchronous mount.
+        devtools.unmount();
+      } finally {
+        release();
+        host.remove();
+      }
     },
   };
 }

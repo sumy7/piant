@@ -57,5 +57,8 @@
     "access": "public",
     "registry": "https://registry.npmjs.org/"
   },
-  "sideEffects": false
+  "sideEffects": false,
+  "dependencies": {
+    "@tanstack/devtools": "0.15.0"
+  }
 }

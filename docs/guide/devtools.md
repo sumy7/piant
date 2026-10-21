@@ -1,6 +1,6 @@
 # DevTools 调试工具
 
-`@piant/devtools` 提供开发时可选挂载的独立 DOM 面板，用于检查 Piant **元素树**、选中高亮、基础样式和布局、只读业务状态、布局更新时间线与动画状态。它检查 `PRoot` 下的 `PNode`，没有追踪函数组件调用关系；`Show`、`For` 或业务组件不会因此成为可检查的组件实例。
+`@piant/devtools` 基于 `@tanstack/devtools` 的 `TanStackDevtoolsCore`，将 Piant 检查器注册为插件。一期采用页面内嵌的底部停靠面板，用于检查 Piant **元素树**、选中高亮、基础样式和布局、只读业务状态、布局更新时间线与动画状态。它检查 `PRoot` 下的 `PNode`，没有追踪函数组件调用关系；`Show`、`For` 或业务组件不会因此成为可检查的组件实例。
 
 ## 运行示例
 
@@ -9,7 +9,7 @@ pnpm install
 pnpm --filter @piant/examples-devtools-demo dev
 ```
 
-示例位于 `examples/devtools-demo`。点击计数按钮观察状态快照，切换卡片观察元素树变化，点击「Start animation」观察显式注册的动画。面板选中元素后，画布上显示高亮；高亮不会阻止点击业务按钮。点击面板关闭按钮仅卸载调试会话，点击「Unmount application」则按顺序卸载会话和业务应用。
+示例位于 `examples/devtools-demo`。点击计数按钮观察状态快照，切换卡片观察元素树变化，点击「Start animation」观察显式注册的动画。面板选中元素后，画布上显示高亮；高亮不会阻止点击业务按钮。通过右下角 TanStack Devtools 入口打开或收起底部面板。收起时暂停 Piant 自动采样并清除选择与高亮；重新打开会刷新元素树并恢复采样。点击 Piant 插件内的「Disconnect」才会卸载整个调试会话；点击「Unmount application」则按顺序卸载会话和业务应用。
 
 生产示例构建使用 `pnpm --filter @piant/examples-devtools-demo build`，生产预览没有调试面板。
 
@@ -35,6 +35,7 @@ if (process.env.NODE_ENV === 'development') {
   const { attachDevtools } = await import('@piant/devtools');
   tools = attachDevtools({
     enabled: true,
+    defaultOpen: true,
     root,
     app,
     getState: () => ({ count: count() }),
@@ -58,27 +59,29 @@ function destroy() {
 ```ts
 const tools = attachDevtools({
   enabled: true,
+  defaultOpen: true,
   root,
   app,
   getState: () => ({ count: count() }),
   sampleInterval: 100,
   maxEntries: 120,
   maxNodes: 2000,
-  // mount: document.querySelector('#debug-panel')!,
+  // mount: document.querySelector('#devtools-host')!,
 });
 ```
 
-| 选项             | 说明                                                                             |
-| ---------------- | -------------------------------------------------------------------------------- |
-| `enabled`        | 必须显式为 `true`；否则返回 `null`。                                             |
-| `root`           | 要检查的 `PRoot`。                                                               |
-| `app`            | 对应的 PixiJS `Application`，用于画布坐标和 Ticker 统计。                        |
-| `getState`       | 可选的只读快照提供函数；显式返回需要暴露的业务状态。不会自动捕获所有响应式状态。 |
-| `animations`     | 可选的函数，返回 `{ id, node, animation }[]`，只观测应用明确登记的动画句柄。     |
-| `sampleInterval` | 面板与快照采样间隔，默认 100ms，限制为 16–60000ms。                              |
-| `maxEntries`     | 时间线保存上限，默认 120，最大 1000。旧记录被移出。                              |
-| `maxNodes`       | 元素树遍历上限，默认 2000，最大 10000。超限时快照标记截断。                      |
-| `mount`          | 可选面板宿主 DOM 元素；省略时挂载到 `document.body`。                            |
+| 选项             | 说明                                                                                                            |
+| ---------------- | --------------------------------------------------------------------------------------------------------------- |
+| `enabled`        | 必须显式为 `true`；否则返回 `null`。                                                                            |
+| `defaultOpen`    | 首次挂载时是否默认展开，默认 `true`。TanStack 已保存的用户设置优先。                                            |
+| `root`           | 要检查的 `PRoot`。                                                                                              |
+| `app`            | 对应的 PixiJS `Application`，用于画布坐标和 Ticker 统计。                                                       |
+| `getState`       | 可选的只读快照提供函数；显式返回需要暴露的业务状态。不会自动捕获所有响应式状态。                                |
+| `animations`     | 可选的函数，返回 `{ id, node, animation }[]`，只观测应用明确登记的动画句柄。                                    |
+| `sampleInterval` | 面板与快照采样间隔，默认 100ms，限制为 16–60000ms。                                                             |
+| `maxEntries`     | 时间线保存上限，默认 120，最大 1000。旧记录被移出。                                                             |
+| `maxNodes`       | 元素树遍历上限，默认 2000，最大 10000。超限时快照标记截断。                                                     |
+| `mount`          | 可选的 TanStack 挂载生命周期宿主，默认 `document.body`；面板通过 Portal 显示到 body，不是在宿主内参与局部布局。 |
 
 会话方法：
 
@@ -99,7 +102,11 @@ const tools = attachDevtools({
 | `stats`                    | `frames`、`frameInterval`、`maxFrameInterval`、`layoutUpdates`、`layoutDuration`。时间单位为毫秒。 |
 | `timeline`                 | 有界的 `{ time, duration }` 布局记录；`time` 来自 `performance.now()`，不是日期时间。              |
 
-面板关闭、根节点销毁或应用 stage 销毁都会结束会话。业务应用销毁时仍推荐先显式 `detach()`，再停止业务动画、调用渲染 disposer、销毁根节点和 PixiJS 应用。异步动态导入期间若应用已经销毁，调用方应跳过 `attachDevtools`；示例演示了这一处理。
+同一 document 只保留一个 Piant 调试会话；再次接入会先卸载旧会话。TanStack 挂载为异步过程，插件准备好前不会启动 Piant Ticker；`snapshot()` 可以同步读取初始数据。
+
+收起面板会移除 Piant Ticker，暂停业务状态、动画和布局时间线的自动采样，并清除选中与高亮；根节点销毁监听仍保留。此时 `refresh()` 仍可显式刷新，`snapshot()` 返回最近一次快照。重新展开后刷新树并恢复采样。采样开关跟随 TanStack 的 `devtoolsOpen`：切换到 Settings 或其他插件不等于收起面板，Piant 仍继续采样。
+
+「Disconnect」、`detach()`、根节点销毁或应用 stage 销毁都会结束会话，清理 Piant 订阅、Ticker、高亮以及 TanStack 外壳和本地事件总线。工具不会删除 TanStack 持久化的用户设置。业务应用销毁时仍推荐先显式 `detach()`，再停止业务动画、调用渲染 disposer、销毁根节点和 PixiJS 应用。异步动态导入期间若应用已经销毁，调用方应跳过 `attachDevtools`；示例演示了这一处理。
 
 ## 树、样式与高亮
 
@@ -117,7 +124,7 @@ Store 时间旅行由独立问题 COD-134 跟踪，脚手架模板接入由 COD-
 
 ## 时间线、统计与动画
 
-布局时间线记录根节点布局更新的 CPU 耗时和更新时间；帧统计来自 PixiJS Ticker 的帧间隔与观测帧数。它们可辅助判断布局更新频率、帧节奏和长间隔，**不是 GPU 渲染耗时、浏览器最终呈现时间或完整性能追踪器**。时间线有保存上限，统计量为会话内累计值，关闭后停止采样。
+布局时间线记录根节点布局更新的 CPU 耗时和更新时间；帧统计来自 PixiJS Ticker 的帧间隔与观测帧数。它们可辅助判断布局更新频率、帧节奏和长间隔，**不是 GPU 渲染耗时、浏览器最终呈现时间或完整性能追踪器**。时间线有保存上限，统计量为会话内累计值，收起面板时停止自动采样，重新展开后继续累计。
 
 动画通过现有 `@piant/animation` 句柄读取 `playState`、`currentTime`，并在每帧读取上一次采样缓存的有界动画列表。`playState` 为 `running` 时，`observedFrames` 加一，`observedElapsed` 累加该帧 Ticker 的墙钟间隔；面板按采样间隔显示这些累计值与最新 `currentTime`。注册后首次采样前的帧不会计入，观测值不等同于动画引擎的实际执行耗时。工具不替换播放控制、不自动捕获所有动画，也不添加暂停、回放或时间旅行。
 
@@ -139,4 +146,6 @@ const animations = () =>
     : [];
 ```
 
-应用应维护有界的注册列表，替换动画时释放旧句柄，卸载业务元素时移除登记并按应用生命周期取消动画。示例只保留一个当前动画。现有独立 DOM 面板已可直接使用；本包没有浏览器扩展，也没有跨窗口或远程传输协议。
+应用应维护有界的注册列表，替换动画时释放旧句柄，卸载业务元素时移除登记并按应用生命周期取消动画。示例只保留一个当前动画。一期支持和验收范围为页面内嵌的 TanStack 停靠面板。本包没有提供独立窗口 API、浏览器扩展或远程传输协议，也没有接入 TanStack 服务端事件总线、Vite 插件或 WebSocket；使用 `connectToServerBus: false`，保留上游本地事件总线。当前 TanStack Devtools 0.15 自带分离窗口按钮且未提供禁用配置；该上游入口不代表 Piant 已完成独立窗口模式验收。
+
+TanStack 的底座与插件生命周期可参考官方[安装指南](https://tanstack.com/devtools/latest/docs/installation)、[插件生命周期](https://tanstack.com/devtools/latest/docs/plugin-lifecycle)与[配置](https://tanstack.com/devtools/latest/docs/configuration)。其[生产环境指南](https://tanstack.com/devtools/latest/docs/production)中的适配器行为不能代替本包的开发条件动态导入：本包默认入口包含运行时实现，仍须按前文示例剔除。

@@ -1,4 +1,5 @@
 import { PNode, PRoot } from '@piant/core';
+import { TanStackDevtoolsCore } from '@tanstack/devtools';
 import { type Application, Container, Rectangle, Ticker } from 'pixi.js';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -46,13 +47,16 @@ function fixture(): Fixture {
   return value;
 }
 
-function attach(
+async function attach(
   value: ReturnType<typeof fixture>,
   options: Partial<DevtoolsOptions> = {},
 ) {
   const session = attachDevtools({ ...value, enabled: true, ...options });
   expect(session).not.toBeNull();
   sessions.push(session!);
+  await vi.waitFor(() => {
+    expect(document.querySelector('[data-piant-devtools]')).not.toBeNull();
+  });
   return session!;
 }
 
@@ -80,6 +84,7 @@ afterEach(() => {
     value.ticker.destroy();
   }
   document.body.replaceChildren();
+  localStorage.clear();
   vi.restoreAllMocks();
 });
 
@@ -93,6 +98,10 @@ describe('optional inspector session', () => {
       const getState = vi.fn();
       expect(attachDevtools({ ...value, enabled, getState })).toBeNull();
       expect(document.querySelector('[data-piant-devtools]')).toBeNull();
+      expect(document.querySelector('[data-piant-devtools-host]')).toBeNull();
+      expect(
+        document.querySelector('[aria-label="TanStack Devtools"]'),
+      ).toBeNull();
       expect(document.querySelector('[data-piant-highlight]')).toBeNull();
       expect(observe).not.toHaveBeenCalled();
       expect(add).not.toHaveBeenCalled();
@@ -100,14 +109,14 @@ describe('optional inspector session', () => {
     },
   );
 
-  it('records actual nested elements, batches layouts, and bounds tree traversal', () => {
+  it('records actual nested elements, batches layouts, and bounds tree traversal', async () => {
     const value = fixture();
     const parent = child(value.root, 'Parent');
     const nested = child(parent, 'Nested');
     const sibling = child(value.root, 'Sibling');
     child(nested, 'Beyond limit');
     value.root.doLayout();
-    const session = attach(value, { maxNodes: 4, sampleInterval: 100 });
+    const session = await attach(value, { maxNodes: 4, sampleInterval: 100 });
     expect(session.snapshot().elements).toEqual([
       {
         id: value.root._id,
@@ -135,7 +144,7 @@ describe('optional inspector session', () => {
     expect(session.snapshot().truncated).toBe(false);
   });
 
-  it('highlights using parent transforms and CSS canvas scale without changing the Pixi tree', () => {
+  it('highlights using parent transforms and CSS canvas scale without changing the Pixi tree', async () => {
     const value = fixture();
     const parent = child(value.root);
     const node = child(parent);
@@ -147,7 +156,7 @@ describe('optional inspector session', () => {
     node._view.position.set(2, 4);
     const stageChildren = [...value.stage.children];
     const viewChildren = [...node._view.children];
-    const session = attach(value);
+    const session = await attach(value);
     session.select(node._id);
     const points = overlay()
       .querySelector('polygon')!
@@ -181,11 +190,11 @@ describe('optional inspector session', () => {
     expect(overlay().style.display).toBe('none');
   });
 
-  it('hides highlights when the canvas disconnects or selected view becomes invisible', () => {
+  it('hides highlights when the canvas disconnects or selected view becomes invisible', async () => {
     const value = fixture();
     const node = child(value.root);
     value.root.doLayout();
-    const session = attach(value);
+    const session = await attach(value);
     session.select(node._id);
     expect(overlay().style.display).toBe('');
     node._view.visible = false;
@@ -200,12 +209,12 @@ describe('optional inspector session', () => {
     expect(overlay().style.display).toBe('');
   });
 
-  it('lets panel buttons select, refresh state and clear a selection', () => {
+  it('lets panel buttons select, refresh state and clear a selection', async () => {
     const value = fixture();
     const node = child(value.root, 'Button');
     value.root.doLayout();
     let count = 1;
-    const session = attach(value, { getState: () => ({ count }) });
+    const session = await attach(value, { getState: () => ({ count }) });
     const shadow = document.querySelector('[data-piant-devtools]')!.shadowRoot!;
     const button = Array.from(
       shadow.querySelectorAll<HTMLButtonElement>('nav button'),
@@ -220,11 +229,11 @@ describe('optional inspector session', () => {
     expect(overlay().style.display).toBe('none');
   });
 
-  it('copies state and handles a throwing state source without disrupting the application', () => {
+  it('copies state and handles a throwing state source without disrupting the application', async () => {
     const value = fixture();
     const state = { nested: { count: 1 } };
     const getState = vi.fn((): unknown => state);
-    const session = attach(value, { getState });
+    const session = await attach(value, { getState });
     const snapshot = session.snapshot();
     state.nested.count = 2;
     expect(snapshot.state).toEqual({ nested: { count: 1 } });
@@ -240,12 +249,12 @@ describe('optional inspector session', () => {
     expect(session.snapshot().state).toBe('[State source failed]');
   });
 
-  it('retains bounded layout events and counts sampled frame intervals and running animations', () => {
+  it('retains bounded layout events and counts sampled frame intervals and running animations', async () => {
     const value = fixture();
     const node = child(value.root);
     value.root.doLayout();
     const animation = { playState: 'running', currentTime: 10 };
-    const session = attach(value, {
+    const session = await attach(value, {
       maxEntries: 2,
       sampleInterval: 16,
       animations: () => [{ id: 'fade', node, animation }],
@@ -283,7 +292,7 @@ describe('optional inspector session', () => {
     expect(session.snapshot().animations).toEqual([]);
   });
 
-  it('isolates animation source errors and ignores nodes outside the root', () => {
+  it('isolates animation source errors and ignores nodes outside the root', async () => {
     const value = fixture();
     const other = fixture();
     const foreign = child(other.root);
@@ -294,7 +303,7 @@ describe('optional inspector session', () => {
         animation: { playState: 'running', currentTime: 0 },
       },
     ]);
-    const session = attach(value, { animations });
+    const session = await attach(value, { animations });
     expect(session.snapshot().animations).toEqual([]);
     animations.mockImplementation(() => {
       throw new Error('source failed');
@@ -303,7 +312,7 @@ describe('optional inspector session', () => {
     expect(session.snapshot().animations).toBe('[Animation source failed]');
   });
 
-  it('contains failures when registered animation properties become unavailable', () => {
+  it('contains failures when registered animation properties become unavailable', async () => {
     const value = fixture();
     const node = child(value.root);
     value.root.doLayout();
@@ -317,7 +326,7 @@ describe('optional inspector session', () => {
         return 42;
       },
     };
-    const session = attach(value, {
+    const session = await attach(value, {
       animations: () => [{ id: 'disposed', node, animation }],
     });
     unavailable = true;
@@ -331,7 +340,7 @@ describe('optional inspector session', () => {
 
   it.each(['detach', 'root', 'stage', 'close'] as const)(
     'cleans DOM, ticker and observer resources on %s',
-    (mode) => {
+    async (mode) => {
       const value = fixture();
       const stop = vi.fn();
       const observe = value.root.observe.bind(value.root);
@@ -345,7 +354,7 @@ describe('optional inspector session', () => {
       const getState = vi.fn(() => ({ count: 1 }));
       const listeners = value.ticker.count;
       const stageListeners = value.stage.listenerCount('destroyed');
-      const session = attach(value, { getState });
+      const session = await attach(value, { getState });
       expect(value.ticker.count).toBe(listeners + 1);
       if (mode === 'detach') session.detach();
       if (mode === 'root') value.root.destroy();
@@ -361,6 +370,10 @@ describe('optional inspector session', () => {
       expect(stop).toHaveBeenCalledTimes(1);
       expect(value.ticker.count).toBe(listeners);
       expect(document.querySelector('[data-piant-devtools]')).toBeNull();
+      expect(document.querySelector('[data-piant-devtools-host]')).toBeNull();
+      expect(
+        document.querySelector('[aria-label="TanStack Devtools"]'),
+      ).toBeNull();
       expect(document.querySelector('[data-piant-highlight]')).toBeNull();
       expect(value.stage.listenerCount('destroyed')).toBe(
         mode === 'root' || mode === 'stage' ? 0 : stageListeners,
@@ -379,11 +392,11 @@ describe('optional inspector session', () => {
     },
   );
 
-  it('replaces an existing session and rejects destroyed roots', () => {
+  it('replaces an existing session and rejects destroyed roots', async () => {
     const value = fixture();
-    const first = attach(value);
+    const first = await attach(value);
     const firstSnapshot = first.snapshot();
-    const second = attach(value);
+    const second = await attach(value);
     expect(document.querySelectorAll('[data-piant-devtools]')).toHaveLength(1);
     expect(value.ticker.count).toBe(1);
     first.refresh();
@@ -392,5 +405,302 @@ describe('optional inspector session', () => {
     expect(value.ticker.count).toBe(0);
     value.root.destroy();
     expect(attachDevtools({ ...value, enabled: true })).toBeNull();
+  });
+
+  it('renders the Piant inspector inside the real TanStack workbench', async () => {
+    const value = fixture();
+    await attach(value);
+    expect(document.querySelector('[data-piant-devtools-host]')).not.toBeNull();
+    expect(
+      document.querySelector('[aria-label="TanStack Devtools"]'),
+    ).not.toBeNull();
+    expect(
+      document.querySelector('[aria-label="Close TanStack Devtools"]'),
+    ).not.toBeNull();
+    const plugin = document.querySelector('[data-piant-devtools]')!;
+    expect(
+      plugin.shadowRoot!.querySelector('nav')!.getAttribute('aria-label'),
+    ).toBe('PNode element tree');
+    expect((plugin as HTMLElement).style.position).not.toBe('fixed');
+  });
+
+  it('pauses sampling while collapsed and refreshes changed elements on launcher reopen', async () => {
+    const value = fixture();
+    const node = child(value.root, 'Before collapse');
+    value.root.doLayout();
+    const getState = vi.fn(() => ({ count: 1 }));
+    const animations = vi.fn(() => [
+      {
+        id: 'fade',
+        node,
+        animation: { playState: 'running', currentTime: 10 },
+      },
+    ]);
+    const session = await attach(value, {
+      getState,
+      animations,
+      sampleInterval: 16,
+    });
+    session.select(node._id);
+    advance(value.ticker, 20);
+    expect(overlay().style.display).toBe('');
+    document
+      .querySelector<HTMLButtonElement>(
+        '[aria-label="Close TanStack Devtools"]',
+      )!
+      .click();
+    await vi.waitFor(() => expect(value.ticker.count).toBe(0));
+    expect(overlay().style.display).toBe('none');
+    const snapshot = session.snapshot();
+    const stateCalls = getState.mock.calls.length;
+    const animationCalls = animations.mock.calls.length;
+    value.root.removeChild(node);
+    child(value.root, 'Added while collapsed');
+    value.root.doLayout();
+    advance(value.ticker, 200);
+    expect(getState).toHaveBeenCalledTimes(stateCalls);
+    expect(animations).toHaveBeenCalledTimes(animationCalls);
+    expect(session.snapshot()).toBe(snapshot);
+    document
+      .querySelector<HTMLButtonElement>(
+        '[aria-label="Open TanStack Devtools"]',
+      )!
+      .click();
+    await vi.waitFor(() => expect(value.ticker.count).toBe(1));
+    expect(session.snapshot().elements.map((entry) => entry.name)).toContain(
+      'Added while collapsed',
+    );
+    expect(
+      session.snapshot().elements.map((entry) => entry.name),
+    ).not.toContain('Before collapse');
+    expect(session.snapshot().selectedId).toBeNull();
+    expect(getState.mock.calls.length).toBeGreaterThan(stateCalls);
+    expect(animations.mock.calls.length).toBeGreaterThan(animationCalls);
+    advance(value.ticker, 20);
+    expect(session.snapshot().stats.frames).toBe(snapshot.stats.frames + 1);
+  });
+
+  it('pauses Piant sampling when its plugin tab is closed', async () => {
+    const value = fixture();
+    const node = child(value.root);
+    value.root.doLayout();
+    const getState = vi.fn(() => ({ count: 1 }));
+    const session = await attach(value, { getState });
+    session.select(node._id);
+    document
+      .querySelector<HTMLButtonElement>('[aria-label="Close Piant"]')!
+      .click();
+    await vi.waitFor(() => expect(value.ticker.count).toBe(0));
+    expect(overlay().style.display).toBe('none');
+    const calls = getState.mock.calls.length;
+    value.root.markDirty();
+    value.root.doLayout();
+    advance(value.ticker, 200);
+    expect(getState).toHaveBeenCalledTimes(calls);
+    session.detach();
+    expect(document.querySelector('[data-piant-devtools-host]')).toBeNull();
+    expect(
+      document.querySelector('[aria-label="TanStack Devtools"]'),
+    ).toBeNull();
+  });
+
+  it('starts collapsed without Piant sampling until the launcher opens', async () => {
+    const value = fixture();
+    const getState = vi.fn(() => ({ count: 1 }));
+    const session = attachDevtools({
+      ...value,
+      enabled: true,
+      defaultOpen: false,
+      getState,
+    })!;
+    sessions.push(session);
+    await vi.waitFor(() =>
+      expect(
+        document.querySelector('[aria-label="Open TanStack Devtools"]'),
+      ).not.toBeNull(),
+    );
+    expect(value.ticker.count).toBe(0);
+    const calls = getState.mock.calls.length;
+    advance(value.ticker, 200);
+    expect(getState).toHaveBeenCalledTimes(calls);
+    document
+      .querySelector<HTMLButtonElement>(
+        '[aria-label="Open TanStack Devtools"]',
+      )!
+      .click();
+    await vi.waitFor(() => expect(value.ticker.count).toBe(1));
+    expect(getState.mock.calls.length).toBeGreaterThan(calls);
+  });
+
+  it('cancels an asynchronous TanStack mount on immediate detach', async () => {
+    const value = fixture();
+    const session = attachDevtools({ ...value, enabled: true })!;
+    sessions.push(session);
+    session.detach();
+    // Flush dynamic imports and Solid lazy rendering, rather than only asserting
+    // before the upstream asynchronous mount had a chance to run.
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    expect(value.ticker.count).toBe(0);
+    expect(document.querySelector('[data-piant-devtools-host]')).toBeNull();
+    expect(document.querySelector('[data-piant-devtools]')).toBeNull();
+    expect(document.querySelector('[data-piant-highlight]')).toBeNull();
+    expect(
+      document.querySelector('[aria-label="Open TanStack Devtools"]'),
+    ).toBeNull();
+    expect(
+      document.querySelector('[aria-label="TanStack Devtools"]'),
+    ).toBeNull();
+  });
+
+  it('replaces the document session when attaching a different application root', async () => {
+    const firstApp = fixture();
+    const first = await attach(firstApp);
+    const snapshot = first.snapshot();
+    const secondApp = fixture();
+    await attach(secondApp);
+    expect(firstApp.ticker.count).toBe(0);
+    expect(secondApp.ticker.count).toBe(1);
+    expect(
+      document.querySelectorAll('[data-piant-devtools-host]'),
+    ).toHaveLength(1);
+    expect(
+      document.querySelectorAll('[aria-label="TanStack Devtools"]'),
+    ).toHaveLength(1);
+    first.refresh();
+    expect(first.snapshot()).toBe(snapshot);
+  });
+
+  it('still detaches the complete shell when the root is destroyed while collapsed', async () => {
+    const value = fixture();
+    const session = await attach(value);
+    document
+      .querySelector<HTMLButtonElement>(
+        '[aria-label="Close TanStack Devtools"]',
+      )!
+      .click();
+    await vi.waitFor(() => expect(value.ticker.count).toBe(0));
+    expect(
+      document.querySelector('[aria-label="Open TanStack Devtools"]'),
+    ).not.toBeNull();
+    value.root.destroy();
+    expect(document.querySelector('[data-piant-devtools-host]')).toBeNull();
+    expect(document.querySelector('[data-piant-highlight]')).toBeNull();
+    expect(
+      document.querySelector('[aria-label="Open TanStack Devtools"]'),
+    ).toBeNull();
+    session.detach();
+  });
+
+  it('preserves a synchronous selection made before the asynchronous shell is ready', async () => {
+    const value = fixture();
+    const node = child(value.root, 'Selected before mount');
+    value.root.doLayout();
+    const session = attachDevtools({ ...value, enabled: true })!;
+    sessions.push(session);
+    session.select(node._id);
+    expect(session.snapshot().selectedId).toBe(node._id);
+    expect(session.snapshot().selection).toMatchObject({
+      name: 'Selected before mount',
+    });
+    expect(overlay().style.display).toBe('none');
+    await vi.waitFor(() => {
+      expect(document.querySelector('[data-piant-devtools]')).not.toBeNull();
+      expect(overlay().style.display).toBe('');
+    });
+    expect(session.snapshot().selectedId).toBe(node._id);
+    expect(
+      document
+        .querySelector('[data-piant-devtools]')!
+        .shadowRoot!.querySelector('nav button[aria-pressed="true"]')!
+        .textContent,
+    ).toContain('Selected before mount');
+  });
+
+  it('allows explicit refresh while collapsed to read changed state and tree without restarting sampling', async () => {
+    const value = fixture();
+    let count = 1;
+    const getState = vi.fn(() => ({ count }));
+    const session = await attach(value, { getState });
+    document
+      .querySelector<HTMLButtonElement>(
+        '[aria-label="Close TanStack Devtools"]',
+      )!
+      .click();
+    await vi.waitFor(() => expect(value.ticker.count).toBe(0));
+    const before = session.snapshot();
+    const stateCalls = getState.mock.calls.length;
+    count = 2;
+    const node = child(value.root, 'Added while collapsed');
+    value.root.doLayout();
+    advance(value.ticker, 200);
+    expect(getState).toHaveBeenCalledTimes(stateCalls);
+    session.refresh();
+    expect(session.snapshot().elements).toContainEqual({
+      id: node._id,
+      parentId: value.root._id,
+      depth: 1,
+      name: 'Added while collapsed',
+    });
+    expect(session.snapshot().state).toEqual({ count: 2 });
+    expect(session.snapshot().stats).toEqual(before.stats);
+    expect(session.snapshot().timeline).toEqual(before.timeline);
+    expect(value.ticker.count).toBe(0);
+    expect(overlay().style.display).toBe('none');
+    const refreshedCalls = getState.mock.calls.length;
+    advance(value.ticker, 200);
+    expect(getState).toHaveBeenCalledTimes(refreshedCalls);
+  });
+
+  it('cleans Piant resources and propagates errors when the upstream unmount throws', async () => {
+    const value = fixture();
+    const node = child(value.root);
+    value.root.doLayout();
+    const stop = vi.fn();
+    const observe = value.root.observe.bind(value.root);
+    vi.spyOn(value.root, 'observe').mockImplementation((listener) => {
+      const unsubscribe = observe(listener);
+      return () => {
+        stop();
+        unsubscribe();
+      };
+    });
+    const getState = vi.fn(() => ({ count: 1 }));
+    const baselineTicker = value.ticker.count;
+    const baselineStageListeners = value.stage.listenerCount('destroyed');
+    const session = await attach(value, { getState });
+    session.select(node._id);
+    const unmount = TanStackDevtoolsCore.prototype.unmount;
+    const failure = new Error('Injected upstream unmount failure');
+    const unmountSpy = vi
+      .spyOn(TanStackDevtoolsCore.prototype, 'unmount')
+      .mockImplementation(function (this: TanStackDevtoolsCore) {
+        unmount.call(this);
+        throw failure;
+      });
+    expect(() => session.detach()).toThrow(failure);
+    expect(stop).toHaveBeenCalledTimes(1);
+    expect(value.ticker.count).toBe(baselineTicker);
+    expect(value.stage.listenerCount('destroyed')).toBe(baselineStageListeners);
+    expect(value.root._view.listenerCount('destroyed')).toBe(0);
+    expect(document.querySelector('[data-piant-highlight]')).toBeNull();
+    expect(document.querySelector('[data-piant-devtools-host]')).toBeNull();
+    expect(
+      document.querySelector('[aria-label="TanStack Devtools"]'),
+    ).toBeNull();
+    const stateCalls = getState.mock.calls.length;
+    session.refresh();
+    session.select(node._id);
+    value.root.markDirty();
+    value.root.doLayout();
+    advance(value.ticker, 200);
+    expect(getState).toHaveBeenCalledTimes(stateCalls);
+    expect(() => session.detach()).not.toThrow();
+    expect(unmountSpy).toHaveBeenCalledTimes(1);
+    unmountSpy.mockRestore();
+    await attach(value);
+    expect(value.ticker.count).toBe(baselineTicker + 1);
+    expect(
+      document.querySelectorAll('[data-piant-devtools-host]'),
+    ).toHaveLength(1);
   });
 });

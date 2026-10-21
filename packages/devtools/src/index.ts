@@ -20,7 +20,7 @@ export type {
   ElementInspection,
 } from './types';
 
-const sessions = new WeakMap<DevtoolsOptions['root'], DevtoolsSession>();
+const sessions = new WeakMap<Document, DevtoolsSession>();
 const bound = (
   value: number | undefined,
   fallback: number,
@@ -31,7 +31,7 @@ const bound = (
     ? Math.max(min, Math.min(max, Math.floor(value!)))
     : fallback;
 
-/** Attach one independent DOM inspector per root. Import inside a development-only branch. */
+/** Attach one page-embedded TanStack inspector per document. Import inside a development-only branch. */
 export function attachDevtools(
   options: DevtoolsOptions,
 ): DevtoolsSession | null {
@@ -40,7 +40,7 @@ export function attachDevtools(
   if (root.isDestroyed || root._view.destroyed || app.stage.destroyed)
     return null;
   const mount = options.mount ?? document.body;
-  sessions.get(root)?.detach();
+  sessions.get(mount.ownerDocument)?.detach();
   const interval = bound(options.sampleInterval, 100, 60000, 16);
   const maxEntries = bound(options.maxEntries, 120, 1000);
   const maxNodes = bound(options.maxNodes, 2000, 10000);
@@ -52,14 +52,15 @@ export function attachDevtools(
   overlay.dataset.piantHighlight = '';
   overlay.setAttribute('aria-hidden', 'true');
   overlay.style.cssText =
-    'position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:2147483646;overflow:hidden;';
+    'position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:99997;overflow:hidden;';
   const polygon = doc.createElementNS(overlay.namespaceURI, 'polygon');
   polygon.setAttribute('fill', '#38bdf833');
   polygon.setAttribute('stroke', '#38bdf8');
   polygon.setAttribute('stroke-width', '2');
   overlay.appendChild(polygon);
-  mount.appendChild(overlay);
+  doc.body.appendChild(overlay);
   let detached = false;
+  let active = false;
   let dirty = true;
   let selected: PNode | null = null;
   let elapsed = interval;
@@ -97,6 +98,10 @@ export function attachDevtools(
   }
 
   function highlight() {
+    if (!active) {
+      overlay.style.display = 'none';
+      return;
+    }
     if (!selected || !belongs(selected)) {
       if (selected) {
         selected = null;
@@ -266,7 +271,7 @@ export function attachDevtools(
   }
 
   function tick() {
-    if (detached) return;
+    if (detached || !active) return;
     const delta = Number.isFinite(ticker.elapsedMS)
       ? Math.max(0, ticker.elapsedMS)
       : 0;
@@ -295,13 +300,45 @@ export function attachDevtools(
     }
   }
 
-  const panel = createPanel(mount, select, refresh, detach);
+  function setActive(next: boolean) {
+    if (detached || active === next) return;
+    active = next;
+    if (active) {
+      // Layouts may have changed while the shell was collapsed.
+      dirty = true;
+      elapsed = 0;
+      ticker.add(tick, undefined, UPDATE_PRIORITY.LOW);
+      refresh();
+    } else {
+      ticker.remove(tick);
+      selected = null;
+      animations.clear();
+      overlay.style.display = 'none';
+      current = Object.freeze({
+        ...current,
+        selectedId: null,
+        selection: null,
+        animations: readonlySnapshot([]),
+      });
+      panel.render(current);
+    }
+  }
+
+  const panel = createPanel(
+    mount,
+    select,
+    refresh,
+    detach,
+    setActive,
+    options.defaultOpen,
+  );
   const unsubscribe = root.observe((event) => {
     if (event.type === 'destroy') {
       detach();
       return;
     }
     dirty = true;
+    if (!active) return;
     stats.layoutUpdates++;
     stats.layoutDuration += event.duration;
     timeline.push({ time: performance.now(), duration: event.duration });
@@ -314,12 +351,15 @@ export function attachDevtools(
     ticker.remove(tick);
     stage.off('destroyed', detach);
     root._view.off('destroyed', detach);
-    panel.remove();
-    overlay.remove();
-    nodes.clear();
-    animations.clear();
-    selected = null;
-    sessions.delete(root);
+    try {
+      panel.remove();
+    } finally {
+      overlay.remove();
+      nodes.clear();
+      animations.clear();
+      selected = null;
+      sessions.delete(doc);
+    }
   }
   const session: DevtoolsSession = {
     select,
@@ -327,10 +367,9 @@ export function attachDevtools(
     snapshot: () => current,
     detach,
   };
-  sessions.set(root, session);
+  sessions.set(doc, session);
   stage.on('destroyed', detach);
   root._view.on('destroyed', detach);
-  ticker.add(tick, undefined, UPDATE_PRIORITY.LOW);
   refresh();
   return session;
 }
