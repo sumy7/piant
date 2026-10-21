@@ -11,6 +11,35 @@ export type AnimationInspection = {
   };
 };
 
+export type StoreHistoryEntry = {
+  readonly id: number;
+  readonly timestamp: number;
+  readonly state: SnapshotValue;
+  readonly restorable: boolean;
+  readonly reason?: string;
+};
+
+export type StoreHistorySnapshot = {
+  readonly entries: readonly StoreHistoryEntry[];
+  readonly currentId: number | null;
+  readonly disposed: boolean;
+};
+
+/** Explicit history source; the application owns and disposes its recorder. */
+export type StoreHistorySource = {
+  readonly name: string;
+  snapshot(): StoreHistorySnapshot;
+  subscribe(listener: () => void): () => void;
+  restore(id: number): boolean;
+  clear(): void;
+};
+
+export type StoreInspection = StoreHistorySnapshot & {
+  readonly id: number;
+  readonly name: string;
+  readonly error?: string;
+};
+
 export type DevtoolsOptions = {
   /** Opt in explicitly; false/omitted creates no panel or subscriptions. */
   enabled?: boolean;
@@ -21,6 +50,8 @@ export type DevtoolsOptions = {
   mount?: HTMLElement;
   getState?: () => unknown;
   animations?: () => readonly AnimationInspection[];
+  /** Explicitly registered store histories. Never discovers or records stores automatically. */
+  stores?: readonly StoreHistorySource[];
   sampleInterval?: number;
   maxEntries?: number;
   maxNodes?: number;
@@ -40,6 +71,7 @@ export type DevtoolsSnapshot = {
   readonly selection: SnapshotValue;
   readonly state: SnapshotValue;
   readonly animations: SnapshotValue;
+  readonly stores?: readonly StoreInspection[];
   readonly stats: {
     readonly frames: number;
     readonly frameInterval: number;

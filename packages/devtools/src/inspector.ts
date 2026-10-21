@@ -1,6 +1,10 @@
 import { inspectorStyles } from './inspectorStyles';
 import type { SnapshotValue } from './snapshot';
-import type { DevtoolsSnapshot, ElementInspection } from './types';
+import type {
+  DevtoolsSnapshot,
+  ElementInspection,
+  StoreInspection,
+} from './types';
 
 const icons = {
   logo: '<path d="m3 4 5 3 5-3v8l-5 3-5-3Z"/><path d="M8 7v8M3 4l5-3 5 3"/>',
@@ -36,6 +40,8 @@ export function createInspector(
     collapse: () => void;
     toggleTheme: () => void;
     togglePicking?: () => void;
+    restoreStore?: (storeId: number, entryId: number) => void;
+    clearStore?: (storeId: number) => void;
   },
 ) {
   const doc = mount.ownerDocument;
@@ -76,10 +82,7 @@ export function createInspector(
   const brand = el('div', 'brand');
   const mark = el('span', 'brand-mark');
   mark.append(icon('logo'));
-  brand.append(
-    mark,
-    el('span', '', 'Piant Devtools'),
-  );
+  brand.append(mark, el('span', '', 'Piant Devtools'));
   const tabs = el('div', 'tabs');
   tabs.setAttribute('role', 'tablist');
   tabs.setAttribute('aria-label', 'Inspector views');
@@ -378,6 +381,181 @@ export function createInspector(
   stateContent.append(state);
   const renderState = valueTree(state);
 
+  const historyContent = viewHeader(
+    panels.get('State')!,
+    'Store history',
+    'Preview recorded snapshots. Restore explicitly to apply a snapshot to the registered store.',
+  );
+  const historyHint = el(
+    'p',
+    'view-description',
+    'Register stores with the stores option to inspect and restore their history.',
+  );
+  const historyStores = el('div', 'history-stores');
+  historyContent.append(historyHint, historyStores);
+  type HistoryCard = {
+    element: HTMLElement;
+    source?: StoreInspection;
+    selectedId: number | null;
+    entries: Map<number, HTMLButtonElement>;
+    list: HTMLElement;
+    title: HTMLElement;
+    status: HTMLElement;
+    previewTitle: HTMLElement;
+    reason: HTMLElement;
+    restore: HTMLButtonElement;
+    clear: HTMLButtonElement;
+    renderValue: (value: SnapshotValue) => void;
+  };
+  const historyCards = new Map<number, HistoryCard>();
+  function updateHistoryCard(card: HistoryCard, store: StoreInspection) {
+    card.source = store;
+    card.title.textContent = store.name;
+    card.clear.setAttribute('aria-label', `Clear ${store.name} history`);
+    card.restore.setAttribute('aria-label', `Restore ${store.name} snapshot`);
+    card.list.setAttribute('aria-label', `${store.name} snapshots`);
+    card.status.textContent = store.error
+      ? 'Unavailable'
+      : store.disposed
+        ? 'Disposed'
+        : `${store.entries.length} snapshots`;
+    card.clear.disabled =
+      store.disposed ||
+      !!store.error ||
+      !controls?.clearStore ||
+      store.entries.length === 0;
+    if (!store.entries.some((entry) => entry.id === card.selectedId)) {
+      card.selectedId =
+        store.entries.find((entry) => entry.id === store.currentId)?.id ??
+        store.entries.at(-1)?.id ??
+        null;
+    }
+    const retained = new Set(store.entries.map((entry) => entry.id));
+    for (const [id, row] of card.entries) {
+      if (!retained.has(id)) {
+        row.remove();
+        card.entries.delete(id);
+      }
+    }
+    let previous: HTMLElement | null = null;
+    for (const entry of store.entries) {
+      let row = card.entries.get(entry.id);
+      if (!row) {
+        row = button(
+          'history-entry',
+          `Preview ${store.name} snapshot #${entry.id}`,
+        );
+        row.addEventListener('click', () => {
+          if (removed || !card.source) return;
+          card.selectedId = entry.id;
+          updateHistoryCard(card, card.source);
+        });
+        card.entries.set(entry.id, row);
+      }
+      row.textContent = `#${entry.id} · ${Number.isFinite(entry.timestamp) ? new Date(entry.timestamp).toLocaleTimeString() : 'Unknown time'}${entry.id === store.currentId ? ' · Current' : ''}`;
+      row.setAttribute(
+        'aria-label',
+        `Preview ${store.name} snapshot #${entry.id}`,
+      );
+      row.setAttribute('aria-pressed', String(entry.id === card.selectedId));
+      row.dataset.current = String(entry.id === store.currentId);
+      const expected: Element | null = previous
+        ? previous.nextElementSibling
+        : card.list.firstElementChild;
+      if (expected !== row) card.list.insertBefore(row, expected);
+      previous = row;
+    }
+    const selected = store.entries.find(
+      (entry) => entry.id === card.selectedId,
+    );
+    card.previewTitle.textContent = selected
+      ? `Snapshot #${selected.id}${selected.id === store.currentId ? ' · Current' : ' · Preview'}`
+      : 'No recorded snapshots';
+    card.restore.disabled =
+      !selected?.restorable ||
+      store.disposed ||
+      !!store.error ||
+      !controls?.restoreStore;
+    card.reason.textContent =
+      store.error ??
+      (store.disposed
+        ? 'This store has been disposed. Recorded snapshots remain available for preview.'
+        : selected && !selected.restorable
+          ? (selected.reason ?? 'This snapshot cannot be restored.')
+          : '');
+    card.reason.hidden = !card.reason.textContent;
+    card.renderValue(selected?.state ?? null);
+  }
+  function renderHistory(stores: DevtoolsSnapshot['stores']) {
+    historyHint.hidden = !!stores?.length;
+    const retained = new Set(stores?.map((store) => store.id));
+    for (const [id, card] of historyCards) {
+      if (!retained.has(id)) {
+        card.element.remove();
+        historyCards.delete(id);
+      }
+    }
+    for (const store of stores ?? []) {
+      let card = historyCards.get(store.id);
+      if (!card) {
+        const element = el('article', 'history-card');
+        element.dataset.storeId = String(store.id);
+        const header = el('div', 'history-header');
+        const title = el('h3', 'section-heading');
+        const status = el('span', 'badge');
+        const clear = button('history-action', `Clear ${store.name} history`);
+        clear.textContent = 'Clear history';
+        header.append(title, status, clear);
+        const body = el('div', 'history-body');
+        const list = el('nav', 'history-list');
+        list.setAttribute('aria-label', `${store.name} snapshots`);
+        const preview = el('div', 'history-preview');
+        const previewHeader = el('div', 'history-preview-header');
+        const previewTitle = el('span', 'section-heading');
+        const restore = button(
+          'history-action',
+          `Restore ${store.name} snapshot`,
+        );
+        restore.textContent = 'Restore';
+        previewHeader.append(previewTitle, restore);
+        const reason = el('p', 'history-reason');
+        const value = el('div', 'history-value');
+        preview.append(previewHeader, reason, value);
+        body.append(list, preview);
+        element.append(header, body);
+        card = {
+          element,
+          selectedId: null,
+          entries: new Map(),
+          list,
+          title,
+          status,
+          previewTitle,
+          reason,
+          restore,
+          clear,
+          renderValue: valueTree(value),
+        };
+        const record = card;
+        clear.addEventListener('click', () => {
+          if (!removed && !record.clear.disabled)
+            controls?.clearStore?.(store.id);
+        });
+        restore.addEventListener('click', () => {
+          if (
+            !removed &&
+            !record.restore.disabled &&
+            record.selectedId !== null
+          )
+            controls?.restoreStore?.(store.id, record.selectedId);
+        });
+        historyCards.set(store.id, card);
+        historyStores.append(element);
+      }
+      if (card.source !== store) updateHistoryCard(card, store);
+    }
+  }
+
   const performance = viewHeader(
     panels.get('Performance')!,
     'Performance',
@@ -648,6 +826,7 @@ export function createInspector(
       }
     }
     renderState(snapshot.state);
+    renderHistory(snapshot.stores);
     const { stats } = snapshot;
     [
       stats.layoutUpdates.toString(),
@@ -767,6 +946,7 @@ export function createInspector(
       collapsed.clear();
       treeRows.clear();
       animationCards.clear();
+      historyCards.clear();
       timelineRows.length = 0;
       shadow.replaceChildren();
       host.remove();

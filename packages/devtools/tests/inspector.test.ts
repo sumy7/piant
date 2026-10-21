@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createInspector } from '../src/inspector';
 import { readonlySnapshot } from '../src/snapshot';
-import type { DevtoolsSnapshot } from '../src/types';
+import type { DevtoolsSnapshot, StoreInspection } from '../src/types';
 
 const inspectors: ReturnType<typeof createInspector>[] = [];
 
@@ -407,5 +407,156 @@ describe('embedded inspector interactions', () => {
     expect(close).toHaveBeenCalledTimes(1);
     expect(select).not.toHaveBeenCalled();
     expect(document.querySelector('[data-piant-devtools]')).toBeNull();
+  });
+});
+
+describe('store history inspection', () => {
+  const store = (
+    overrides: Partial<StoreInspection> = {},
+  ): StoreInspection => ({
+    id: 4,
+    name: 'Counter store',
+    currentId: 12,
+    disposed: false,
+    entries: [
+      {
+        id: 10,
+        timestamp: 1000,
+        state: { count: 0, nested: { enabled: true } },
+        restorable: true,
+      },
+      { id: 12, timestamp: 2000, state: { count: 2 }, restorable: true },
+    ],
+    ...overrides,
+  });
+  const controls = () => ({
+    collapse: vi.fn(),
+    toggleTheme: vi.fn(),
+    restoreStore: vi.fn(),
+    clearStore: vi.fn(),
+  });
+
+  it('previews historical values without restoring and restores only the explicit store and entry', () => {
+    const callbacks = controls();
+    const { tab, button, shadow, inspector } = fixture(
+      snapshot({ stores: [store(), store({ id: 7, name: 'Other store' })] }),
+      callbacks,
+    );
+    const state = tab('State');
+    expect(state.textContent).toContain('Application state');
+    const row = button('Preview Counter store snapshot #12');
+    expect(row.dataset.current).toBe('true');
+    expect(row.getAttribute('aria-pressed')).toBe('true');
+    button('Preview Counter store snapshot #10').click();
+    expect(state.textContent).toContain('Snapshot #10 · Preview');
+    expect(callbacks.restoreStore).not.toHaveBeenCalled();
+    button('Restore Counter store snapshot').click();
+    expect(callbacks.restoreStore).toHaveBeenCalledExactlyOnceWith(4, 10);
+    button('Clear Other store history').click();
+    expect(callbacks.clearStore).toHaveBeenCalledExactlyOnceWith(7);
+    const restore = button('Restore Counter store snapshot');
+    const clear = button('Clear Counter store history');
+    inspector.remove();
+    restore.click();
+    clear.click();
+    expect(callbacks.restoreStore).toHaveBeenCalledTimes(1);
+    expect(callbacks.clearStore).toHaveBeenCalledTimes(1);
+    expect(shadow.querySelector('.history-card')).toBeNull();
+  });
+
+  it('disables unsupported or disposed restoration and explains source failures safely', () => {
+    const callbacks = controls();
+    const first = store({
+      entries: [
+        {
+          id: 1,
+          timestamp: 1,
+          state: { value: '[Unsupported]' },
+          restorable: false,
+          reason: 'Functions cannot be restored',
+        },
+      ],
+      currentId: 1,
+    });
+    const { tab, button, inspector } = fixture(
+      snapshot({ stores: [first] }),
+      callbacks,
+    );
+    const state = tab('State');
+    expect(button('Restore Counter store snapshot').disabled).toBe(true);
+    expect(state.textContent).toContain('Functions cannot be restored');
+    inspector.render(snapshot({ stores: [store({ disposed: true })] }));
+    expect(button('Restore Counter store snapshot').disabled).toBe(true);
+    expect(button('Clear Counter store history').disabled).toBe(true);
+    expect(state.textContent).toContain('This store has been disposed');
+    inspector.render(
+      snapshot({ stores: [store({ error: '<img src=x onerror=alert(1)>' })] }),
+    );
+    expect(state.textContent).toContain('<img src=x onerror=alert(1)>');
+    expect(state.querySelector('img')).toBeNull();
+    expect(button('Restore Counter store snapshot').disabled).toBe(true);
+    button('Restore Counter store snapshot').click();
+    expect(callbacks.restoreStore).not.toHaveBeenCalled();
+  });
+
+  it('retains preview, disclosure, scroll and focus while new snapshots arrive, then falls back after eviction', () => {
+    const first = store();
+    const { tab, button, inspector, shadow } = fixture(
+      snapshot({ stores: [first] }),
+      controls(),
+    );
+    tab('State');
+    const chosen = button('Preview Counter store snapshot #10');
+    chosen.click();
+    chosen.focus();
+    const nested = shadow.querySelector<HTMLDetailsElement>(
+      '.history-value details',
+    )!;
+    nested.open = true;
+    const list = shadow.querySelector<HTMLElement>('.history-list')!;
+    list.scrollTop = 30;
+    const next = store({
+      currentId: 13,
+      entries: [
+        ...first.entries,
+        { id: 13, timestamp: 3000, state: { count: 3 }, restorable: true },
+      ],
+    });
+    inspector.render(snapshot({ stores: [next] }));
+    expect(button('Preview Counter store snapshot #10')).toBe(chosen);
+    expect(chosen.getAttribute('aria-pressed')).toBe('true');
+    expect(shadow.activeElement).toBe(chosen);
+    expect(shadow.querySelector('.history-value details')).toBe(nested);
+    expect(nested.open).toBe(true);
+    expect(list.scrollTop).toBe(30);
+    inspector.render(
+      snapshot({ stores: [store({ entries: [first.entries[1]] })] }),
+    );
+    expect(
+      button('Preview Counter store snapshot #12').getAttribute('aria-pressed'),
+    ).toBe('true');
+    expect(shadow.textContent).toContain('Snapshot #12 · Current');
+  });
+
+  it('shows an opt-in hint without stores and removes stale cards when registrations disappear', () => {
+    const { tab, inspector } = fixture();
+    const state = tab('State');
+    expect(state.textContent).toContain(
+      'Register stores with the stores option',
+    );
+    expect(state.querySelector('.history-card')).toBeNull();
+    inspector.render(
+      snapshot({ stores: [store({ entries: [], currentId: null })] }),
+    );
+    expect(state.textContent).toContain('No recorded snapshots');
+    expect(
+      state.querySelector<HTMLButtonElement>('.history-preview button')!
+        .disabled,
+    ).toBe(true);
+    inspector.render(snapshot({ stores: [] }));
+    expect(state.querySelector('.history-card')).toBeNull();
+    expect(
+      state.querySelector<HTMLElement>('.view-description:last-child')?.hidden,
+    ).not.toBe(true);
   });
 });

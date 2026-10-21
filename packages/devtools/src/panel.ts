@@ -17,6 +17,10 @@ export function createPanel(
   onActiveChange: (active: boolean) => void,
   defaultOpen = true,
   onPickToggle?: () => void,
+  storeControls?: {
+    restore: (storeId: number, entryId: number) => void;
+    clear: (storeId: number) => void;
+  },
 ) {
   const doc = mount.ownerDocument;
   const view = doc.defaultView;
@@ -100,6 +104,8 @@ export function createPanel(
     collapse: () => setOpen(false),
     toggleTheme,
     togglePicking: onPickToggle,
+    restoreStore: storeControls?.restore,
+    clearStore: storeControls?.clear,
   });
   inspector.host.dataset.theme = initialTheme;
   panel.hidden = !open;

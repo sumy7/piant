@@ -9,6 +9,8 @@ import type {
   DevtoolsSession,
   DevtoolsSnapshot,
   ElementInspection,
+  StoreHistorySnapshot,
+  StoreInspection,
 } from './types';
 
 export type { SnapshotValue } from './snapshot';
@@ -19,6 +21,10 @@ export type {
   DevtoolsSession,
   DevtoolsSnapshot,
   ElementInspection,
+  StoreHistoryEntry,
+  StoreHistorySnapshot,
+  StoreHistorySource,
+  StoreInspection,
 } from './types';
 
 const sessions = new WeakMap<Document, DevtoolsSession>();
@@ -45,6 +51,14 @@ export function attachDevtools(
   const interval = bound(options.sampleInterval, 100, 60000, 16);
   const maxEntries = bound(options.maxEntries, 120, 1000);
   const maxNodes = bound(options.maxNodes, 2000, 10000);
+  const storeSources = (options.stores ?? []).slice(0, 20);
+  const storeErrors = new Map<number, string>();
+  const storeCache = new Map<
+    number,
+    { snapshot: StoreHistorySnapshot; inspection: StoreInspection }
+  >();
+  let storeSubscriptions: (() => void)[] = [];
+  let storeInspections: readonly StoreInspection[] = Object.freeze([]);
   const stage = app.stage;
   const ticker = app.ticker;
   const canvas = app.canvas;
@@ -215,6 +229,117 @@ export function attachDevtools(
     );
   }
 
+  function readStores(): readonly StoreInspection[] {
+    const next = storeSources.map((source, id): StoreInspection => {
+      const cached = storeCache.get(id);
+      try {
+        const snapshot = source.snapshot();
+        const error = storeErrors.get(id);
+        if (cached?.snapshot === snapshot && cached.inspection.error === error)
+          return cached.inspection;
+        const entries = Object.freeze(
+          snapshot.entries.slice(-maxEntries).map((entry) =>
+            Object.freeze({
+              id: entry.id,
+              timestamp: entry.timestamp,
+              state: readonlySnapshot(entry.state),
+              restorable: entry.restorable,
+              ...(entry.reason === undefined ? {} : { reason: entry.reason }),
+            }),
+          ),
+        );
+        const inspection: StoreInspection = Object.freeze({
+          id,
+          name: source.name,
+          entries,
+          currentId: snapshot.currentId,
+          disposed: snapshot.disposed,
+          ...(error ? { error } : {}),
+        });
+        storeCache.set(id, { snapshot, inspection });
+        return inspection;
+      } catch {
+        return Object.freeze({
+          id,
+          name: `Store ${id + 1}`,
+          entries: cached?.inspection.entries ?? Object.freeze([]),
+          currentId: null,
+          disposed: false,
+          error: 'Store history could not be read.',
+        });
+      }
+    });
+    if (
+      next.length !== storeInspections.length ||
+      next.some((inspection, index) => inspection !== storeInspections[index])
+    )
+      storeInspections = Object.freeze(next);
+    return storeInspections;
+  }
+
+  function stopStoreSubscriptions() {
+    const stops = storeSubscriptions;
+    storeSubscriptions = [];
+    for (const stop of stops) {
+      try {
+        stop();
+      } catch {
+        // A custom source cannot prevent other subscriptions from being released.
+      }
+    }
+  }
+
+  function startStoreSubscriptions() {
+    stopStoreSubscriptions();
+    storeSources.forEach((source, id) => {
+      try {
+        storeSubscriptions.push(
+          source.subscribe(() => {
+            if (!active || detached) return;
+            storeErrors.delete(id);
+            refresh();
+          }),
+        );
+      } catch {
+        storeErrors.set(id, 'Store history could not be subscribed.');
+      }
+    });
+  }
+
+  function restoreStore(storeId: number, entryId: number) {
+    if (detached || !active || !Number.isInteger(storeId)) return;
+    const source = storeSources[storeId];
+    if (!source) return;
+    storeErrors.delete(storeId);
+    try {
+      const snapshot = source.snapshot();
+      if (
+        snapshot.disposed ||
+        !snapshot.entries.some(
+          (entry) => entry.id === entryId && entry.restorable,
+        ) ||
+        !source.restore(entryId)
+      )
+        storeErrors.set(storeId, 'This snapshot cannot be restored.');
+    } catch {
+      storeErrors.set(storeId, 'Store history restore failed.');
+    }
+    refresh();
+  }
+
+  function clearStore(storeId: number) {
+    if (detached || !active || !Number.isInteger(storeId)) return;
+    const source = storeSources[storeId];
+    if (!source) return;
+    storeErrors.delete(storeId);
+    try {
+      if (!source.snapshot().disposed) source.clear();
+    } catch {
+      storeErrors.set(storeId, 'Store history could not be cleared.');
+    }
+    refresh();
+  }
+
   function refresh() {
     if (detached) return;
     if (dirty) {
@@ -259,6 +384,7 @@ export function attachDevtools(
       ),
       state: readonlySnapshot(state),
       animations: readonlySnapshot(readAnimations()),
+      stores: readStores(),
       stats: Object.freeze({ ...stats }),
       timeline: Object.freeze(
         timeline.map((event) => Object.freeze({ ...event })),
@@ -312,10 +438,12 @@ export function attachDevtools(
       dirty = true;
       elapsed = 0;
       ticker.add(tick, undefined, UPDATE_PRIORITY.LOW);
+      startStoreSubscriptions();
       refresh();
     } else {
       setPicking(false);
       ticker.remove(tick);
+      stopStoreSubscriptions();
       selected = null;
       animations.clear();
       overlay.style.display = 'none';
@@ -348,6 +476,7 @@ export function attachDevtools(
     setActive,
     options.defaultOpen,
     () => setPicking(!picking),
+    { restore: restoreStore, clear: clearStore },
   );
   const picker = createPicker({
     canvas,
@@ -384,6 +513,7 @@ export function attachDevtools(
     if (detached) return;
     detached = true;
     unsubscribe();
+    stopStoreSubscriptions();
     ticker.remove(tick);
     stage.off('destroyed', detach);
     root._view.off('destroyed', detach);
@@ -394,6 +524,8 @@ export function attachDevtools(
       overlay.remove();
       nodes.clear();
       animations.clear();
+      storeCache.clear();
+      storeErrors.clear();
       selected = null;
       hovered = null;
       picking = false;

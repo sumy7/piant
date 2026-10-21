@@ -1,5 +1,6 @@
 import { PRoot, render } from '@piant/core';
 import type { DevtoolsSession } from '@piant/devtools';
+import type { StoreHistory } from '@piant/store';
 import { Application } from 'pixi.js';
 import { createDemo } from './App';
 import './index.css';
@@ -16,6 +17,7 @@ import './index.css';
   const demo = createDemo();
   const dispose = render(demo.App, root);
   let tools: DevtoolsSession | null = null;
+  let history: StoreHistory | null = null;
   let destroyed = false;
 
   const resize = () =>
@@ -26,6 +28,7 @@ import './index.css';
     if (destroyed) return;
     destroyed = true;
     tools?.detach();
+    history?.dispose();
     window.removeEventListener('resize', resize);
     window.removeEventListener('pagehide', destroy);
     demo.dispose();
@@ -44,16 +47,24 @@ import './index.css';
 
   // Rsbuild replaces NODE_ENV and removes this branch and its chunk in production.
   if (process.env.NODE_ENV === 'development') {
-    const { attachDevtools } = await import('@piant/devtools');
+    const [{ attachDevtools }, { createStoreHistory }] = await Promise.all([
+      import('@piant/devtools'),
+      import('@piant/store'),
+    ]);
     if (!destroyed) {
+      history = createStoreHistory(demo.store, {
+        enabled: true,
+        name: 'Demo store',
+        maxEntries: 100,
+      });
       tools = attachDevtools({
         enabled: true,
-        // Phase one uses the in-page TanStack Devtools dock. Saved user settings take priority.
         defaultOpen: true,
         root,
         app,
         getState: demo.getState,
         animations: demo.animations,
+        stores: history ? [history] : [],
       });
     }
   }

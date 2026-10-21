@@ -45,9 +45,11 @@ export function Counter() {
   const styles = StyleSheet.create({
     container: { flexDirection: 'row', gap: 16, alignItems: 'center' },
     btn: {
-      width: 40, height: 40,
+      width: 40,
+      height: 40,
       backgroundColor: '#171717',
-      justifyContent: 'center', alignItems: 'center',
+      justifyContent: 'center',
+      alignItems: 'center',
       borderRadius: 8,
     },
     btnText: { color: '#fff' },
@@ -117,5 +119,6 @@ unsub();
 
 ## 下一步
 
+- [Store 历史与恢复](/devtools/store-history) — 显式启用记录器并接入独立调试面板
 - [异步 action 与错误恢复](./async-actions) — 用现有 API 管理请求状态与竞态
 - [API 参考](./api) — 完整 API 文档

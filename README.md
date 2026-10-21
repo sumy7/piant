@@ -27,6 +27,8 @@ Piant 是一个基于 [PixiJS](https://pixijs.com/) 的高性能画布（Canvas�
 
 完整文档请访问 [piant.sumygg.com](https://piant.sumygg.com)。
 
+[Piant Devtools](https://piant.sumygg.com/devtools/introduction) 是独立可选包：`pnpm add -D @piant/devtools`，在开发条件内动态导入并显式启用后才会创建面板。支持元素检查、只读状态与显式注册的 Store 历史恢复；业务 Store 不依赖调试包。
+
 ## 安装
 
 ```bash

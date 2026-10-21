@@ -8,6 +8,7 @@
 - **天然响应式**：store 状态是 MobX observable，在 Piant 组件中直接访问即可获得自动响应式更新。
 - **Zustand 风格**：熟悉的 `set` / `get` API，易于迁移或上手。
 - **TypeScript 友好**：完整泛型类型推导，无需额外配置。
+- **可选历史记录**：显式启用 `createStoreHistory` 后记录状态，按需接入独立的 [Piant Devtools](/devtools/store-history) 预览与恢复；普通 Store 不自动记录。
 
 ## 适用场景
 

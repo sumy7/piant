@@ -12,6 +12,7 @@
     "@piant/animation": "workspace:*",
     "@piant/core": "workspace:*",
     "@piant/devtools": "workspace:*",
+    "@piant/store": "workspace:*",
     "pixi.js": "^8.22.0"
   },
   "devDependencies": {

@@ -1,6 +1,8 @@
-# DevTools 调试工具
+# Piant Devtools API 与调试边界
 
-`@piant/devtools` 使用 `@tanstack/devtools-ui` 的 Solid.js 基础组件，提供单层 Piant 面板。一期采用页面内嵌的底部停靠面板，用于检查 Piant **元素树**、选中高亮、基础样式和布局、只读业务状态、布局更新时间线与动画状态。它检查 `PRoot` 下的 `PNode`，没有追踪函数组件调用关系；`Show`、`For` 或业务组件不会因此成为可检查的组件实例。
+初次使用请先阅读 [Piant Devtools 简介](/devtools/introduction) 与 [快速开始](/devtools/quick-start)。`@piant/devtools` 是独立可选包，需要单独安装并显式接入；不会随业务 Store 初始化自动生效。
+
+`@piant/devtools` 使用 `@tanstack/devtools-ui` 的 Solid.js 基础组件，提供单层 Piant 面板。一期采用页面内嵌的底部停靠面板，用于检查 Piant **元素树**、选中高亮、基础样式和布局、只读业务状态、显式注册的 Store 历史预览与恢复、布局更新时间线与动画状态。它检查 `PRoot` 下的 `PNode`，没有追踪函数组件调用关系；`Show`、`For` 或业务组件不会因此成为可检查的组件实例。
 
 ## 运行示例
 
@@ -15,10 +17,10 @@ pnpm --filter @piant/examples-devtools-demo dev
 
 ## 面板导航
 
-界面借鉴 [Vue Devtools](https://devtools.vuejs.org/getting-started/features#components) 的树与详情分栏方式，保留 Piant 元素树和只读观测的边界：
+界面借鉴 [Vue Devtools](https://devtools.vuejs.org/getting-started/features#components) 的树与详情分栏方式，保留 Piant 元素树与显式状态源的边界：
 
 - **Elements**：按节点名称或 ID 搜索，折叠子树；选择后通过面包屑查看层级，在右侧检查 Layout、Style 与 Transform 分组。
-- **State**：用带类型颜色的键值行读取业务快照，展开嵌套对象；状态仍然只读。
+- **State**：用带类型颜色的键值行读取 `getState` 快照；预览显式注册的 Store 历史，只有点击 Restore 才恢复可恢复记录，Clear 以当前状态重建历史。
 - **Performance**：分别展示 CPU 布局耗时、布局更新次数和 Ticker 帧间隔，并查看有界布局事件列表。
 - **Animations**：查看应用显式登记的动画状态、当前时间及观测统计；数值最多显示两位小数，没有额外播放控制。
 
@@ -90,9 +92,10 @@ const tools = attachDevtools({
 | `root`           | 要检查的 `PRoot`。                                                                                                  |
 | `app`            | 对应的 PixiJS `Application`，用于画布坐标和 Ticker 统计。                                                           |
 | `getState`       | 可选的只读快照提供函数；显式返回需要暴露的业务状态。不会自动捕获所有响应式状态。                                    |
+| `stores`         | 可选的显式历史记录器列表（最多 20 个）；见 [Store 历史与恢复](/devtools/store-history)。                            |
 | `animations`     | 可选的函数，返回 `{ id, node, animation }[]`，只观测应用明确登记的动画句柄。                                        |
 | `sampleInterval` | 面板与快照采样间隔，默认 100ms，限制为 16–60000ms。                                                                 |
-| `maxEntries`     | 时间线保存上限，默认 120，最大 1000。旧记录被移出。                                                                 |
+| `maxEntries`     | 布局时间线与每个 Store 历史展示的记录上限，默认 120，最大 1000。旧记录被移出。                                      |
 | `maxNodes`       | 元素树遍历上限，默认 2000，最大 10000。超限时快照标记截断。                                                         |
 | `mount`          | 可选的实际 DOM 宿主，默认 `document.body`。面板使用 fixed 定位；应选择没有 transform 祖先的容器，避免改变定位参照。 |
 
@@ -112,14 +115,15 @@ const tools = attachDevtools({
 | `elements` / `truncated`   | 有界元素列表（`id`、`parentId`、`depth`、`name`）及截断标记。                                      |
 | `selectedId` / `selection` | 选中 ID 与复制的样式、布局、PixiJS 变换信息；未选中时为 `null`。                                   |
 | `state` / `animations`     | 复制的业务状态和显式动画观测信息。                                                                 |
+| `stores`                   | 手动注册的 Store 历史的只读检查副本；含记录、当前 ID、disposed 状态与来源名称。                    |
 | `stats`                    | `frames`、`frameInterval`、`maxFrameInterval`、`layoutUpdates`、`layoutDuration`。时间单位为毫秒。 |
 | `timeline`                 | 有界的 `{ time, duration }` 布局记录；`time` 来自 `performance.now()`，不是日期时间。              |
 
 同一 document 只保留一个 Piant 调试会话；再次接入会先卸载旧会话。面板 DOM 同步创建，`snapshot()` 可以同步读取初始数据，`select()` 也可以立即调用。自动采样在微任务中激活；立即 `detach()` 会取消尚未激活的采样。
 
-收起面板会移除 Piant Ticker，暂停业务状态、动画和布局时间线的自动采样，并清除选中与高亮；根节点销毁监听仍保留。此时 `refresh()` 仍可显式刷新，`snapshot()` 返回最近一次快照。重新展开后刷新树并恢复采样，保留功能页、筛选与树折叠状态。在四个功能页之间切换不会暂停采样。
+收起面板会移除 Piant Ticker，暂停业务状态、动画和布局时间线的自动采样，并清除选中与高亮；根节点销毁监听仍保留。应用拥有的历史记录器继续记录，只有面板对历史来源的订阅暂停。此时 `refresh()` 仍可显式刷新，`snapshot()` 返回最近一次快照。重新展开后刷新树并恢复采样，保留功能页、筛选与树折叠状态。在四个功能页之间切换不会暂停采样。
 
-「Disconnect」、`detach()`、根节点销毁或应用 stage 销毁都会结束会话，清理 Piant 订阅、Ticker、高亮、Solid 根、面板 DOM 和交互监听。已保存的面板高度与主题保留。业务应用销毁时仍推荐先显式 `detach()`，再停止业务动画、调用渲染 disposer、销毁根节点和 PixiJS 应用。异步动态导入期间若应用已经销毁，调用方应跳过 `attachDevtools`；示例演示了这一处理。
+「Disconnect」、`detach()`、根节点销毁或应用 stage 销毁都会结束会话，清理 Piant 订阅、Ticker、高亮、Solid 根、面板 DOM 和交互监听。已保存的面板高度与主题保留。`detach()` 不销毁外部历史记录器；应用还需显式调用其 `dispose()`。业务应用销毁时仍推荐先显式 `detach()`，再停止业务动画、调用渲染 disposer、销毁根节点和 PixiJS 应用。异步动态导入期间若应用已经销毁，调用方应跳过 `attachDevtools`；示例演示了这一处理。
 
 ## 树、样式与高亮
 
@@ -141,9 +145,9 @@ const tools = attachDevtools({
 
 `getState` 是应用与检查器的显式边界。它应读取状态并返回小型普通对象，不应写状态或触发业务操作。工具复制返回值后递归冻结副本，不冻结或更改业务源对象。没有提供 `getState` 时，不会自动发现 Store 或其他全局状态。
 
-快照保留 JSON 可表示的基本值、数组与对象；不保留原型和对象身份，不支持编辑、恢复状态或 Store 时间旅行。访问器属性与函数不会被执行，改用 `[Accessor]` 或 `[function]` 标记。循环引用、非 JSON 值及超出深度或数量限制的数据也使用标记表示。快照最多复制 6 层、约 1000 个值，每个对象最多 100 个可枚举属性，字符串最多保留 10000 个字符；非普通对象（例如 Date、Map 和类实例）不展开。该机制避免将无限对象图直接交给面板，但不意味着任意业务回调都无成本；调用方仍应让 `getState` 和 `animations` 保持轻量。
+快照保留 JSON 可表示的基本值、数组与对象；不保留原型和对象身份，不支持编辑或恢复这类快照。访问器属性与函数不会被执行，改用 `[Accessor]` 或 `[function]` 标记。循环引用、非 JSON 值及超出深度或数量限制的数据也使用标记表示。快照最多复制 6 层、约 1000 个值，每个对象最多 100 个可枚举属性，字符串最多保留 10000 个字符；非普通对象（例如 Date、Map 和类实例）不展开。该机制避免将无限对象图直接交给面板，但不意味着任意业务回调都无成本；调用方仍应让 `getState` 和 `animations` 保持轻量。
 
-Store 时间旅行由独立问题 COD-134 跟踪，脚手架模板接入由 COD-140 跟踪。
+Store 历史与恢复使用独立的显式记录器和 `stores` 注册列表，不改变 `getState` 的只读边界，详见 [Store 历史与恢复](/devtools/store-history)。脚手架模板接入仍由 COD-140 跟踪。
 
 ## 时间线、统计与动画
 

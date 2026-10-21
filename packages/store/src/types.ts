@@ -112,3 +112,41 @@ export interface PersistOptions<T> {
    */
   skipHydration?: boolean;
 }
+
+/** Detached, JSON-shaped data used by the optional history recorder. */
+export type StoreSnapshotValue =
+  | null
+  | boolean
+  | number
+  | string
+  | readonly StoreSnapshotValue[]
+  | { readonly [key: string]: StoreSnapshotValue };
+
+export interface StoreHistoryOptions {
+  enabled?: boolean;
+  name?: string;
+  maxEntries?: number;
+}
+
+export interface StoreHistoryEntry {
+  readonly id: number;
+  readonly timestamp: number;
+  readonly state: StoreSnapshotValue;
+  readonly restorable: boolean;
+  readonly reason?: string;
+}
+
+export interface StoreHistorySnapshot {
+  readonly entries: readonly StoreHistoryEntry[];
+  readonly currentId: number | null;
+  readonly disposed: boolean;
+}
+
+export interface StoreHistory {
+  readonly name: string;
+  snapshot(): StoreHistorySnapshot;
+  subscribe(listener: () => void): () => void;
+  restore(id: number): boolean;
+  clear(): void;
+  dispose(): void;
+}
