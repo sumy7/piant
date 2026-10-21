@@ -30,7 +30,7 @@ Neutral charcoal surfaces with a restrained emerald selection accent, 1px separa
 
 ## Components
 
-`@tanstack/devtools-ui` 0.7.1 provides shared Solid.js UI primitives and theme foundations. Piant owns the fixed bottom dock, launcher, resize handle and single inspector toolbar, plus search, tree rows, disclosure controls, breadcrumb, property groups, metric tiles, event rows and empty states. Inspector CSS tokens live in its Shadow DOM and follow the Piant theme control. Reuse the existing snapshot and callbacks rather than adding observation layers.
+`@tanstack/devtools-ui` provides shared Solid.js UI primitives and theme foundations. Piant owns the fixed bottom dock, launcher, resize handle and single inspector toolbar, plus search, tree rows, disclosure controls, breadcrumb, property groups, metric tiles, event rows and empty states. Inspector CSS tokens live in its Shadow DOM and follow the Piant theme control. Reuse the existing snapshot and callbacks rather than adding observation layers.
 
 ## Accessibility
 

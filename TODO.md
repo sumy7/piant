@@ -101,7 +101,7 @@ MVP 范围：
 进展备注（2026-10-21，COD-133）：
 
 - 已实现元素树（不含函数组件所有权追踪）、选中高亮、样式/布局、显式只读状态源，并基于 `@tanstack/devtools-ui` 提供一期页面内嵌的单层 Piant 底部面板，保留 Elements、State、Performance、Animations 四个功能页。
-- Piant 自管入口、停靠、拖动高度与主题，不再挂载 TanStack 工作台；收起后保留面板浏览状态、暂停自动采样并清除高亮，Disconnect 或应用销毁时清理会话。仅保存高度与主题，每次接入遵循 `defaultOpen`。独立窗口、浏览器扩展或远程协议仍属后续范围，上方对应增强项保留未勾选。
+- Piant 自管入口、停靠、拖动高度与主题；收起后保留面板浏览状态、暂停自动采样并清除高亮，Disconnect 或应用销毁时清理会话。仅保存高度与主题，每次接入遵循 `defaultOpen`。独立窗口、浏览器扩展或远程协议仍属后续范围，上方对应增强项保留未勾选。
 - 已提供有界布局更新时间线、CPU 布局耗时、Ticker 帧间隔与布局次数；基础观测已勾选，完整渲染追踪/性能分析仍未勾选，不将这些值等同于 GPU 渲染耗时。
 - 已提供显式注册动画的 `playState` / `currentTime`、running 观测帧数与帧间隔总和；不自动捕获所有动画或测量动画引擎执行耗时。动画调试增强项仍保留后续范围。
 - 接入与限制见 [DevTools 指南](docs/guide/devtools.md)，真实示例见 `examples/devtools-demo`。Store 历史与恢复（COD-134）已实现，见 [Piant Devtools](docs/devtools/introduction.md)；模板集成（COD-140）仍独立跟踪。
@@ -144,14 +144,14 @@ MVP 范围：
 
 ### 4.1 新包：@piant/animation（popmotion + WAAPI 风格接口）
 
-目标：提供与 `@piant/core` 协同的动画库，继续沉淀可复用效果与声明式 API。基础实现采用 popmotion 工具与 Pixi Ticker，无需因早期 motion 计划命名而更换引擎。
+目标：提供与 `@piant/core` 协同的动画库，继续沉淀可复用效果与声明式 API。基础实现采用 popmotion 工具与 Pixi Ticker。
 
 MVP 范围：
 
 - [x] 创建包目录：`packages/animation`
 - [x] 基础动画：位移 / 透明度 / 缩放，以及通过 `Transition` / `TransitionGroup` hooks 实现进入 / 离开
 - [x] 基础核心 API：`animate`、`PNode.animate()`、`PNodeAnimation`（关键帧、播放控制与 `finished`）
-- [ ] 状态变化自动驱动补间的声明式接入（早期 `createMotion` / `MotionView` / `useMotion` 计划的未完成部分，见 [COD-136](https://linear.app/codepuppies/issue/COD-136)）
+- [ ] 状态变化自动驱动补间的声明式接入（见 [COD-136](https://linear.app/codepuppies/issue/COD-136)）
 - [ ] 可复用的基础预设效果集（`fade`、`slide`、`scale`，见 [COD-136](https://linear.app/codepuppies/issue/COD-136)）
 - [x] 最小示例（已新增 `examples/animation-demo`）
 
@@ -175,7 +175,7 @@ MVP 范围：
 
 核对依据（2026-10-22）：
 
-- [公开 API](packages/animation/src/index.ts)、[动画实现](packages/animation/src/PNodeAnimation.ts) 与 [动画指南](docs/animation/introduction.md) 已对应当前方案；原计划中的基础节点动画已实现，声明式状态绑定与预设仍缺失。
+- [公开 API](packages/animation/src/index.ts)、[动画实现](packages/animation/src/PNodeAnimation.ts) 与 [动画指南](docs/animation/introduction.md) 已对应当前方案；基础节点动画已实现，声明式状态绑定与预设仍缺失。
 - [动画测试](packages/animation/tests/animation.test.ts)、[集成测试](packages/animation/tests/integration.test.ts) 以及 [Transition](packages/core/tests/components.Transition.test.ts) / [TransitionGroup 测试](packages/core/tests/components.TransitionGroup.test.ts) 已覆盖基础生命周期；不据此勾选未启用动画时的完整渲染回归。
 - [Transition 示例](examples/animation-demo/src/TransitionDemo.tsx) / [列表示例](examples/animation-demo/src/TransitionGroupDemo.tsx) 通过 `createState` 改变子节点，并在 hooks 中手写关键帧；这与自动监听状态并补间任意属性的高级 API 有不同范围。现有 [快速开始](docs/animation/quick-start.md) 展示的串联与 fade / slide / scale 同样是手写方式。
 

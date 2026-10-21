@@ -232,7 +232,7 @@ node.animate(
 // 中点：紫色（RGB 128, 0, 128），alpha 为 0.75
 ```
 
-输入格式遵循 [PixiJS ColorSource](https://pixijs.download/v8.17.1/docs/color.ColorSource.html)。
+输入格式遵循 [PixiJS ColorSource](https://pixijs.download/release/docs/color.ColorSource.html)。
 
 ---
 

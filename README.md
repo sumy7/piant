@@ -160,9 +160,8 @@ pnpm dev
 ## 发布
 
 ```bash
-# 进入/退出 alpha 状态
-pnpm changeset pre enter alpha
-pnpm changeset pre exit
+# 记录变更
+pnpm changeset
 
 # 更新版本
 pnpm changeset version
@@ -171,7 +170,7 @@ pnpm changeset version
 pnpm changeset publish
 ```
 
-所有公开包当前统一为 `0.1.0`，已退出 alpha 预发布模式。依赖 core 的包使用 `^0.1.0` 作为 peer 兼容范围，并通过 `onlyUpdatePeerDependentsWhenOutOfRange` 避免范围内的 core 更新触发 major；未来 core 进入新的 minor 系列时，需要先验证兼容性，再更新范围并添加对应 changeset。本地开发依赖仍使用 `workspace:*`。
+公开包通过 Changesets 管理版本与发布。发布前检查包间的 `peerDependencies` 兼容范围，并为对外 API/行为变化添加对应 changeset。本地包间开发依赖使用 `workspace:*`。
 
 ## 贡献指南
 
