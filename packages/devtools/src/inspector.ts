@@ -66,7 +66,7 @@ export function createInspector(
   };
   const host = el('aside');
   host.dataset.piantDevtools = '';
-  host.setAttribute('aria-label', 'Piant DevTools');
+  host.setAttribute('aria-label', 'Piant Devtools');
   const shadow = host.attachShadow({ mode: 'open' });
   shadow.append(el('style', '', inspectorStyles));
   const inspector = el('div', 'inspector');
@@ -78,8 +78,7 @@ export function createInspector(
   mark.append(icon('logo'));
   brand.append(
     mark,
-    el('span', '', 'Piant'),
-    el('span', 'brand-subtitle', 'DevTools'),
+    el('span', '', 'Piant Devtools'),
   );
   const tabs = el('div', 'tabs');
   tabs.setAttribute('role', 'tablist');
@@ -89,9 +88,9 @@ export function createInspector(
   refreshButton.id = 'refresh';
   refreshButton.title = 'Refresh snapshot';
   refreshButton.append(icon('refresh'), el('span', 'sr-only', 'Refresh'));
-  const closeButton = button('icon-button', 'Disconnect Piant DevTools');
+  const closeButton = button('icon-button', 'Disconnect Piant Devtools');
   closeButton.id = 'close';
-  closeButton.title = 'Disconnect Piant DevTools';
+  closeButton.title = 'Disconnect Piant Devtools';
   closeButton.append(icon('close'), el('span', 'sr-only', 'Disconnect'));
   const divider = el('span', 'action-divider');
   divider.setAttribute('aria-hidden', 'true');
@@ -117,9 +116,9 @@ export function createInspector(
     themeButton.title = 'Toggle color theme';
     themeButton.append(icon('theme'));
     themeButton.addEventListener('click', controls.toggleTheme);
-    const collapseButton = button('icon-button', 'Collapse Piant DevTools');
+    const collapseButton = button('icon-button', 'Collapse Piant Devtools');
     collapseButton.id = 'collapse';
-    collapseButton.title = 'Collapse Piant DevTools';
+    collapseButton.title = 'Collapse Piant Devtools';
     collapseButton.append(icon('chevron'));
     collapseButton.classList.add('collapse-button');
     collapseButton.addEventListener('click', controls.collapse);

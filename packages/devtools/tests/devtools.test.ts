@@ -442,7 +442,7 @@ describe('optional inspector session', () => {
     await attach(value);
     const host = document.querySelector('[data-piant-devtools-host]')!;
     const panel = host.querySelector('[data-piant-devtools-panel]')!;
-    expect(panel.getAttribute('aria-label')).toBe('Piant DevTools panel');
+    expect(panel.getAttribute('aria-label')).toBe('Piant Devtools panel');
     expect(host.querySelectorAll('[data-piant-devtools-panel]')).toHaveLength(
       1,
     );
@@ -505,7 +505,7 @@ describe('optional inspector session', () => {
     expect(animations).toHaveBeenCalledTimes(animationCalls);
     expect(session.snapshot()).toBe(snapshot);
     document
-      .querySelector<HTMLButtonElement>('[aria-label="Open Piant DevTools"]')!
+      .querySelector<HTMLButtonElement>('[aria-label="Open Piant Devtools"]')!
       .click();
     await vi.waitFor(() => expect(value.ticker.count).toBe(1));
     expect(session.snapshot().elements.map((entry) => entry.name)).toContain(
@@ -546,7 +546,7 @@ describe('optional inspector session', () => {
         .hidden,
     ).toBe(true);
     document
-      .querySelector<HTMLButtonElement>('[aria-label="Open Piant DevTools"]')!
+      .querySelector<HTMLButtonElement>('[aria-label="Open Piant Devtools"]')!
       .click();
     expect(value.ticker.count).toBe(1);
     expect(inspectorShadow()).toBe(shadow);
@@ -569,7 +569,7 @@ describe('optional inspector session', () => {
     sessions.push(session);
     await vi.waitFor(() =>
       expect(
-        document.querySelector('[aria-label="Open Piant DevTools"]'),
+        document.querySelector('[aria-label="Open Piant Devtools"]'),
       ).not.toBeNull(),
     );
     expect(value.ticker.count).toBe(0);
@@ -577,7 +577,7 @@ describe('optional inspector session', () => {
     advance(value.ticker, 200);
     expect(getState).toHaveBeenCalledTimes(calls);
     document
-      .querySelector<HTMLButtonElement>('[aria-label="Open Piant DevTools"]')!
+      .querySelector<HTMLButtonElement>('[aria-label="Open Piant Devtools"]')!
       .click();
     await vi.waitFor(() => expect(value.ticker.count).toBe(1));
     expect(getState.mock.calls.length).toBeGreaterThan(calls);
@@ -595,7 +595,7 @@ describe('optional inspector session', () => {
     expect(document.querySelector('[data-piant-devtools]')).toBeNull();
     expect(document.querySelector('[data-piant-highlight]')).toBeNull();
     expect(
-      document.querySelector('[aria-label="Open Piant DevTools"]'),
+      document.querySelector('[aria-label="Open Piant Devtools"]'),
     ).toBeNull();
     expect(
       document.querySelector('[aria-label="TanStack Devtools"]'),
@@ -626,13 +626,13 @@ describe('optional inspector session', () => {
     inspectorShadow().querySelector<HTMLButtonElement>('#collapse')!.click();
     await vi.waitFor(() => expect(value.ticker.count).toBe(0));
     expect(
-      document.querySelector('[aria-label="Open Piant DevTools"]'),
+      document.querySelector('[aria-label="Open Piant Devtools"]'),
     ).not.toBeNull();
     value.root.destroy();
     expect(document.querySelector('[data-piant-devtools-host]')).toBeNull();
     expect(document.querySelector('[data-piant-highlight]')).toBeNull();
     expect(
-      document.querySelector('[aria-label="Open Piant DevTools"]'),
+      document.querySelector('[aria-label="Open Piant Devtools"]'),
     ).toBeNull();
     session.detach();
   });
@@ -737,7 +737,7 @@ describe('optional inspector session', () => {
     ).toBe('dark');
     expect(value.ticker.count).toBe(0);
     document
-      .querySelector<HTMLButtonElement>('[aria-label="Open Piant DevTools"]')!
+      .querySelector<HTMLButtonElement>('[aria-label="Open Piant Devtools"]')!
       .click();
     expect(value.ticker.count).toBe(1);
     expect(JSON.parse(localStorage.getItem(key)!)).not.toHaveProperty('open');
@@ -849,11 +849,11 @@ describe('optional inspector session', () => {
       '[data-piant-devtools-host]',
     )!;
     const separator = host.querySelector<HTMLElement>(
-      '[aria-label="Resize Piant DevTools panel"]',
+      '[aria-label="Resize Piant Devtools panel"]',
     )!;
     const theme = inspectorShadow().querySelector<HTMLButtonElement>('#theme')!;
     const launcher = host.querySelector<HTMLButtonElement>(
-      '[aria-label="Open Piant DevTools"]',
+      '[aria-label="Open Piant Devtools"]',
     )!;
     const getState = vi.spyOn(window, 'localStorage', 'get');
     separator.dispatchEvent(

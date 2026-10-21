@@ -18,7 +18,7 @@ Piant developers debugging a live Canvas application. They need to move between 
 
 ## Information architecture
 
-A compact toolbar with Piant identity, “Select element from canvas” toggle, Elements / State / Performance / Animations navigation, live connection status, theme, refresh, collapse and disconnect. The bottom-right “Open Piant DevTools” button opens the panel directly; no outer plugin navigation or second toolbar. Elements uses a searchable tree on the left and selected-node header, breadcrumb and grouped Layout / Style / Transform properties on the right. State uses typed read-only property rows. Performance shows labeled numeric metrics and bounded layout update history. Animations lists explicitly registered handles with playback status and observed statistics.
+A compact toolbar with Piant identity, “Select element from canvas” toggle, Elements / State / Performance / Animations navigation, live connection status, theme, refresh, collapse and disconnect. The bottom-right “Open Piant Devtools” button opens the panel directly; no outer plugin navigation or second toolbar. Elements uses a searchable tree on the left and selected-node header, breadcrumb and grouped Layout / Style / Transform properties on the right. State uses typed read-only property rows. Performance shows labeled numeric metrics and bounded layout update history. Animations lists explicitly registered handles with playback status and observed statistics.
 
 ## Design principles
 

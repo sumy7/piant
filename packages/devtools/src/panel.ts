@@ -40,12 +40,12 @@ export function createPanel(
   style.textContent = panelStyles;
   const panel = doc.createElement('section');
   panel.dataset.piantDevtoolsPanel = '';
-  panel.setAttribute('aria-label', 'Piant DevTools panel');
+  panel.setAttribute('aria-label', 'Piant Devtools panel');
   const resize = doc.createElement('div');
   resize.className = 'piant-resize';
   resize.tabIndex = 0;
   resize.setAttribute('role', 'separator');
-  resize.setAttribute('aria-label', 'Resize Piant DevTools panel');
+  resize.setAttribute('aria-label', 'Resize Piant Devtools panel');
   resize.setAttribute('aria-orientation', 'horizontal');
   const content = doc.createElement('div');
   content.className = 'piant-inspector-mount';
@@ -123,7 +123,7 @@ export function createPanel(
           return createComponent(Button, {
             type: 'button',
             className: 'piant-launcher',
-            'aria-label': 'Open Piant DevTools',
+            'aria-label': 'Open Piant Devtools',
             get hidden() {
               return open;
             },
@@ -131,7 +131,7 @@ export function createPanel(
             ref(element: HTMLButtonElement) {
               launcher = element;
             },
-            children: 'Piant DevTools',
+            children: 'Piant Devtools',
           });
         },
       }),

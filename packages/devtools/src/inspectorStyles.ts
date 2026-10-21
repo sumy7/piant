@@ -55,7 +55,6 @@ svg { width: 15px; height: 15px; flex: none; vertical-align: middle; }
 .brand { display: flex; gap: 8px; align-items: center; white-space: nowrap; font-weight: 650; font-size: 13px; letter-spacing: -.2px; }
 .brand-mark { display: grid; place-items: center; color: var(--accent); width: 22px; height: 22px; background: var(--accent-bg); border-radius: 6px; }
 .brand-mark svg { width: 16px; height: 16px; }
-.brand-subtitle { font-weight: 400; color: var(--muted); }
 .tabs { display: flex; align-self: stretch; gap: 3px; }
 .tab { display: flex; align-items: center; gap: 6px; padding: 0 10px; position: relative; color: var(--muted); white-space: nowrap; font-size: 12px; }
 .tab[aria-selected='true'] { color: var(--accent); }
@@ -164,7 +163,6 @@ summary::-webkit-details-marker { display: none; }
 .animation-body { padding: 4px 11px; }
 @media (max-width: 760px) {
   .toolbar { gap: 8px; padding: 0 8px; }
-  .brand-subtitle { display: none; }
   .tab { padding: 0 7px; }
   .tab svg { display: none; }
   .live { padding: 0 3px; }

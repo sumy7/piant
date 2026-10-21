@@ -9,7 +9,7 @@ pnpm install
 pnpm --filter @piant/examples-devtools-demo dev
 ```
 
-示例位于 `examples/devtools-demo`。点击计数按钮观察状态快照，切换卡片观察元素树变化，点击「Start animation」观察显式注册的动画。面板选中元素后，画布上显示高亮；普通选中高亮不会阻止点击业务按钮；开启元素选择器后，画布点击用于确认检查目标。通过右下角「Open Piant DevTools」入口打开面板，通过面板工具栏收起。收起时保留当前功能页、筛选与展开状态，暂停 Piant 自动采样并清除选择与高亮；重新打开会刷新元素树并恢复采样。点击工具栏「Disconnect」会卸载整个调试会话；点击「Unmount application」则按顺序卸载会话和业务应用。
+示例位于 `examples/devtools-demo`。点击计数按钮观察状态快照，切换卡片观察元素树变化，点击「Start animation」观察显式注册的动画。面板选中元素后，画布上显示高亮；普通选中高亮不会阻止点击业务按钮；开启元素选择器后，画布点击用于确认检查目标。通过右下角「Open Piant Devtools」入口打开面板，通过面板工具栏收起。收起时保留当前功能页、筛选与展开状态，暂停 Piant 自动采样并清除选择与高亮；重新打开会刷新元素树并恢复采样。点击工具栏「Disconnect」会卸载整个调试会话；点击「Unmount application」则按顺序卸载会话和业务应用。
 
 生产示例构建使用 `pnpm --filter @piant/examples-devtools-demo build`，生产预览没有调试面板。
 

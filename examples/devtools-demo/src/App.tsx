@@ -38,7 +38,7 @@ export function createDemo() {
       const countLabel = () => `Count: ${count()}`;
       return (
         <View style={styles.page}>
-          <Text style={styles.title}>Piant DevTools</Text>
+          <Text style={styles.title}>Piant Devtools</Text>
           <Text style={styles.text}>Use the element picker or tree to inspect an element.</Text>
           <View style={styles.button} onClick={() => setCount(count() + 1)}>
             <Text style={styles.text}>{countLabel()}</Text>

@@ -1,6 +1,6 @@
 {
   "name": "@piant/examples-devtools-demo",
-  "description": "Piant DevTools：元素树、选中高亮、只读状态与动画观测。",
+  "description": "Piant Devtools：元素树、选中高亮、只读状态与动画观测。",
   "private": true,
   "type": "module",
   "scripts": {
