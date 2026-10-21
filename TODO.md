@@ -104,7 +104,7 @@ MVP 范围：
 
 - [x] middleware 机制（`combine`、`persist`）
 - [ ] devtools 集成（状态快照与时间旅行基础能力）
-- [ ] async action 与错误恢复模式
+- [x] async action 与错误恢复模式（[指南与在线示例](docs/store/async-actions.md)，含重试恢复、最新请求优先与取消回归验证）
 
 验收标准：
 

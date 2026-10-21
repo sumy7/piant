@@ -32,4 +32,5 @@ pnpm add @piant/store "mobx@^6.16.1"
 ## 下一步
 
 - [快速开始](./quick-start) — 5 分钟上手第一个 store
+- [异步 action 与错误恢复](./async-actions) — 加载、失败重试与并发请求一致性
 - [API 参考](./api) — 完整 API 文档
