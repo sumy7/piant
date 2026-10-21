@@ -65,6 +65,7 @@ svg { width: 15px; height: 15px; flex: none; vertical-align: middle; }
 .live::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
 .icon-button { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 4px; color: var(--muted); }
 .icon-button:hover { color: var(--text); }
+.pick-button[aria-pressed="true"] { color: var(--accent); background: var(--accent-bg); }
 .collapse-button svg { transform: rotate(90deg); }
 .action-divider { width: 1px; height: 16px; background: var(--line); margin: 0 3px; }
 .workspace { flex: 1; min-height: 0; }

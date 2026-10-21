@@ -16,6 +16,7 @@ export function createPanel(
   disconnect: () => void,
   onActiveChange: (active: boolean) => void,
   defaultOpen = true,
+  onPickToggle?: () => void,
 ) {
   const doc = mount.ownerDocument;
   const view = doc.defaultView;
@@ -98,6 +99,7 @@ export function createPanel(
   const inspector = createInspector(content, select, refresh, disconnect, {
     collapse: () => setOpen(false),
     toggleTheme,
+    togglePicking: onPickToggle,
   });
   inspector.host.dataset.theme = initialTheme;
   panel.hidden = !open;
@@ -192,6 +194,12 @@ export function createPanel(
   return {
     render(value: DevtoolsSnapshot) {
       if (!removed) inspector.render(value);
+    },
+    setPicking(active: boolean) {
+      if (!removed) inspector.setPicking(active);
+    },
+    reveal(id: number) {
+      if (!removed) inspector.reveal(id);
     },
     remove() {
       if (removed) return;

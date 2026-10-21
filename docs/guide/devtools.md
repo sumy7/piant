@@ -9,7 +9,7 @@ pnpm install
 pnpm --filter @piant/examples-devtools-demo dev
 ```
 
-示例位于 `examples/devtools-demo`。点击计数按钮观察状态快照，切换卡片观察元素树变化，点击「Start animation」观察显式注册的动画。面板选中元素后，画布上显示高亮；高亮不会阻止点击业务按钮。通过右下角「Open Piant DevTools」入口打开面板，通过面板工具栏收起。收起时保留当前功能页、筛选与展开状态，暂停 Piant 自动采样并清除选择与高亮；重新打开会刷新元素树并恢复采样。点击工具栏「Disconnect」会卸载整个调试会话；点击「Unmount application」则按顺序卸载会话和业务应用。
+示例位于 `examples/devtools-demo`。点击计数按钮观察状态快照，切换卡片观察元素树变化，点击「Start animation」观察显式注册的动画。面板选中元素后，画布上显示高亮；普通选中高亮不会阻止点击业务按钮；开启元素选择器后，画布点击用于确认检查目标。通过右下角「Open Piant DevTools」入口打开面板，通过面板工具栏收起。收起时保留当前功能页、筛选与展开状态，暂停 Piant 自动采样并清除选择与高亮；重新打开会刷新元素树并恢复采样。点击工具栏「Disconnect」会卸载整个调试会话；点击「Unmount application」则按顺序卸载会话和业务应用。
 
 生产示例构建使用 `pnpm --filter @piant/examples-devtools-demo build`，生产预览没有调试面板。
 
@@ -126,6 +126,16 @@ const tools = attachDevtools({
 面板展示底层元素及其父子关系、节点当前样式与布局信息。布局通知触发后，工具按采样间隔合并遍历；每帧仅累积帧统计并更新选中节点高亮，不持续高频扫描整棵树。节点 ID 仅用于当前会话，不应作为业务持久标识。
 
 高亮位于独立 SVG overlay，遵循 PixiJS 父级变换，不修改 Yoga 业务布局，且使用 `pointer-events: none` 保留输入。支持画布的轴对齐 CSS 缩放和页面滚动；画布自身或其 DOM 祖先的 CSS 旋转、倾斜不在支持范围内。高亮是用于定位的包围区域，不表示遮罩裁剪后所有可见像素的精确轮廓。
+
+### 从画布选择元素
+
+点击工具栏品牌旁的「Select element from canvas」开启选择器，画布光标变为十字。移动到元素上预览高亮，点击确认后自动退出选择模式。按 Escape 或再次点击选择器按钮可取消，保留原先选中；收起面板或结束会话也会取消并清理选择器。
+
+确认后面板切到 Elements，清除筛选并展开目标的祖先，将目标滚动到可见位置，同时更新右侧样式与布局。其他分支的折叠状态保留；自动采样不会反复滚动树。
+
+选择器按布局盒检查当前观测树中的 PNode，优先选择显示在上方的最深匹配节点，包括没有业务事件的文字或装饰元素，不修改业务节点的 `eventMode`。选择期间会拦截画布主按键的 pointer、mouse 与 click 事件，避免确认目标时同时触发业务动作；退出后恢复普通交互。
+
+命中计算支持画布的轴对齐 CSS 缩放、PixiJS 节点变换、普通显示层级与 `zIndex`，以及 Graphics 几何遮罩（含 Piant `overflow: hidden` 裁剪）。复杂透明度或反向遮罩、RenderLayer 跨树绘制、CSS 旋转与倾斜不保证逐像素精确命中。
 
 ## 状态快照边界
 

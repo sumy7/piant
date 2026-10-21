@@ -39,7 +39,7 @@ export function createDemo() {
       return (
         <View style={styles.page}>
           <Text style={styles.title}>Piant DevTools</Text>
-          <Text style={styles.text}>Select an element in the panel to highlight it.</Text>
+          <Text style={styles.text}>Use the element picker or tree to inspect an element.</Text>
           <View style={styles.button} onClick={() => setCount(count() + 1)}>
             <Text style={styles.text}>{countLabel()}</Text>
           </View>

@@ -30,11 +30,20 @@ function snapshot(overrides: Partial<DevtoolsSnapshot> = {}): DevtoolsSnapshot {
   });
 }
 
-function fixture(value = snapshot()) {
+function fixture(
+  value = snapshot(),
+  controls?: Parameters<typeof createInspector>[4],
+) {
   const select = vi.fn();
   const refresh = vi.fn();
   const close = vi.fn();
-  const inspector = createInspector(document.body, select, refresh, close);
+  const inspector = createInspector(
+    document.body,
+    select,
+    refresh,
+    close,
+    controls,
+  );
   inspectors.push(inspector);
   inspector.render(value);
   const shadow = inspector.host.shadowRoot!;
@@ -81,11 +90,88 @@ function fixture(value = snapshot()) {
 }
 
 afterEach(() => {
+  vi.restoreAllMocks();
   for (const inspector of inspectors.splice(0)) inspector.remove();
   document.body.replaceChildren();
 });
 
 describe('embedded inspector interactions', () => {
+  it('toggles canvas picking and reflects its controlled state until removed', () => {
+    const togglePicking = vi.fn();
+    const { inspector, button } = fixture(snapshot(), {
+      collapse: vi.fn(),
+      toggleTheme: vi.fn(),
+      togglePicking,
+    });
+    const pick = button('Select element from canvas');
+    expect(pick.getAttribute('aria-pressed')).toBe('false');
+    pick.click();
+    expect(togglePicking).toHaveBeenCalledTimes(1);
+    inspector.setPicking(true);
+    expect(pick.getAttribute('aria-pressed')).toBe('true');
+    inspector.setPicking(false);
+    expect(pick.getAttribute('aria-pressed')).toBe('false');
+    inspector.remove();
+    pick.click();
+    inspector.setPicking(true);
+    expect(togglePicking).toHaveBeenCalledTimes(1);
+    expect(pick.getAttribute('aria-pressed')).toBe('false');
+  });
+
+  it('reveals a canvas selection through filters and collapsed ancestors without reopening other branches', () => {
+    const value = snapshot();
+    const elements = Object.freeze([
+      ...value.elements,
+      { id: 5, parentId: 4, depth: 2, name: 'FooterLabel' },
+    ]);
+    const { inspector, button, filter, search, tree, shadow, tab } = fixture(
+      snapshot({ elements }),
+    );
+    button('Collapse Container #2').click();
+    button('Collapse Footer #4').click();
+    button('Collapse Root #1').click();
+    filter('missing');
+    tab('State');
+    inspector.render(
+      snapshot({
+        elements,
+        selectedId: 3,
+        selection: readonlySnapshot({
+          id: 3,
+          name: 'Counter',
+          layout: { left: 10, top: 12, width: 80, height: 30 },
+          style: { backgroundColor: '#112233' },
+          transform: { x: 4 },
+        }),
+      }),
+    );
+    const scroll = vi
+      .spyOn(HTMLElement.prototype, 'scrollIntoView')
+      .mockImplementation(() => {});
+    inspector.reveal(3);
+    expect(search.value).toBe('');
+    expect(button('Elements').getAttribute('aria-selected')).toBe('true');
+    expect(tree.textContent).toContain('Counter');
+    expect(tree.textContent).not.toContain('FooterLabel');
+    expect(button('Counter #3').getAttribute('aria-pressed')).toBe('true');
+    expect(button('Expand Footer #4').getAttribute('aria-expanded')).toBe(
+      'false',
+    );
+    const selection = shadow.querySelector<HTMLElement>('#selection')!;
+    expect(selection.hidden).toBe(false);
+    expect(selection.textContent).toContain('Counter');
+    expect(selection.textContent).toContain('#112233');
+    expect(scroll).toHaveBeenCalledExactlyOnceWith({
+      block: 'nearest',
+      inline: 'nearest',
+    });
+    inspector.render(snapshot({ elements, state: { count: 4 } }));
+    expect(scroll).toHaveBeenCalledTimes(1);
+    inspector.remove();
+    inspector.reveal(3);
+    expect(scroll).toHaveBeenCalledTimes(1);
+  });
+
   it('filters names without case sensitivity and ids while retaining ancestors', () => {
     const { tree, filter } = fixture();
     filter('cOuNtEr');

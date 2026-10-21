@@ -80,6 +80,31 @@ function inspectorShadow() {
   return document.querySelector('[data-piant-devtools]')!.shadowRoot!;
 }
 
+function canvasClick(canvas: HTMLCanvasElement, clientX = 30, clientY = 30) {
+  for (const type of [
+    'pointerdown',
+    'mousedown',
+    'pointerup',
+    'mouseup',
+    'click',
+  ]) {
+    const init = {
+      clientX,
+      clientY,
+      button: 0,
+      bubbles: true,
+      cancelable: true,
+    };
+    canvas.dispatchEvent(
+      type.startsWith('pointer')
+        ? new PointerEvent(type, { ...init, pointerId: 1, isPrimary: true })
+        : type === 'click'
+          ? new PointerEvent(type, { ...init, pointerId: 1, isPrimary: false })
+          : new MouseEvent(type, init),
+    );
+  }
+}
+
 afterEach(() => {
   for (const session of sessions.splice(0)) session.detach();
   for (const value of fixtures.splice(0)) {
@@ -856,5 +881,116 @@ describe('optional inspector session', () => {
     expect(host.isConnected).toBe(false);
     expect(document.querySelector('[data-piant-highlight]')).toBeNull();
     expect(() => session.detach()).not.toThrow();
+  });
+});
+
+describe('canvas element picking', () => {
+  it('previews without selecting, then locates the canvas target and consumes its business click', async () => {
+    const value = fixture();
+    const parent = child(value.root, 'Parent');
+    const target = child(parent, 'Canvas target');
+    value.root.doLayout();
+    let count = 0;
+    const businessClick = vi.fn(() => count++);
+    value.canvas.addEventListener('pointerdown', businessClick);
+    value.canvas.addEventListener('click', businessClick);
+    const session = await attach(value, { getState: () => ({ count }) });
+    const shadow = inspectorShadow();
+    shadow
+      .querySelector<HTMLButtonElement>(
+        `[aria-label="Collapse Parent #${parent._id}"]`,
+      )!
+      .click();
+    const search = shadow.querySelector<HTMLInputElement>(
+      '[aria-label="Filter elements"]',
+    )!;
+    search.value = 'unrelated';
+    search.dispatchEvent(new Event('input'));
+    shadow.querySelector<HTMLButtonElement>('#tab-state')!.click();
+    const pick = shadow.querySelector<HTMLButtonElement>('#pick')!;
+    pick.click();
+    expect(pick.getAttribute('aria-pressed')).toBe('true');
+    expect(value.canvas.style.cursor).toBe('crosshair');
+    value.canvas.dispatchEvent(
+      new PointerEvent('pointermove', {
+        clientX: 30,
+        clientY: 30,
+        isPrimary: true,
+        bubbles: true,
+      }),
+    );
+    expect(overlay().style.display).toBe('');
+    expect(session.snapshot().selectedId).toBeNull();
+    canvasClick(value.canvas);
+    expect(businessClick).not.toHaveBeenCalled();
+    expect(session.snapshot().selectedId).toBe(target._id);
+    expect(session.snapshot().selection).toMatchObject({
+      name: 'Canvas target',
+    });
+    expect(pick.getAttribute('aria-pressed')).toBe('false');
+    expect(value.canvas.style.cursor).toBe('');
+    expect(search.value).toBe('');
+    expect(
+      shadow.querySelector('#tab-elements')!.getAttribute('aria-selected'),
+    ).toBe('true');
+    expect(
+      shadow
+        .querySelector(`nav [aria-label="Canvas target #${target._id}"]`)!
+        .getAttribute('aria-pressed'),
+    ).toBe('true');
+    expect(shadow.querySelector('.selection-title')!.textContent).toContain(
+      'Canvas target',
+    );
+    canvasClick(value.canvas);
+    expect(businessClick).toHaveBeenCalledTimes(2);
+    value.canvas.removeEventListener('pointerdown', businessClick);
+    value.canvas.removeEventListener('click', businessClick);
+  });
+
+  it('cancels preview on Escape and collapse, preserving the committed selection on Escape', async () => {
+    const value = fixture();
+    const node = child(value.root, 'Selected');
+    value.root.doLayout();
+    const session = await attach(value);
+    session.select(node._id);
+    const pick = inspectorShadow().querySelector<HTMLButtonElement>('#pick')!;
+    pick.click();
+    document.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        key: 'Escape',
+        bubbles: true,
+        cancelable: true,
+      }),
+    );
+    expect(pick.getAttribute('aria-pressed')).toBe('false');
+    expect(session.snapshot().selectedId).toBe(node._id);
+    expect(overlay().style.display).toBe('');
+    pick.click();
+    inspectorShadow().querySelector<HTMLButtonElement>('#collapse')!.click();
+    expect(value.canvas.style.cursor).toBe('');
+    expect(pick.getAttribute('aria-pressed')).toBe('false');
+    expect(value.ticker.count).toBe(0);
+    const before = session.snapshot();
+    canvasClick(value.canvas);
+    expect(session.snapshot()).toBe(before);
+  });
+
+  it('cleans active picking when detached and ignores retained picker controls', async () => {
+    const value = fixture();
+    child(value.root);
+    value.root.doLayout();
+    const session = await attach(value);
+    const pick = inspectorShadow().querySelector<HTMLButtonElement>('#pick')!;
+    pick.click();
+    session.detach();
+    expect(value.canvas.style.cursor).toBe('');
+    const snapshot = session.snapshot();
+    pick.click();
+    canvasClick(value.canvas);
+    document.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }),
+    );
+    expect(session.snapshot()).toBe(snapshot);
+    expect(document.querySelector('[data-piant-highlight]')).toBeNull();
   });
 });

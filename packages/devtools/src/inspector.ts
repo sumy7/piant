@@ -32,7 +32,11 @@ export function createInspector(
   select: (id: number) => void,
   refresh: () => void,
   close: () => void,
-  controls?: { collapse: () => void; toggleTheme: () => void },
+  controls?: {
+    collapse: () => void;
+    toggleTheme: () => void;
+    togglePicking?: () => void;
+  },
 ) {
   const doc = mount.ownerDocument;
   let removed = false;
@@ -92,6 +96,20 @@ export function createInspector(
   const divider = el('span', 'action-divider');
   divider.setAttribute('aria-hidden', 'true');
   actions.append(el('span', 'live', 'Live'), refreshButton);
+  const pickButton = controls?.togglePicking
+    ? button('icon-button pick-button', 'Select element from canvas')
+    : undefined;
+  const togglePicking = () => {
+    if (!removed) controls?.togglePicking?.();
+  };
+  if (pickButton) {
+    pickButton.id = 'pick';
+    pickButton.title =
+      'Select an element from the canvas · click to confirm · Escape to cancel';
+    pickButton.setAttribute('aria-pressed', 'false');
+    pickButton.append(icon('select'));
+    pickButton.addEventListener('click', togglePicking);
+  }
   const dockControls: HTMLButtonElement[] = [];
   if (controls) {
     const themeButton = button('icon-button', 'Toggle color theme');
@@ -109,7 +127,9 @@ export function createInspector(
     actions.append(...dockControls);
   }
   actions.append(divider, closeButton);
-  toolbar.append(brand, tabs, actions);
+  toolbar.append(brand);
+  if (pickButton) toolbar.append(pickButton);
+  toolbar.append(tabs, actions);
   const workspace = el('main', 'workspace');
   inspector.append(toolbar, workspace);
   const tabButtons = new Map<Tab, HTMLButtonElement>();
@@ -708,11 +728,36 @@ export function createInspector(
   return {
     host,
     render,
+    setPicking(active: boolean) {
+      if (!removed) pickButton?.setAttribute('aria-pressed', String(active));
+    },
+    reveal(id: number) {
+      if (removed || !current) return;
+      const byId = new Map(current.elements.map((node) => [node.id, node]));
+      let node = byId.get(id);
+      if (!node) return;
+      activateTab('Elements');
+      search.value = '';
+      const visited = new Set<number>([id]);
+      while (node.parentId !== null && !visited.has(node.parentId)) {
+        visited.add(node.parentId);
+        if (collapsed.delete(node.parentId)) collapseRevision++;
+        const parent = byId.get(node.parentId);
+        if (!parent) break;
+        node = parent;
+      }
+      renderTree(current);
+      treeRows.get(id)?.row.scrollIntoView?.({
+        block: 'nearest',
+        inline: 'nearest',
+      });
+    },
     remove() {
       if (removed) return;
       removed = true;
       refreshButton.removeEventListener('click', refresh);
       closeButton.removeEventListener('click', close);
+      pickButton?.removeEventListener('click', togglePicking);
       if (controls) {
         dockControls[0].removeEventListener('click', controls.toggleTheme);
         dockControls[1].removeEventListener('click', controls.collapse);

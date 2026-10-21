@@ -1,6 +1,7 @@
 import type { PNode } from '@piant/core';
 import { type Container, UPDATE_PRIORITY } from 'pixi.js';
 import { createPanel } from './panel';
+import { createPicker } from './picker';
 import { readonlySnapshot } from './snapshot';
 import type {
   AnimationInspection,
@@ -63,6 +64,8 @@ export function attachDevtools(
   let active = false;
   let dirty = true;
   let selected: PNode | null = null;
+  let picking = false;
+  let hovered: PNode | null = null;
   let elapsed = interval;
   let elements: readonly ElementInspection[] = [];
   const nodes = new Map<number, PNode>();
@@ -102,33 +105,34 @@ export function attachDevtools(
       overlay.style.display = 'none';
       return;
     }
-    if (!selected || !belongs(selected)) {
-      if (selected) {
-        selected = null;
-        dirty = true;
-      }
+    if (selected && !belongs(selected)) {
+      selected = null;
+      dirty = true;
+    }
+    const target = picking ? hovered : selected;
+    if (!target || !belongs(target)) {
       overlay.style.display = 'none';
       return;
     }
     const rect = canvas.getBoundingClientRect();
     if (
       !canvas.isConnected ||
-      !isVisible(selected._view) ||
+      !isVisible(target._view) ||
       !rect.width ||
       !rect.height
     ) {
       overlay.style.display = 'none';
       return;
     }
-    const width = selected._layoutNode.getComputedWidth();
-    const height = selected._layoutNode.getComputedHeight();
+    const width = target._layoutNode.getComputedWidth();
+    const height = target._layoutNode.getComputedHeight();
     const points = [
       [0, 0],
       [width, 0],
       [width, height],
       [0, height],
     ].map(([x, y]) => {
-      const point = selected!._view.toGlobal({ x, y });
+      const point = target._view.toGlobal({ x, y });
       return `${rect.left + (point.x * rect.width) / app.screen.width},${rect.top + (point.y * rect.height) / app.screen.height}`;
     });
     polygon.setAttribute('points', points.join(' '));
@@ -310,6 +314,7 @@ export function attachDevtools(
       ticker.add(tick, undefined, UPDATE_PRIORITY.LOW);
       refresh();
     } else {
+      setPicking(false);
       ticker.remove(tick);
       selected = null;
       animations.clear();
@@ -324,6 +329,17 @@ export function attachDevtools(
     }
   }
 
+  function setPicking(next: boolean) {
+    next = next && active && !detached;
+    if (picking === next) return;
+    picking = next;
+    hovered = null;
+    if (next) picker.start();
+    else picker.stop();
+    panel.setPicking(next);
+    highlight();
+  }
+
   const panel = createPanel(
     mount,
     select,
@@ -331,7 +347,27 @@ export function attachDevtools(
     detach,
     setActive,
     options.defaultOpen,
+    () => setPicking(!picking),
   );
+  const picker = createPicker({
+    canvas,
+    app,
+    getNodes() {
+      if (dirty && !detached) refresh();
+      return nodes.values();
+    },
+    onHover(node) {
+      hovered = node;
+      highlight();
+    },
+    onPick(node) {
+      if (!picking || !belongs(node)) return;
+      setPicking(false);
+      select(node._id);
+      panel.reveal(node._id);
+    },
+    onCancel: () => setPicking(false),
+  });
   const unsubscribe = root.observe((event) => {
     if (event.type === 'destroy') {
       detach();
@@ -351,6 +387,7 @@ export function attachDevtools(
     ticker.remove(tick);
     stage.off('destroyed', detach);
     root._view.off('destroyed', detach);
+    picker.remove();
     try {
       panel.remove();
     } finally {
@@ -358,6 +395,8 @@ export function attachDevtools(
       nodes.clear();
       animations.clear();
       selected = null;
+      hovered = null;
+      picking = false;
       sessions.delete(doc);
     }
   }
