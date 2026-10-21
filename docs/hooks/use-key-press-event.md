@@ -22,6 +22,8 @@ function useKeyPressEvent(
 
 `keydown` 和 `keyup` 均为可选，可以只传其中一个。
 
+监听目标固定使用默认 `window`，没有第四个 options 参数，也不支持 `opts.target`。如需自定义目标，请分别调用两次 [`useKey`](./use-key)，传入相同的 `target` 和不同的 `event`（`'keydown'` / `'keyup'`）。没有 `window` 时不注册监听器。
+
 ## 基本用法
 
 ```tsx
@@ -47,7 +49,7 @@ useKeyPressEvent('Enter', () => submit());
 ## 只监听松开
 
 ```tsx
-useKeyPressEvent('Space', null, () => releaseCharge());
+useKeyPressEvent(' ', null, () => releaseCharge());
 ```
 
 ## 结合状态实现长按检测

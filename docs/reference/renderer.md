@@ -2,18 +2,26 @@
 
 ## render
 
-`render` 函数将组件渲染到指定的根节点。
+`render` 函数在新的响应式 owner 中执行组件，将返回内容插入指定的 `PNode`，并返回该 owner 的清理函数（disposer）。通常使用 `PRoot` 作为挂载点。
 
 ```ts
 function render(
   component: () => JSX.Element,
-  root: PRoot
-): void;
+  element: PNode,
+): () => void;
 ```
 
 **参数：**
 - `component`：根组件函数（无参数的函数）
-- `root`：`PRoot` 实例，作为渲染挂载点
+- `element`：渲染挂载点，接受 `PNode`，通常传入 `PRoot` 实例
+
+这里展示常规 JSX 组件的用法；底层渲染器也接受数组、响应式 getter 等可渲染内容。
+
+**返回值与清理边界：**
+
+调用 disposer 会清理所属响应式 owner、停止其 effect，并执行登记的 `onCleanup`（包括组件或 Hook 注册的资源清理）。尚未执行的 `onMount` 回调会被取消。重复调用不会重复执行已清理的回调。
+
+disposer 本身没有移除或递归销毁整个节点树，也不会调用 `PRoot.destroy()` 或销毁 Pixi Application。宿主仍需管理这些资源；`PRoot.destroy()` 才会移除其布局 ticker。当前节点销毁也没有统一释放 Yoga 节点，不能把 disposer 当作完整的应用卸载函数。
 
 **示例：**
 ```ts
@@ -21,8 +29,14 @@ import { PRoot, render } from '@piant/core';
 import { App } from './App';
 
 const root = new PRoot(app.stage, { width: 800, height: 600 });
-render(App, root);
+const dispose = render(App, root);
+
+// 宿主结束本次渲染时，先停止响应式更新与已登记的副作用。
+dispose();
+// 节点树、根节点和 Application 的销毁仍由宿主另行负责。
 ```
+
+`app` 为已初始化的 Pixi Application。完整宿主的资源管理可参考[文档在线示例宿主](https://github.com/sumy7/piant/blob/main/docs/.vitepress/theme/mountExample.ts)；其 Yoga 释放是对当前核心清理限制的补偿。
 
 ---
 

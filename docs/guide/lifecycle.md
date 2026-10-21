@@ -48,6 +48,12 @@ function TimerComponent() {
 }
 ```
 
+## render 返回的清理函数
+
+`render(App, root)` 返回 `() => void`。宿主结束本次渲染时调用它，可停止所属 owner 的响应式副作用、执行 `onCleanup` 并取消尚未执行的 `onMount`。
+
+该清理函数不保证销毁整个节点树、`PRoot` 或 Pixi Application；根节点布局 ticker 与宿主资源需另行释放。签名、使用示例和当前清理限制见 [render API](/reference/renderer#render)。
+
 ## onError
 
 `onError` 注册一个错误处理函数，捕获当前 owner 作用域内的错误。通常用于在组件内部处理局部错误，比使用 `ErrorBoundary` 更灵活。

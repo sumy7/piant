@@ -53,6 +53,34 @@ interface TextProps {
 
 ---
 
+## Input
+
+```ts
+import type { InputProps } from '@piant/core';
+
+function Input(props: InputProps): JSX.Element;
+```
+
+`InputProps` 的属性均可选：
+
+| 属性 | 类型 | 说明 |
+|------|------|------|
+| `style` | `StyleValue<ViewStyles>` | 节点布局与视觉样式 |
+| `value` | `string` | 响应式同步的值 |
+| `defaultValue` | `string` | 仅用于初始化；同时传 `value` 时被其覆盖 |
+| `placeholder` | `string` | 默认 `''` |
+| `type` | `string` | 默认 `'text'` |
+| `disabled` | `boolean` | 默认 `false` |
+| `onInput` / `onChange` | `(value: string, event: Event) => void` | 当前字符串值与原生 DOM 事件 |
+| `onFocus` / `onBlur` | `(event: FocusEvent) => void` | 原生焦点事件 |
+| `ref` | `InputProps['ref']` | 接收 `PInput` 节点，参数类型可自动推导 |
+
+`Input` 基于原生 HTML input，需要 DOM 环境；受控用法应在 `onInput` 中写回状态。`ref` 的 `node._inputElement` 是原生 `HTMLInputElement`；`PInput` 没有从包入口直接导出。Props 不包含 `children`、`PixiEventProps` 或任意 HTML 属性透传，`style` 不会将文本样式转换成原生 input 的 CSS。
+
+详见：[Input 指南与在线示例](/guide/components/input)
+
+---
+
 ## Span
 
 ```ts
@@ -213,9 +241,26 @@ function ErrorBoundary(props: {
 
 ---
 
+## Transition 与 TransitionGroup
+
+```ts
+import type { TransitionGroupProps, TransitionProps } from '@piant/core';
+
+function Transition(props: TransitionProps): JSX.Element;
+function TransitionGroup(props: TransitionGroupProps): JSX.Element;
+```
+
+两者均接受 `children`、`appear`（默认 `false`）和 `TransitionEvents` 中的六个进入/离开钩子。`Transition` 另接受 `mode: 'parallel' | 'out-in' | 'in-out'`（默认 `'parallel'`），通常配合 `Show` 使用；`TransitionGroup` 配合 `For` / `Index` 管理列表增删。
+
+`onEnter` / `onExit` 接收元素与 `done` 回调，调用 `done()` 表示该阶段完成。`TransitionProps`、`TransitionGroupProps` 和 `TransitionEvents` 均从包入口导出。
+
+详见：[完整 Props、生命周期与用法](/guide/control-flow/transition)
+
+---
+
 ## 事件 Props（PixiEventProps）
 
-所有支持交互的组件（View、Image、ScrollView、CustomView）均接受以下事件 props：
+View、Image、ScrollView、CustomView 接受以下 Pixi 事件 props；Input 使用上文列出的原生 DOM 事件回调：
 
 ```ts
 type PixiEventProps<TNode extends PNode = PNode> = {

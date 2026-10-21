@@ -217,6 +217,11 @@ button:focus-visible {
   width: 100%;
   height: 100%;
 }
+/* Pixi 8.22 positions its DOM layer using viewport offsets. This preview
+   already provides the canvas's positioning origin, including on scroll. */
+.example-canvas > :deep(div) {
+  transform: none !important;
+}
 .example-placeholder {
   position: absolute;
   inset: 0;
