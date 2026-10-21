@@ -1,5 +1,4 @@
 import { PNode, PRoot } from '@piant/core';
-import { TanStackDevtoolsCore } from '@tanstack/devtools';
 import { type Application, Container, Rectangle, Ticker } from 'pixi.js';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -56,6 +55,7 @@ async function attach(
   sessions.push(session!);
   await vi.waitFor(() => {
     expect(document.querySelector('[data-piant-devtools]')).not.toBeNull();
+    expect(value.ticker.count).toBe(options.defaultOpen === false ? 0 : 1);
   });
   return session!;
 }
@@ -76,6 +76,10 @@ function overlay() {
   return document.querySelector<SVGSVGElement>('[data-piant-highlight]')!;
 }
 
+function inspectorShadow() {
+  return document.querySelector('[data-piant-devtools]')!.shadowRoot!;
+}
+
 afterEach(() => {
   for (const session of sessions.splice(0)) session.detach();
   for (const value of fixtures.splice(0)) {
@@ -84,8 +88,9 @@ afterEach(() => {
     value.ticker.destroy();
   }
   document.body.replaceChildren();
-  localStorage.clear();
   vi.restoreAllMocks();
+  localStorage.clear();
+  vi.unstubAllGlobals();
 });
 
 describe('optional inspector session', () => {
@@ -407,21 +412,38 @@ describe('optional inspector session', () => {
     expect(attachDevtools({ ...value, enabled: true })).toBeNull();
   });
 
-  it('renders the Piant inspector inside the real TanStack workbench', async () => {
+  it('renders a single Piant dock with its four working inspection tabs', async () => {
     const value = fixture();
     await attach(value);
-    expect(document.querySelector('[data-piant-devtools-host]')).not.toBeNull();
+    const host = document.querySelector('[data-piant-devtools-host]')!;
+    const panel = host.querySelector('[data-piant-devtools-panel]')!;
+    expect(panel.getAttribute('aria-label')).toBe('Piant DevTools panel');
+    expect(host.querySelectorAll('[data-piant-devtools-panel]')).toHaveLength(
+      1,
+    );
     expect(
       document.querySelector('[aria-label="TanStack Devtools"]'),
-    ).not.toBeNull();
-    expect(
-      document.querySelector('[aria-label="Close TanStack Devtools"]'),
-    ).not.toBeNull();
-    const plugin = document.querySelector('[data-piant-devtools]')!;
-    expect(
-      plugin.shadowRoot!.querySelector('nav')!.getAttribute('aria-label'),
-    ).toBe('PNode element tree');
-    expect((plugin as HTMLElement).style.position).not.toBe('fixed');
+    ).toBeNull();
+    expect(document.querySelector('[aria-label="Close Piant"]')).toBeNull();
+    const plugin = panel.querySelector<HTMLElement>('[data-piant-devtools]')!;
+    const shadow = plugin.shadowRoot!;
+    expect(shadow.querySelectorAll('[role="tab"]')).toHaveLength(4);
+    for (const name of ['Elements', 'State', 'Performance', 'Animations']) {
+      const tab = Array.from(
+        shadow.querySelectorAll<HTMLButtonElement>('[role="tab"]'),
+      ).find((entry) => entry.textContent === name)!;
+      tab.click();
+      expect(tab.getAttribute('aria-selected')).toBe('true');
+      expect(
+        shadow.querySelector<HTMLElement>(
+          `[role="tabpanel"][aria-label="${name}"]`,
+        )!.hidden,
+      ).toBe(false);
+    }
+    expect(shadow.querySelector('nav')!.getAttribute('aria-label')).toBe(
+      'PNode element tree',
+    );
+    expect(plugin.style.position).not.toBe('fixed');
   });
 
   it('pauses sampling while collapsed and refreshes changed elements on launcher reopen', async () => {
@@ -444,11 +466,7 @@ describe('optional inspector session', () => {
     session.select(node._id);
     advance(value.ticker, 20);
     expect(overlay().style.display).toBe('');
-    document
-      .querySelector<HTMLButtonElement>(
-        '[aria-label="Close TanStack Devtools"]',
-      )!
-      .click();
+    inspectorShadow().querySelector<HTMLButtonElement>('#collapse')!.click();
     await vi.waitFor(() => expect(value.ticker.count).toBe(0));
     expect(overlay().style.display).toBe('none');
     const snapshot = session.snapshot();
@@ -462,9 +480,7 @@ describe('optional inspector session', () => {
     expect(animations).toHaveBeenCalledTimes(animationCalls);
     expect(session.snapshot()).toBe(snapshot);
     document
-      .querySelector<HTMLButtonElement>(
-        '[aria-label="Open TanStack Devtools"]',
-      )!
+      .querySelector<HTMLButtonElement>('[aria-label="Open Piant DevTools"]')!
       .click();
     await vi.waitFor(() => expect(value.ticker.count).toBe(1));
     expect(session.snapshot().elements.map((entry) => entry.name)).toContain(
@@ -480,28 +496,40 @@ describe('optional inspector session', () => {
     expect(session.snapshot().stats.frames).toBe(snapshot.stats.frames + 1);
   });
 
-  it('pauses Piant sampling when its plugin tab is closed', async () => {
+  it('retains the inspector and its filter, tab and disclosure state across collapse', async () => {
     const value = fixture();
-    const node = child(value.root);
+    child(value.root, 'Counter');
     value.root.doLayout();
-    const getState = vi.fn(() => ({ count: 1 }));
-    const session = await attach(value, { getState });
-    session.select(node._id);
-    document
-      .querySelector<HTMLButtonElement>('[aria-label="Close Piant"]')!
-      .click();
-    await vi.waitFor(() => expect(value.ticker.count).toBe(0));
-    expect(overlay().style.display).toBe('none');
-    const calls = getState.mock.calls.length;
-    value.root.markDirty();
-    value.root.doLayout();
-    advance(value.ticker, 200);
-    expect(getState).toHaveBeenCalledTimes(calls);
-    session.detach();
-    expect(document.querySelector('[data-piant-devtools-host]')).toBeNull();
+    await attach(value, { getState: () => ({ nested: { count: 1 } }) });
+    const shadow = inspectorShadow();
+    const filter = shadow.querySelector<HTMLInputElement>(
+      '[aria-label="Filter elements"]',
+    )!;
+    filter.value = 'counter';
+    filter.dispatchEvent(new Event('input', { bubbles: true }));
+    const stateTab = Array.from(
+      shadow.querySelectorAll<HTMLButtonElement>('[role="tab"]'),
+    ).find((tab) => tab.textContent === 'State')!;
+    stateTab.click();
+    const nested = shadow.querySelector<HTMLDetailsElement>('#state details')!;
+    nested.open = true;
+    nested.dispatchEvent(new Event('toggle'));
+    shadow.querySelector<HTMLButtonElement>('#collapse')!.click();
+    expect(value.ticker.count).toBe(0);
     expect(
-      document.querySelector('[aria-label="TanStack Devtools"]'),
-    ).toBeNull();
+      document.querySelector<HTMLElement>('[data-piant-devtools-panel]')!
+        .hidden,
+    ).toBe(true);
+    document
+      .querySelector<HTMLButtonElement>('[aria-label="Open Piant DevTools"]')!
+      .click();
+    expect(value.ticker.count).toBe(1);
+    expect(inspectorShadow()).toBe(shadow);
+    expect(shadow.querySelector('[aria-label="Filter elements"]')).toBe(filter);
+    expect(filter.value).toBe('counter');
+    expect(stateTab.getAttribute('aria-selected')).toBe('true');
+    expect(shadow.querySelector('#state details')).toBe(nested);
+    expect(nested.open).toBe(true);
   });
 
   it('starts collapsed without Piant sampling until the launcher opens', async () => {
@@ -516,7 +544,7 @@ describe('optional inspector session', () => {
     sessions.push(session);
     await vi.waitFor(() =>
       expect(
-        document.querySelector('[aria-label="Open TanStack Devtools"]'),
+        document.querySelector('[aria-label="Open Piant DevTools"]'),
       ).not.toBeNull(),
     );
     expect(value.ticker.count).toBe(0);
@@ -524,28 +552,25 @@ describe('optional inspector session', () => {
     advance(value.ticker, 200);
     expect(getState).toHaveBeenCalledTimes(calls);
     document
-      .querySelector<HTMLButtonElement>(
-        '[aria-label="Open TanStack Devtools"]',
-      )!
+      .querySelector<HTMLButtonElement>('[aria-label="Open Piant DevTools"]')!
       .click();
     await vi.waitFor(() => expect(value.ticker.count).toBe(1));
     expect(getState.mock.calls.length).toBeGreaterThan(calls);
   });
 
-  it('cancels an asynchronous TanStack mount on immediate detach', async () => {
+  it('cancels deferred sampling startup on immediate detach', async () => {
     const value = fixture();
     const session = attachDevtools({ ...value, enabled: true })!;
     sessions.push(session);
     session.detach();
-    // Flush dynamic imports and Solid lazy rendering, rather than only asserting
-    // before the upstream asynchronous mount had a chance to run.
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    // Allow the queued sampling activation to run after detach.
+    await Promise.resolve();
     expect(value.ticker.count).toBe(0);
     expect(document.querySelector('[data-piant-devtools-host]')).toBeNull();
     expect(document.querySelector('[data-piant-devtools]')).toBeNull();
     expect(document.querySelector('[data-piant-highlight]')).toBeNull();
     expect(
-      document.querySelector('[aria-label="Open TanStack Devtools"]'),
+      document.querySelector('[aria-label="Open Piant DevTools"]'),
     ).toBeNull();
     expect(
       document.querySelector('[aria-label="TanStack Devtools"]'),
@@ -564,7 +589,7 @@ describe('optional inspector session', () => {
       document.querySelectorAll('[data-piant-devtools-host]'),
     ).toHaveLength(1);
     expect(
-      document.querySelectorAll('[aria-label="TanStack Devtools"]'),
+      document.querySelectorAll('[data-piant-devtools-panel]'),
     ).toHaveLength(1);
     first.refresh();
     expect(first.snapshot()).toBe(snapshot);
@@ -573,25 +598,21 @@ describe('optional inspector session', () => {
   it('still detaches the complete shell when the root is destroyed while collapsed', async () => {
     const value = fixture();
     const session = await attach(value);
-    document
-      .querySelector<HTMLButtonElement>(
-        '[aria-label="Close TanStack Devtools"]',
-      )!
-      .click();
+    inspectorShadow().querySelector<HTMLButtonElement>('#collapse')!.click();
     await vi.waitFor(() => expect(value.ticker.count).toBe(0));
     expect(
-      document.querySelector('[aria-label="Open TanStack Devtools"]'),
+      document.querySelector('[aria-label="Open Piant DevTools"]'),
     ).not.toBeNull();
     value.root.destroy();
     expect(document.querySelector('[data-piant-devtools-host]')).toBeNull();
     expect(document.querySelector('[data-piant-highlight]')).toBeNull();
     expect(
-      document.querySelector('[aria-label="Open TanStack Devtools"]'),
+      document.querySelector('[aria-label="Open Piant DevTools"]'),
     ).toBeNull();
     session.detach();
   });
 
-  it('preserves a synchronous selection made before the asynchronous shell is ready', async () => {
+  it('preserves synchronous selection before deferred sampling starts', async () => {
     const value = fixture();
     const node = child(value.root, 'Selected before mount');
     value.root.doLayout();
@@ -621,11 +642,7 @@ describe('optional inspector session', () => {
     let count = 1;
     const getState = vi.fn(() => ({ count }));
     const session = await attach(value, { getState });
-    document
-      .querySelector<HTMLButtonElement>(
-        '[aria-label="Close TanStack Devtools"]',
-      )!
-      .click();
+    inspectorShadow().querySelector<HTMLButtonElement>('#collapse')!.click();
     await vi.waitFor(() => expect(value.ticker.count).toBe(0));
     const before = session.snapshot();
     const stateCalls = getState.mock.calls.length;
@@ -651,56 +668,193 @@ describe('optional inspector session', () => {
     expect(getState).toHaveBeenCalledTimes(refreshedCalls);
   });
 
-  it('cleans Piant resources and propagates errors when the upstream unmount throws', async () => {
+  it('persists theme and height while defaultOpen controls each new session', async () => {
+    const key = 'piant-devtools-panel:v1';
+    localStorage.setItem(
+      key,
+      JSON.stringify({ height: 280, theme: 'light', open: false }),
+    );
     const value = fixture();
-    const node = child(value.root);
-    value.root.doLayout();
-    const stop = vi.fn();
-    const observe = value.root.observe.bind(value.root);
-    vi.spyOn(value.root, 'observe').mockImplementation((listener) => {
-      const unsubscribe = observe(listener);
-      return () => {
-        stop();
-        unsubscribe();
-      };
+    const first = await attach(value, { defaultOpen: true });
+    const panel = document.querySelector<HTMLElement>(
+      '[data-piant-devtools-panel]',
+    )!;
+    expect(panel.hidden).toBe(false);
+    expect(panel.style.height).toBe('280px');
+    expect(
+      document.querySelector<HTMLElement>('[data-piant-devtools]')!.dataset
+        .theme,
+    ).toBe('light');
+    const resize = panel.querySelector('[role="separator"]')!;
+    resize.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }),
+    );
+    inspectorShadow().querySelector<HTMLButtonElement>('#theme')!.click();
+    expect(
+      document.querySelector<HTMLElement>('[data-piant-devtools]')!.dataset
+        .theme,
+    ).toBe('dark');
+    expect(JSON.parse(localStorage.getItem(key)!)).toEqual({
+      height: 304,
+      theme: 'dark',
     });
-    const getState = vi.fn(() => ({ count: 1 }));
-    const baselineTicker = value.ticker.count;
-    const baselineStageListeners = value.stage.listenerCount('destroyed');
-    const session = await attach(value, { getState });
-    session.select(node._id);
-    const unmount = TanStackDevtoolsCore.prototype.unmount;
-    const failure = new Error('Injected upstream unmount failure');
-    const unmountSpy = vi
-      .spyOn(TanStackDevtoolsCore.prototype, 'unmount')
-      .mockImplementation(function (this: TanStackDevtoolsCore) {
-        unmount.call(this);
-        throw failure;
+    inspectorShadow().querySelector<HTMLButtonElement>('#collapse')!.click();
+    first.detach();
+    await attach(value, { defaultOpen: false });
+    const reopened = document.querySelector<HTMLElement>(
+      '[data-piant-devtools-panel]',
+    )!;
+    expect(reopened.hidden).toBe(true);
+    expect(reopened.style.height).toBe('304px');
+    expect(
+      document.querySelector<HTMLElement>('[data-piant-devtools]')!.dataset
+        .theme,
+    ).toBe('dark');
+    expect(value.ticker.count).toBe(0);
+    document
+      .querySelector<HTMLButtonElement>('[aria-label="Open Piant DevTools"]')!
+      .click();
+    expect(value.ticker.count).toBe(1);
+    expect(JSON.parse(localStorage.getItem(key)!)).not.toHaveProperty('open');
+  });
+
+  it.each([
+    '{broken',
+    'null',
+    '{"height":"500","theme":"sepia"}',
+    '{"height":-2,"theme":false}',
+  ])('uses safe defaults for invalid saved settings %s', async (settings) => {
+    localStorage.setItem('piant-devtools-panel:v1', settings);
+    await attach(fixture());
+    expect(
+      document.querySelector<HTMLElement>('[data-piant-devtools-panel]')!.style
+        .height,
+    ).toBe('400px');
+    expect(
+      document.querySelector<HTMLElement>('[data-piant-devtools]')!.dataset
+        .theme,
+    ).toBe('dark');
+  });
+
+  it('keeps resizing and theme switching functional when storage is unavailable', async () => {
+    const storage = vi
+      .spyOn(window, 'localStorage', 'get')
+      .mockImplementation(() => {
+        throw new Error('Storage blocked');
       });
-    expect(() => session.detach()).toThrow(failure);
-    expect(stop).toHaveBeenCalledTimes(1);
-    expect(value.ticker.count).toBe(baselineTicker);
-    expect(value.stage.listenerCount('destroyed')).toBe(baselineStageListeners);
-    expect(value.root._view.listenerCount('destroyed')).toBe(0);
+    await attach(fixture());
+    const panel = document.querySelector<HTMLElement>(
+      '[data-piant-devtools-panel]',
+    )!;
+    expect(panel.style.height).toBe('400px');
+    expect(() =>
+      inspectorShadow().querySelector<HTMLButtonElement>('#theme')!.click(),
+    ).not.toThrow();
+    expect(
+      document.querySelector<HTMLElement>('[data-piant-devtools]')!.dataset
+        .theme,
+    ).toBe('light');
+    expect(() =>
+      panel
+        .querySelector('[role="separator"]')!
+        .dispatchEvent(
+          new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }),
+        ),
+    ).not.toThrow();
+    expect(panel.style.height).toBe('376px');
+    expect(storage).toHaveBeenCalledTimes(3);
+  });
+
+  it('resizes with keyboard and matching pointer drags and clamps to the viewport', async () => {
+    vi.stubGlobal('innerHeight', 800);
+    await attach(fixture());
+    const panel = document.querySelector<HTMLElement>(
+      '[data-piant-devtools-panel]',
+    )!;
+    const separator = panel.querySelector<HTMLElement>('[role="separator"]')!;
+    const key = (key: string) =>
+      separator.dispatchEvent(
+        new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }),
+      );
+    key('ArrowUp');
+    expect(panel.style.height).toBe('424px');
+    key('ArrowDown');
+    expect(panel.style.height).toBe('400px');
+    key('Home');
+    expect(panel.style.height).toBe('180px');
+    key('End');
+    expect(panel.style.height).toBe('776px');
+    key('Home');
+    separator.dispatchEvent(
+      new PointerEvent('pointerdown', {
+        pointerId: 7,
+        button: 0,
+        clientY: 500,
+        bubbles: true,
+      }),
+    );
+    window.dispatchEvent(
+      new PointerEvent('pointermove', { pointerId: 8, clientY: 200 }),
+    );
+    expect(panel.style.height).toBe('180px');
+    window.dispatchEvent(
+      new PointerEvent('pointermove', { pointerId: 7, clientY: 400 }),
+    );
+    expect(panel.style.height).toBe('280px');
+    window.dispatchEvent(new PointerEvent('pointerup', { pointerId: 7 }));
+    window.dispatchEvent(
+      new PointerEvent('pointermove', { pointerId: 7, clientY: 200 }),
+    );
+    expect(panel.style.height).toBe('280px');
+    expect(
+      JSON.parse(localStorage.getItem('piant-devtools-panel:v1')!).height,
+    ).toBe(280);
+    vi.stubGlobal('innerHeight', 150);
+    window.dispatchEvent(new Event('resize'));
+    expect(panel.style.height).toBe('126px');
+    expect(separator.getAttribute('aria-valuenow')).toBe('126');
+    expect(separator.getAttribute('aria-valuemin')).toBe('126');
+    expect(separator.getAttribute('aria-valuemax')).toBe('126');
+  });
+
+  it('removes resize and toolbar handlers when detached during a pointer drag', async () => {
+    const value = fixture();
+    const session = await attach(value);
+    const host = document.querySelector<HTMLElement>(
+      '[data-piant-devtools-host]',
+    )!;
+    const separator = host.querySelector<HTMLElement>(
+      '[aria-label="Resize Piant DevTools panel"]',
+    )!;
+    const theme = inspectorShadow().querySelector<HTMLButtonElement>('#theme')!;
+    const launcher = host.querySelector<HTMLButtonElement>(
+      '[aria-label="Open Piant DevTools"]',
+    )!;
+    const getState = vi.spyOn(window, 'localStorage', 'get');
+    separator.dispatchEvent(
+      new PointerEvent('pointerdown', {
+        pointerId: 1,
+        button: 0,
+        clientY: 400,
+        bubbles: true,
+      }),
+    );
+    session.detach();
+    const calls = getState.mock.calls.length;
+    window.dispatchEvent(
+      new PointerEvent('pointermove', { pointerId: 1, clientY: 250 }),
+    );
+    window.dispatchEvent(new PointerEvent('pointerup', { pointerId: 1 }));
+    window.dispatchEvent(new Event('resize'));
+    separator.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }),
+    );
+    theme.click();
+    launcher.click();
+    expect(getState).toHaveBeenCalledTimes(calls);
+    expect(value.ticker.count).toBe(0);
+    expect(host.isConnected).toBe(false);
     expect(document.querySelector('[data-piant-highlight]')).toBeNull();
-    expect(document.querySelector('[data-piant-devtools-host]')).toBeNull();
-    expect(
-      document.querySelector('[aria-label="TanStack Devtools"]'),
-    ).toBeNull();
-    const stateCalls = getState.mock.calls.length;
-    session.refresh();
-    session.select(node._id);
-    value.root.markDirty();
-    value.root.doLayout();
-    advance(value.ticker, 200);
-    expect(getState).toHaveBeenCalledTimes(stateCalls);
     expect(() => session.detach()).not.toThrow();
-    expect(unmountSpy).toHaveBeenCalledTimes(1);
-    unmountSpy.mockRestore();
-    await attach(value);
-    expect(value.ticker.count).toBe(baselineTicker + 1);
-    expect(
-      document.querySelectorAll('[data-piant-devtools-host]'),
-    ).toHaveLength(1);
   });
 });

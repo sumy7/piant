@@ -14,7 +14,7 @@ export type AnimationInspection = {
 export type DevtoolsOptions = {
   /** Opt in explicitly; false/omitted creates no panel or subscriptions. */
   enabled?: boolean;
-  /** Initial TanStack shell visibility; persisted shell settings take precedence. */
+  /** Initial Piant panel visibility, true by default; applies on each attachment. */
   defaultOpen?: boolean;
   root: PRoot;
   app: Application;

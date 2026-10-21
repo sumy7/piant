@@ -11,6 +11,8 @@ const icons = {
   search: '<circle cx="6.5" cy="6.5" r="4.5"/><path d="m10 10 4 4"/>',
   refresh: '<path d="M13 6a5.5 5.5 0 1 0 .2 4M13 2v4H9"/>',
   close: '<path d="m4 4 8 8m0-8-8 8"/>',
+  theme:
+    '<circle cx="8" cy="8" r="5.5"/><path d="M8 2.5v11"/><path d="M8 3a5 5 0 0 1 0 10Z" fill="currentColor" stroke="none"/>',
   chevron: '<path d="m6 4 4 4-4 4"/>',
   select: '<path d="M6 2H2v4m8-4h4v4M2 10v4h4m8-4v4h-4M5 5h6v6H5Z"/>',
 } as const;
@@ -24,12 +26,13 @@ type ValueRow = {
   body?: HTMLElement;
 };
 
-/** The embedded, read-only Piant inspector. TanStack owns its outer dock. */
+/** The read-only Piant inspector, embedded in its own page dock. */
 export function createInspector(
   mount: HTMLElement,
   select: (id: number) => void,
   refresh: () => void,
   close: () => void,
+  controls?: { collapse: () => void; toggleTheme: () => void },
 ) {
   const doc = mount.ownerDocument;
   let removed = false;
@@ -88,12 +91,24 @@ export function createInspector(
   closeButton.append(icon('close'), el('span', 'sr-only', 'Disconnect'));
   const divider = el('span', 'action-divider');
   divider.setAttribute('aria-hidden', 'true');
-  actions.append(
-    el('span', 'live', 'Live'),
-    refreshButton,
-    divider,
-    closeButton,
-  );
+  actions.append(el('span', 'live', 'Live'), refreshButton);
+  const dockControls: HTMLButtonElement[] = [];
+  if (controls) {
+    const themeButton = button('icon-button', 'Toggle color theme');
+    themeButton.id = 'theme';
+    themeButton.title = 'Toggle color theme';
+    themeButton.append(icon('theme'));
+    themeButton.addEventListener('click', controls.toggleTheme);
+    const collapseButton = button('icon-button', 'Collapse Piant DevTools');
+    collapseButton.id = 'collapse';
+    collapseButton.title = 'Collapse Piant DevTools';
+    collapseButton.append(icon('chevron'));
+    collapseButton.classList.add('collapse-button');
+    collapseButton.addEventListener('click', controls.collapse);
+    dockControls.push(themeButton, collapseButton);
+    actions.append(...dockControls);
+  }
+  actions.append(divider, closeButton);
   toolbar.append(brand, tabs, actions);
   const workspace = el('main', 'workspace');
   inspector.append(toolbar, workspace);
@@ -698,6 +713,10 @@ export function createInspector(
       removed = true;
       refreshButton.removeEventListener('click', refresh);
       closeButton.removeEventListener('click', close);
+      if (controls) {
+        dockControls[0].removeEventListener('click', controls.toggleTheme);
+        dockControls[1].removeEventListener('click', controls.collapse);
+      }
       current = undefined;
       renderedElements = undefined;
       breadcrumbElements = undefined;

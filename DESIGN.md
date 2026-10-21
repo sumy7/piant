@@ -2,7 +2,7 @@
 
 ## Source of truth
 
-Status: Active. Date: 2026-10-21. Scope: the Piant inspector inside the TanStack Devtools page dock, not the application canvas or upstream shell. User direction: improve the interface using Vue Devtools as a reference. Evidence: current `packages/devtools/src/panel.ts`, `types.ts`, behavior tests, and browser screenshots; [Vue Devtools Components and Timeline](https://devtools.vuejs.org/getting-started/features#components) inspected in the official documentation. No earlier design contract or inspector-specific assets exist.
+Status: Active. Date: 2026-10-21. Scope: the single-layer Piant page-embedded panel. User direction: use `@tanstack/devtools-ui` as the UI foundation, remove the TanStack workbench, and retain the four Piant views. Evidence: `packages/devtools/src/panel.ts`, `inspector.ts`, `types.ts`, behavior tests, and browser screenshots; [TanStack package overview](https://tanstack.com/devtools/latest/docs/overview) separates the shared Solid.js UI library from the full workbench; [Vue Devtools Components and Timeline](https://devtools.vuejs.org/getting-started/features#components) inspected in the official documentation. The existing inspector design and interactions remain the baseline; no new image assets are required.
 
 ## Brand
 
@@ -10,7 +10,7 @@ Precise, calm, technical. Piant identity remains distinct; borrow Vue Devtools' 
 
 ## Product goals
 
-Find an element quickly, understand its place in the tree, inspect its geometry/style, and read application state or diagnostics without losing context. Success: useful content at a 400px dock height, clear selection/highlight, searchable/collapsible tree, readable values, and unchanged lifecycle/production exclusion. No new runtime capabilities, editing, remote inspection, or dependencies.
+Find an element quickly, understand its place in the tree, inspect its geometry/style, and read application state or diagnostics without losing context. Success: useful content at a 400px dock height, clear selection/highlight, searchable/collapsible tree, readable values, and unchanged lifecycle/production exclusion. No new observation capabilities, editing or remote inspection. Replace the workbench dependency with `@tanstack/devtools-ui` and its Solid.js runtime.
 
 ## Personas and jobs
 
@@ -18,7 +18,7 @@ Piant developers debugging a live Canvas application. They need to move between 
 
 ## Information architecture
 
-A compact toolbar with Piant identity, Elements / State / Performance / Animations navigation, live connection status, refresh and disconnect. Elements uses a searchable tree on the left and selected-node header, breadcrumb and grouped Layout / Style / Transform properties on the right. State uses typed read-only property rows. Performance shows labeled numeric metrics and bounded layout update history. Animations lists explicitly registered handles with playback status and observed statistics.
+A compact toolbar with Piant identity, Elements / State / Performance / Animations navigation, live connection status, theme, refresh, collapse and disconnect. The bottom-right “Open Piant DevTools” button opens the panel directly; no outer plugin navigation or second toolbar. Elements uses a searchable tree on the left and selected-node header, breadcrumb and grouped Layout / Style / Transform properties on the right. State uses typed read-only property rows. Performance shows labeled numeric metrics and bounded layout update history. Animations lists explicitly registered handles with playback status and observed statistics.
 
 ## Design principles
 
@@ -30,28 +30,28 @@ Neutral charcoal surfaces with a restrained emerald selection accent, 1px separa
 
 ## Components
 
-TanStack owns the outer dock/launcher. Piant owns tabs, search, tree rows, disclosure controls, breadcrumb, property groups, metric tiles, event rows and empty states. Inspector CSS tokens live in its Shadow DOM and follow `data-theme` from TanStack. Reuse the existing snapshot and callbacks rather than adding observation layers.
+`@tanstack/devtools-ui` 0.7.1 provides shared Solid.js UI primitives and theme foundations. Piant owns the fixed bottom dock, launcher, resize handle and single inspector toolbar, plus search, tree rows, disclosure controls, breadcrumb, property groups, metric tiles, event rows and empty states. Inspector CSS tokens live in its Shadow DOM and follow the Piant theme control. Reuse the existing snapshot and callbacks rather than adding observation layers.
 
 ## Accessibility
 
-Native buttons and search input, accessible labels, keyboard focus indicators, selected/tab semantics, and keyboard-operable disclosures. Color is reinforced with labels. Search has an explicit no-results state. Read-only values must remain selectable. Keyboard actions must not intercept unrelated application input. Honor reduced-motion preferences.
+Native buttons and search input, accessible labels, keyboard focus indicators, selected/tab semantics, and keyboard-operable disclosures. Color is reinforced with labels. Search has an explicit no-results state. Read-only values must remain selectable. Keyboard actions must not intercept unrelated application input. Honor reduced-motion preferences. The resize separator supports Arrow Up to increase height, Arrow Down to decrease it, Home for minimum height and End for maximum height. Give launcher, theme and collapse controls explicit accessible names.
 
 ## Responsive behavior
 
-Desktop: two independently scrollable panes with approximately 35% tree / 65% details. Small widths: constrained columns and horizontal overflow only for inherently long values, with wrapping labels and readable controls. The inspector fills available dock space; do not set a competing fixed panel or resize the business layout.
+Desktop: two independently scrollable panes with approximately 35% tree / 65% details. Small widths: constrained columns and horizontal overflow only for inherently long values, with wrapping labels and readable controls. Piant owns one viewport-fixed bottom panel and does not resize the business layout. Drag its top edge to adjust height; clamp height again when the viewport resizes. `mount` is the actual DOM host, so use `document.body` or a container without transformed ancestors to preserve viewport positioning.
 
 ## Interaction states
 
-Initial Elements view has a deliberate selection empty state. Tree search retains matching ancestor context; collapse is persistent across sampling, while searching reveals matches. Missing selection after removal returns to the empty state. Empty state, timeline and animation data have helpful text. Snapshot error/unsupported/truncation markers remain visible. Collapse, reopen, plugin destroy, immediate detach and app teardown preserve existing behavior.
+Initial Elements view has a deliberate selection empty state. Tree search retains matching ancestor context; collapse is persistent across sampling, while searching reveals matches. Missing selection after removal returns to the empty state. Empty state, timeline and animation data have helpful text. Snapshot error/unsupported/truncation markers remain visible. Collapse retains the inspector DOM, active view, filter and disclosures while pausing automatic sampling and clearing selection/highlight. Reopen refreshes data and resumes sampling. Persist only height and theme under the private `piant-devtools-panel:v1` storage key; malformed or unavailable storage falls back safely. `defaultOpen` applies on every attachment and is never overridden by saved open state. Disconnect, immediate detach, root destruction and app teardown remove Solid roots, DOM, listeners and observations. Initialization creates the DOM synchronously; sampling activates in a cancellable microtask, while initial snapshots and selection remain synchronously available.
 
 ## Content voice
 
-Short developer-facing English labels, consistent with the current example and upstream shell. Explain actual units and boundaries close to metrics: CPU layout duration, Ticker frame interval and observed animation frames. State is explicitly read-only.
+Short developer-facing English labels, consistent with the current example and Piant panel. Explain actual units and boundaries close to metrics: CPU layout duration, Ticker frame interval and observed animation frames. State is explicitly read-only.
 
 ## Implementation constraints
 
-TypeScript and DOM inside the framework-independent TanStack plugin; no React/Vue adapter or additional dependencies. No core or sampling behavior changes for this visual iteration. Avoid full tree rebuilding on every sample; preserve filter input focus, tree scroll and object disclosure state. Existing lifecycle tests must keep passing; add meaningful interaction tests for new search, collapse, tabs and typed values. Validate default/light themes and real-browser dock behavior, plus production stripping and existing builds.
+TypeScript, native inspector DOM and Solid.js mounting for `@tanstack/devtools-ui`; no React/Vue adapter, full `@tanstack/devtools` workbench, event bus, remote transport or separate window. Keep the existing core observations and four views. Preserve development-only dynamic imports: the package entry itself is not a production no-op. Avoid full tree rebuilding on every sample; preserve filter input focus, tree scroll and object disclosure state. Existing lifecycle tests must keep passing; add meaningful interaction tests for panel resizing, persistence, collapse/reopen and synchronous detach, alongside search, tabs and typed values. Validate default/light themes and real-browser dock behavior, plus production stripping and existing builds.
 
 ## Open questions
 
-No blocking questions. Assumption: retain English UI and the existing TanStack dock configuration. Broader rendering/animation profiling remains tracked outside this visual iteration.
+No blocking questions. Retain English UI and the four existing views. Broader rendering/animation profiling remains tracked separately.

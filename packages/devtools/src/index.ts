@@ -31,7 +31,7 @@ const bound = (
     ? Math.max(min, Math.min(max, Math.floor(value!)))
     : fallback;
 
-/** Attach one page-embedded TanStack inspector per document. Import inside a development-only branch. */
+/** Attach one page-embedded Piant inspector per document. Import inside a development-only branch. */
 export function attachDevtools(
   options: DevtoolsOptions,
 ): DevtoolsSession | null {
@@ -304,7 +304,7 @@ export function attachDevtools(
     if (detached || active === next) return;
     active = next;
     if (active) {
-      // Layouts may have changed while the shell was collapsed.
+      // Layouts may have changed while the panel was collapsed.
       dirty = true;
       elapsed = 0;
       ticker.add(tick, undefined, UPDATE_PRIORITY.LOW);

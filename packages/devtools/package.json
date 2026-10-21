@@ -59,6 +59,7 @@
   },
   "sideEffects": false,
   "dependencies": {
-    "@tanstack/devtools": "0.15.0"
+    "@tanstack/devtools-ui": "0.7.1",
+    "solid-js": "1.9.17"
   }
 }
