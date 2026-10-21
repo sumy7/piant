@@ -6,6 +6,10 @@ Piant 提供了两个列表渲染组件：`For` 和 `Index`，适用于不同的
 
 `For` 用于渲染以**数组项**为中心的列表，每个数组项对应一个组件实例。当数组项本身变化时（引用变化），对应的组件会重新创建。
 
+点击「添加」或「移除末项」，观察 `For` 随数组增删项目；清空后显示 fallback。
+
+<LiveExample example="list" title="动态增删列表" />
+
 ### 基本用法
 
 ```tsx
@@ -28,8 +32,6 @@ function TodoList() {
   );
 }
 ```
-
-<LiveExample example="list" title="动态增删列表" />
 
 ### fallback
 
@@ -58,6 +60,10 @@ function TodoList() {
 `Index` 与 `For` 类似，但以**索引**为中心。每个索引位置对应一个组件实例，当该位置的值变化时，组件会通过响应式更新而不是重新创建。
 
 适合数组长度固定、但内容频繁变化的场景。
+
+点击按钮同时更新三个位置的值，观察 `Index` 的固定索引与响应式 `item()`。
+
+<LiveExample example="indexList" title="固定位置更新数值" />
 
 ### 基本用法
 

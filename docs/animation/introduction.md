@@ -10,6 +10,12 @@
 - **与布局无缝集成**：位移（`x`/`y`）不修改 Yoga Flexbox 布局值，仅叠加偏移；`opacity`/`width` 等样式属性通过 `setStyle()` 正确触发布局更新。
 - **Pixi.js Ticker 驱动**：与渲染帧完全同步，无需 `requestAnimationFrame` 手动管理。
 
+## 在线体验
+
+点击方块或「重播动画」，观察透明度从 0 逐渐变为 1。想体验内容进入、离开和列表增删，继续查看 [Transition 与 TransitionGroup](/guide/control-flow/transition) 的在线示例。
+
+<LiveExample example="animation" title="点击播放淡入动画" />
+
 ## 可动画属性
 
 | 类别     | 属性                                                                                                                                  |

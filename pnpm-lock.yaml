@@ -54,6 +54,9 @@ importers:
       '@piant/core':
         specifier: workspace:*
         version: link:../packages/core
+      '@piant/hooks':
+        specifier: workspace:*
+        version: link:../packages/hooks
       '@piant/router':
         specifier: workspace:*
         version: link:../packages/router

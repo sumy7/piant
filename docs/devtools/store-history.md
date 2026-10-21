@@ -2,6 +2,14 @@
 
 `@piant/store` 提供显式的 `createStoreHistory` 记录器；`@piant/devtools` 接收记录器，在 **State** 页展示历史。业务 Store 不需要依赖调试包，普通 `getState` 快照仍然只读。
 
+## 在线体验状态恢复
+
+先点击「增加计数」生成几条记录，再点击一条旧记录，观察计数恢复。恢复后继续增加，会从该位置建立分支，替换后面的记录；示例最多保留 5 条，点击「清空历史」以当前计数重新开始。
+
+<LiveExample example="storeHistory" title="记录、恢复与分支" :height="400" />
+
+这里直接使用 Store 历史 API 展示状态变化，不包含调试面板；在 Devtools 的 State 页点击 Restore 时使用相同的恢复能力。
+
 ## 显式启用并注册
 
 已有 Store 应用需安装 `@piant/store` 和它的 MobX peer；调试面板单独安装：

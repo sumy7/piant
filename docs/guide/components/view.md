@@ -2,6 +2,12 @@
 
 `View` 是 Piant 中最基础的容器组件，类似于 HTML 中的 `<div>`。它支持 Flexbox 布局和视觉样式，并且可以处理交互事件。
 
+## 在线示例
+
+点击按钮切换横向与纵向布局，观察同一组子 View 如何重新排列。展开代码可查看容器、间距与点击事件的组合。
+
+<LiveExample example="layout" title="切换 View 的 Flex 布局" :height="300" />
+
 ## 基本用法
 
 ```tsx
