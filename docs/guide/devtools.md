@@ -13,6 +13,17 @@ pnpm --filter @piant/examples-devtools-demo dev
 
 生产示例构建使用 `pnpm --filter @piant/examples-devtools-demo build`，生产预览没有调试面板。
 
+## 面板导航
+
+界面借鉴 [Vue Devtools](https://devtools.vuejs.org/getting-started/features#components) 的树与详情分栏方式，保留 Piant 元素树和只读观测的边界：
+
+- **Elements**：按节点名称或 ID 搜索，折叠子树；选择后通过面包屑查看层级，在右侧检查 Layout、Style 与 Transform 分组。
+- **State**：用带类型颜色的键值行读取业务快照，展开嵌套对象；状态仍然只读。
+- **Performance**：分别展示 CPU 布局耗时、布局更新次数和 Ticker 帧间隔，并查看有界布局事件列表。
+- **Animations**：查看应用显式登记的动画状态、当前时间及观测统计；数值最多显示两位小数，没有额外播放控制。
+
+搜索、树滚动和属性展开状态在自动采样时保持，避免查看过程中跳回初始位置。面板跟随 TanStack 的深色/浅色主题。
+
 ## 开发环境接入
 
 发布包需要 `@piant/core ^0.1.1`（包含 `PRoot.observe` 与 `isDestroyed`）；本仓库通过 workspace 使用同一份核心实现。安装调试包可使用 `pnpm add -D @piant/devtools`。
