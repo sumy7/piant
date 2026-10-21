@@ -23,6 +23,10 @@
 ## TODO
 
 - [x] letter spacing
-- [ ] break words
+- [x] 基础自动断行与 `keep-all`（`normal` / 兼容值 `break-word` 使用默认断行）
 - [x] ellipsis（由 Piant 实现）
-- [ ] decoration (underline, strikethrough)
+- [ ] decoration (underline, strikethrough)，见 [COD-132](https://linear.app/codepuppies/issue/COD-132)
+
+断行范围：段落级 `wordBreak` 仅将 `keep-all` 作为独立模式，其余字符串（包括 `break-all`）均回退到 pretext 的 `normal`；尚未提供独立 CSS `break-all` / `break-word` 语义。`whiteSpace` 支持 `normal` / `pre-wrap`。样式类型接受字符串不代表实现了对应 CSS 模式。
+
+依据：[Typesetter](./index.ts)、[断行回归测试](../../../tests/typesetter.test.ts)、[绘制回归测试](../../../tests/typesetter.renderTo.test.ts)。用法与限制见 [Text 指南](../../../../../docs/guide/components/text.md)；[Roadmap](../../../../../TODO.md) 中的视觉验收仍待执行。

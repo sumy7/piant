@@ -86,6 +86,8 @@ import { Text, Span } from '@piant/core';
 | `lineClamp`     | `number`                                               | `0`            | 最大可见行数；`0` 或未设置表示不限制                          |
 | `verticalAlign` | `'baseline' \| 'middle' \| 'top' \| 'bottom'`          | `'baseline'`   | 垂直对齐（用于 Img）                                          |
 
+`wordBreak` 是段落级配置：目前仅 `keep-all` 启用独立模式；`normal`、兼容值 `break-word` 及其他字符串（包括 `break-all`）均使用默认断行，尚未提供独立 CSS `break-all` / `break-word` 语义。`whiteSpace` 同样按段落处理，只有 `pre-wrap` 保留空白，其余字符串使用 `normal`。
+
 ### textOverflow + lineClamp
 
 `textOverflow` 需要与 `lineClamp` 搭配使用，才会在超出行数时生效：
