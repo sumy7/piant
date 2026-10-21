@@ -117,4 +117,5 @@ unsub();
 
 ## 下一步
 
+- [异步 action 与错误恢复](./async-actions) — 用现有 API 管理请求状态与竞态
 - [API 参考](./api) — 完整 API 文档

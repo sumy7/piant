@@ -82,6 +82,8 @@ set((s) => ({ count: s.count + 1 }));
 
 > `set` 内部使用 `Object.assign` 进行浅合并。对于嵌套对象，需手动展开旧值。
 
+`set` 在 MobX `runInAction` 中提交状态；异步 action 在 `await` 后也应通过 `set` 更新 observable 状态。`createStore` 不自动管理 loading、错误、重试或请求顺序，完整用法见[异步 action 与错误恢复](./async-actions)。该指南中的工厂和结果类型属于应用层示例，不是包导出。
+
 ---
 
 ## `GetState<T>`
@@ -189,6 +191,7 @@ interface Subscribe<T> {
     options?: { equals?: (a: U, b: U) => boolean },
   ): () => void;
 }
+```
 
 ---
 

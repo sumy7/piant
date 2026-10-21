@@ -137,6 +137,7 @@ export default defineConfig({
           items: [
             { text: '简介', link: '/store/introduction' },
             { text: '快速开始', link: '/store/quick-start' },
+            { text: '异步 action 与错误恢复', link: '/store/async-actions' },
             { text: 'API 参考', link: '/store/api' },
           ],
         },
