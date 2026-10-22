@@ -1,6 +1,7 @@
 import { Span, StyleSheet, Text, View } from '@piant/core';
 import type { Renderer } from 'pixi.js';
 import { InlineImageExample } from './InlineImageExample';
+import { TextDecorationExample } from './TextDecorationExample';
 import TextList from './TextList';
 
 export function App(props: { renderer: Renderer }) {
@@ -57,6 +58,7 @@ export function App(props: { renderer: Renderer }) {
             </Span>
           </Text>
         </View>
+        <TextDecorationExample />
         <InlineImageExample renderer={renderer} />
         <View style={styles.textListBlock}>
           <TextList />

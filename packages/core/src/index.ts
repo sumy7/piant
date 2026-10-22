@@ -24,6 +24,7 @@ export {
   type ScrollIntoViewOptions,
 } from './elements/PScrollView';
 export type { TextStyles, TextViewStyles } from './elements/text/textStyles';
+export type { TextDecoration } from './elements/text/types';
 export type { PixiEventHandler, PixiEventProp, PixiEventProps } from './events';
 export * from './h';
 export * from './hooks';

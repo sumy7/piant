@@ -4,7 +4,7 @@
 
 ## 在线示例
 
-观察同一行中的 Text、Span 和 Img：彩色粗体、斜体与图标共享文本布局。点击按钮切换两行省略与完整段落，缩窄预览还能观察自动换行。
+观察同一行中的 Text、Span 和 Img：彩色粗体、斜体与图标共享文本布局。点击按钮切换两行省略与完整段落，或开关下划线与删除线，缩窄预览还能观察自动换行。
 
 <LiveExample example="text" title="富文本与行数截断" :height="420" />
 
@@ -34,6 +34,32 @@ import { Text, Span } from '@piant/core';
   这是<Span style={{ color: 'red', fontWeight: 'bold' }}>红色粗体</Span>文字
 </Text>;
 ```
+
+## 下划线与删除线
+
+`Text` 和 `Span` 的 `textDecoration` 支持 `'none'`（默认）、`'underline'`、`'line-through'`，以及组合值 `'underline line-through'` / `'line-through underline'`。
+
+```tsx
+<Text style={{ fontSize: 20, textDecoration: 'underline line-through' }}>
+  <Span>
+    继承两种装饰 <Span>嵌套片段也继承</Span>
+  </Span>
+  <Span style={{ textDecoration: 'underline' }}>仅下划线</Span>
+  <Span style={{ textDecoration: 'none' }}>取消装饰</Span>
+</Text>
+```
+
+未设置的子级继承父级值；显式设置会替换继承值，`none` 可取消两种装饰。更新样式时可在这些值之间响应式切换。
+
+装饰按最终可见文本片段绘制，颜色跟随片段的 `color`，支持混合字体/字号、换行、字间距与对齐，不改变文字测量或断行结果。截断后只绘制可见内容；省略号沿用其来源片段的装饰。行内图片与制表符不绘制装饰，因此图文之间的线条会断开。位置和粗细由字体度量推导；Canvas 不提供字体原生装饰表，删除线位置使用测得的 x 字高估算，不提供独立线色、粗细或线型配置。
+
+紧行高下，下划线会向上限制在当前行框内，避免无下伸笔画的文字将线条裁出画布。
+
+下面的可运行示例包含继承、子级覆盖、响应式开关、混合字体、居中换行、右对齐、省略号和行内图片：
+
+<<< ../../../examples/text-layout/src/TextDecorationExample.tsx
+
+在仓库根目录运行 `pnpm --filter @piant/examples-text-layout dev` 查看并点击开关。
 
 ## 图文混排
 
@@ -75,22 +101,23 @@ import { Text, Span } from '@piant/core';
 
 ## 文本样式属性
 
-| 属性            | 类型                                                   | 默认值         | 说明                                                          |
-| --------------- | ------------------------------------------------------ | -------------- | ------------------------------------------------------------- |
-| `fontSize`      | `number`                                               | `16`           | 字体大小（像素）                                              |
-| `fontFamily`    | `string`                                               | `'Arial'`      | 字体族                                                        |
-| `fontWeight`    | `'normal' \| 'bold' \| string`                         | `'normal'`     | 字体粗细                                                      |
-| `fontStyle`     | `'normal' \| 'italic'`                                 | `'normal'`     | 字体风格                                                      |
-| `color`         | `ColorSource`                                          | `'#000000'`    | 文字颜色                                                      |
-| `lineHeight`    | `number \| string`                                     | `20`           | 行高（像素或倍数字符串如 `'1.5x'`）                           |
-| `letterSpacing` | `number`                                               | `0`            | 字间距（像素）；由 pretext 在断行时原生计算，渲染时逐字符绘制 |
-| `textAlign`     | `'left' \| 'center' \| 'right'`                        | `'left'`       | 文本对齐                                                      |
-| `textTransform` | `'none' \| 'uppercase' \| 'lowercase' \| 'capitalize'` | `'none'`       | 文本变换                                                      |
-| `whiteSpace`    | `'normal' \| 'pre-wrap'`                               | `'normal'`     | 折叠空白，或保留空格、制表符和换行                            |
-| `wordBreak`     | `'normal' \| 'keep-all' \| 'break-word'`               | `'break-word'` | `keep-all` 保持中日韩词组；其余使用默认断行                   |
-| `textOverflow`  | `'clip' \| 'ellipsis'`                                 | `'clip'`       | 超出可见行时的截断策略                                        |
-| `lineClamp`     | `number`                                               | `0`            | 最大可见行数；`0` 或未设置表示不限制                          |
-| `verticalAlign` | `'baseline' \| 'middle' \| 'top' \| 'bottom'`          | `'baseline'`   | 垂直对齐（用于 Img）                                          |
+| 属性             | 类型                                                                                              | 默认值         | 说明                                                          |
+| ---------------- | ------------------------------------------------------------------------------------------------- | -------------- | ------------------------------------------------------------- |
+| `fontSize`       | `number`                                                                                          | `16`           | 字体大小（像素）                                              |
+| `fontFamily`     | `string`                                                                                          | `'Arial'`      | 字体族                                                        |
+| `fontWeight`     | `'normal' \| 'bold' \| string`                                                                    | `'normal'`     | 字体粗细                                                      |
+| `fontStyle`      | `'normal' \| 'italic'`                                                                            | `'normal'`     | 字体风格                                                      |
+| `color`          | `ColorSource`                                                                                     | `'#000000'`    | 文字颜色                                                      |
+| `lineHeight`     | `number \| string`                                                                                | `20`           | 行高（像素或倍数字符串如 `'1.5x'`）                           |
+| `letterSpacing`  | `number`                                                                                          | `0`            | 字间距（像素）；由 pretext 在断行时原生计算，渲染时逐字符绘制 |
+| `textAlign`      | `'left' \| 'center' \| 'right'`                                                                   | `'left'`       | 文本对齐                                                      |
+| `textDecoration` | `'none' \| 'underline' \| 'line-through' \| 'underline line-through' \| 'line-through underline'` | `'none'`       | 下划线、删除线或两者组合；子级显式值替换继承值                |
+| `textTransform`  | `'none' \| 'uppercase' \| 'lowercase' \| 'capitalize'`                                            | `'none'`       | 文本变换                                                      |
+| `whiteSpace`     | `'normal' \| 'pre-wrap'`                                                                          | `'normal'`     | 折叠空白，或保留空格、制表符和换行                            |
+| `wordBreak`      | `'normal' \| 'keep-all' \| 'break-word'`                                                          | `'break-word'` | `keep-all` 保持中日韩词组；其余使用默认断行                   |
+| `textOverflow`   | `'clip' \| 'ellipsis'`                                                                            | `'clip'`       | 超出可见行时的截断策略                                        |
+| `lineClamp`      | `number`                                                                                          | `0`            | 最大可见行数；`0` 或未设置表示不限制                          |
+| `verticalAlign`  | `'baseline' \| 'middle' \| 'top' \| 'bottom'`                                                     | `'baseline'`   | 垂直对齐（用于 Img）                                          |
 
 `wordBreak` 是段落级配置：目前仅 `keep-all` 启用独立模式；`normal`、兼容值 `break-word` 及其他字符串（包括 `break-all`）均使用默认断行，尚未提供独立 CSS `break-all` / `break-word` 语义。`whiteSpace` 同样按段落处理，只有 `pre-wrap` 保留空白，其余字符串使用 `normal`。
 

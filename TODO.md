@@ -10,11 +10,11 @@
 
 参考：[文本布局实现说明](packages/core/src/elements/text/README.md)
 
-- [ ] 补齐 README 中已列出的文本能力
+- [x] 补齐 README 中已列出的文本能力
   - [x] letter spacing
   - [x] 基础自动断行与 `keep-all`（`normal` / 兼容值 `break-word` 使用默认断行，不代表独立 CSS `break-all` / `break-word` 模式）
   - [x] ellipsis
-  - [ ] decoration (underline / strikethrough)，见 [COD-132](https://linear.app/codepuppies/issue/COD-132)
+  - [x] decoration (underline / strikethrough)，见 [COD-132](https://linear.app/codepuppies/issue/COD-132)
 - [x] 为 Text 增加对应 style/API（仅在必要时新增）
 - [x] 增加回归测试（覆盖中英文、换行、极窄容器、长文本）
 - [x] 提供示例页面（建议新增 `examples/text-layout` 对应演示场景）
@@ -39,7 +39,8 @@
 核对备注（2026-10-22）：
 
 - [Typesetter](packages/core/src/elements/text/index.ts) 将段落级 `wordBreak: 'keep-all'` 交给 pretext，其余字符串回退到 `normal`；`whiteSpace` 支持 `normal` / `pre-wrap`。[断行测试](packages/core/tests/typesetter.test.ts) 与 [绘制测试](packages/core/tests/typesetter.renderTo.test.ts) 覆盖跨样式片段、空白、字距与截断，不能替代示例视觉验收。
-- [Text 指南](docs/guide/components/text.md) 已说明上述边界；下划线、删除线仍未实现，完整文本能力与视觉验收保持未勾选。
+- [Text 指南](docs/guide/components/text.md) 已说明上述边界；`textDecoration` 支持下划线、删除线、组合与取消，继承和可见片段绘制规则见指南。独立的完整视觉验收项目仍保留未勾选。
+- COD-132 已在 `examples/text-layout` 的真实浏览器 Canvas 中验证装饰开关、子级覆盖、混合字体、字距换行、对齐、紧行高、图片间断与省略号；开关截图附于 [COD-132](https://linear.app/codepuppies/issue/COD-132)。这不代表所有文本能力的完整视觉验收。
 
 ---
 

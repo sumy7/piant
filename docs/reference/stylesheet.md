@@ -265,6 +265,12 @@ interface TextLayoutStyle {
   lineHeight: number | `${number}x` | 'normal';
   letterSpacing: number;
   textAlign: 'left' | 'center' | 'right';
+  textDecoration:
+    | 'none'
+    | 'underline'
+    | 'line-through'
+    | 'underline line-through'
+    | 'line-through underline';
   textTransform: 'none' | 'uppercase' | 'lowercase' | 'capitalize';
   whiteSpace: 'normal' | 'pre-wrap' | string;
   wordBreak: 'break-word' | 'normal' | 'keep-all' | string;
@@ -275,6 +281,8 @@ interface TextLayoutStyle {
 ```
 
 ---
+
+`textDecoration` 默认为 `'none'`，由 Text / Span 向子级继承；显式设置（包括 `'none'`）替换继承值。两种组合顺序等效。装饰跟随文字颜色与最终可见片段，不参与测量；不覆盖行内图片或制表符，省略号使用来源片段样式。不提供独立装饰颜色、粗细或线型。参见 [Text 指南](/guide/components/text#下划线与删除线)。
 
 ## StyleValue 类型
 

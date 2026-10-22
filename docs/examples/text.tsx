@@ -3,6 +3,10 @@ import { Texture } from 'pixi.js';
 
 export default function App() {
   const [expanded, setExpanded] = createState(false);
+  const [decorated, setDecorated] = createState(true);
+  const decoration = () => (decorated() ? 'underline line-through' : 'none');
+  const decorationLabel = () =>
+    decorated() ? '取消文本装饰' : '显示下划线和删除线';
   const buttonLabel = () => (expanded() ? '收起为两行' : '展开全文');
   const canvas = document.createElement('canvas');
   canvas.width = 24;
@@ -38,15 +42,25 @@ export default function App() {
           lineHeight: 26,
           lineClamp: expanded() ? 0 : 2,
           textOverflow: 'ellipsis',
+          textDecoration: decoration(),
         }}
       >
-        在同一段文字里组合<Span bold>粗体</Span>、
+        在同一段文字里组合<Span bold>继承装饰的粗体</Span>、
         <Span italic style={{ color: '#be123c' }}>
           彩色斜体
         </Span>
+        <Span style={{ textDecoration: 'none' }}>不带装饰的片段</Span>
         和行内图片。
         文字会随预览宽度自动换行。点击下方按钮，可以对比两行截断和完整段落的排版效果。
       </Text>
+      <View
+        style={{ padding: 8, backgroundColor: '#dbeafe', borderRadius: 8 }}
+        onClick={() => setDecorated((value) => !value)}
+      >
+        <Text style={{ fontSize: 16, color: '#1e40af' }}>
+          {decorationLabel()}
+        </Text>
+      </View>
       <View
         style={{
           width: 156,
