@@ -68,31 +68,20 @@ export default defineConfig({
 });
 ```
 
-### 2. 初始化渲染器
+### 2. 挂载应用
 
 ```ts
 // src/index.ts
-import { PRoot, render } from '@piant/core';
-import { Application } from 'pixi.js';
+import { mount } from '@piant/core';
 import { App } from './App';
 
-(async () => {
-  const app = new Application();
-  await app.init({ background: '#1099bb', resizeTo: window });
-  document.body.appendChild(app.canvas);
+const instance = await mount(App, document.getElementById('app')!);
 
-  const root = new PRoot(app.stage, {
-    width: app.screen.width,
-    height: app.screen.height,
-  });
-
-  render(App, root);
-
-  window.onresize = () => {
-    root.setStyle({ width: app.screen.width, height: app.screen.height });
-  };
-})();
+// 页面或路由卸载时调用。
+// instance.destroy();
 ```
+
+宿主容器需要有明确尺寸。例如页面中放置 `<div id="app" style="height: 400px"></div>`，`mount` 会创建 Canvas，观察容器尺寸并同步布局。也可以直接传入已有 Canvas。每次挂载返回独立实例，`destroy()` 会清理该实例的响应式作用域、节点和渲染器。多实例、尺寸和资源所有权说明见[渲染 API](https://piant.sumygg.com/reference/renderer)。
 
 ### 3. 编写组件
 

@@ -128,3 +128,18 @@ export function bindEventEffects<TNode extends PNode>(
     restoreEventMode();
   });
 }
+
+/** Register an explicit DOM event map for the current component lifetime. */
+export function bindDOMEvents(
+  element: HTMLElement,
+  listeners: {
+    [K in keyof HTMLElementEventMap]?: (event: HTMLElementEventMap[K]) => void;
+  },
+) {
+  for (const [name, listener] of Object.entries(listeners)) {
+    // Each callback is paired with its typed event name in the supplied map.
+    const handler = listener as EventListener;
+    element.addEventListener(name, handler);
+    cleanup(() => element.removeEventListener(name, handler));
+  }
+}

@@ -91,6 +91,12 @@ const handleClick = createMemo(() =>
 
 `onClick` 和 `onPointerTap` 可以同时使用，各自独立更新和清理。同一事件触发时，两个处理器都会执行。
 
+## 原生输入事件与绘制回调
+
+`Input` 使用原生 DOM 事件：`onInput` 和 `onChange` 接收 `(value, event)`，`onFocus` 和 `onBlur` 接收原生 `FocusEvent`。这些处理器同样支持响应式替换，组件销毁后会移除监听器。
+
+`CustomView` 的 `onDraw` 是绘制回调，接收 `(graphics, width, height)`，不属于 PixiJS 事件。事件绑定仅识别上表列出的属性，不会把任意 `on*` 属性自动注册为事件。
+
 ## 示例：悬停与点击
 
 ```tsx

@@ -15,6 +15,65 @@ PRoot (根节点)
 
 每个节点持有一个 Yoga LayoutNode，布局系统在根节点处统一触发 `calculateLayout(width, height)`，然后逐层 `applyLayout()` 将计算结果应用到 PixiJS 的 `Container` 位置上。
 
+## 嵌入页面与多个实例
+
+Canvas 可以只占普通页面的一块区域。为容器设定尺寸，再将它交给 `mount`；无需让 Canvas 覆盖整个窗口。
+
+下面两个区域分别使用已有 Canvas 和自动创建的 Canvas。示例假定 `Counter` 在组件函数内通过 `createState` 创建计数状态，因此两边互不影响。
+
+```html
+<div class="panels">
+  <section id="left"><canvas id="left-canvas"></canvas></section>
+  <section id="right"></section>
+</div>
+```
+
+```css
+.panels {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 24px;
+}
+.panels > section {
+  min-width: 0;
+  height: 320px;
+}
+#left-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+```
+
+```ts
+import { mount } from '@piant/core';
+import { Counter } from './Counter';
+
+const leftHost = document.getElementById('left')!;
+const leftCanvas = document.querySelector<HTMLCanvasElement>('#left-canvas')!;
+const rightHost = document.getElementById('right')!;
+
+const left = await mount(Counter, leftCanvas);
+const right = await mount(Counter, rightHost);
+
+// 容器调整后分别同步；销毁左侧不会停止右侧。
+leftHost.style.height = '400px';
+left.destroy();
+
+// 已有 Canvas 保留，可再次挂载。
+const replacement = await mount(Counter, leftCanvas);
+
+// 页面卸载时：
+replacement.destroy();
+right.destroy();
+```
+
+容器挂载观察内容区尺寸；已有 Canvas 则观察 Canvas 自身，保留其响应式 CSS。示例中 Canvas 的 `100%` 宽高随父容器变化，Piant 同步更新布局与渲染缓冲区。容器必须先有明确尺寸，不能依赖内部 Canvas 撑开。页面滚动和容器偏移不会改变 Piant 的逻辑坐标原点；指针交互和 `Input` 的 DOM 输入层以各自 Canvas 的实际位置对齐。
+
+第三个参数中的 `width` / `height` 按轴固定 CSS 像素尺寸，并覆盖对应轴的 Canvas CSS 尺寸。例如 `mount(Counter, rightHost, { height: 240 })` 保持高度固定，宽度仍跟随容器。调用 `instance.resize(480, 240)` 可立即更新画布和根布局，并固定这两个轴的 CSS 像素尺寸。只传一个轴时，另一个尚未固定的轴继续跟随尺寸来源；`instance.resize()` 按当前规则立即同步。
+
+布局尺寸使用 CSS 像素，默认渲染分辨率为当前设备 DPR，调整尺寸时会同步读取。`resolution` 只影响像素缓冲区，不改变 CSS 尺寸。已有 Canvas 在销毁时保留并恢复挂载前的尺寸及样式属性，自动创建的 Canvas 在销毁时移除。取消初始化和完整清理边界见[渲染 API](/reference/renderer#mount)。
+
 ## Flexbox 支持
 
 Piant 支持大多数 CSS Flexbox 属性，包括：
@@ -87,3 +146,5 @@ Piant 支持 `boxSizing` 属性：
 ## 布局脏标记机制
 
 `PRoot` 使用脏标记（`_isDirty`）来避免不必要的布局计算。当任何子节点的样式发生变化时，根节点被标记为 dirty，并在下一帧的 Ticker 回调中重新计算布局。
+
+运行仓库中的完整双实例页面：`pnpm --filter @piant/examples-todos dev`，打开 `/embedded.html`。页面提供独立计数、DOM 输入、容器尺寸调整、销毁和重建，可滚动页面及父容器验证交互位置。

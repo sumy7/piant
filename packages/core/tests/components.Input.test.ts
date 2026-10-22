@@ -154,6 +154,61 @@ describe('Input', () => {
     expect(removedEvents).toContain('blur');
   });
 
+  it.each(['input', 'change', 'focus', 'blur'] as const)(
+    'keeps a stable %s listener with the latest callback and cleans it up',
+    (eventName) => {
+      const prop = {
+        input: 'onInput',
+        change: 'onChange',
+        focus: 'onFocus',
+        blur: 'onBlur',
+      }[eventName];
+      const first = vi.fn();
+      const second = vi.fn();
+      const [callback, setCallback] = createState<typeof first | undefined>(
+        first,
+      );
+      const add = vi.spyOn(HTMLInputElement.prototype, 'addEventListener');
+      const remove = vi.spyOn(
+        HTMLInputElement.prototype,
+        'removeEventListener',
+      );
+      root((dispose) => {
+        const props = Object.defineProperty({}, prop, { get: callback });
+        const node = Input(props) as PInput;
+        const listener = add.mock.calls.find(
+          ([name]) => name === eventName,
+        )?.[1];
+        const event =
+          eventName === 'focus' || eventName === 'blur'
+            ? new FocusEvent(eventName)
+            : new Event(eventName);
+        node._inputElement.value = 'latest';
+        node._inputElement.dispatchEvent(event);
+        expect(first).toHaveBeenCalledTimes(1);
+        expect(first.mock.calls[0]).toEqual(
+          eventName === 'input' || eventName === 'change'
+            ? ['latest', event]
+            : [event],
+        );
+        const count = add.mock.calls.length;
+        setCallback(() => second);
+        node._inputElement.dispatchEvent(event);
+        expect(first).toHaveBeenCalledTimes(1);
+        expect(second).toHaveBeenCalledTimes(1);
+        setCallback(undefined);
+        node._inputElement.dispatchEvent(event);
+        expect(second).toHaveBeenCalledTimes(1);
+        expect(add.mock.calls).toHaveLength(count);
+        dispose();
+        expect(remove).toHaveBeenCalledWith(eventName, listener);
+        setCallback(() => second);
+        node._inputElement.dispatchEvent(event);
+        expect(second).toHaveBeenCalledTimes(1);
+      });
+    },
+  );
+
   it('forwards ref to the PInput element', () => {
     root(() => {
       let captured: PInput | null = null;

@@ -1,7 +1,7 @@
 import type { ViewStyles } from '../elements/layout/viewStyles';
 import { PView } from '../elements/PView';
 import type { PixiEventProps } from '../events';
-import { bindEventEffects, EVENT_PROPS } from '../events';
+import { bindEventEffects } from '../events';
 import { children } from '../reactivity/effects';
 import { splitProps } from '../reactivity/props';
 import { insert } from '../renderer/runtime';
@@ -17,9 +17,8 @@ export type ViewProps = {
 } & PixiEventProps<PView>;
 
 export function View(props: ViewProps): JSX.Element {
-  const [eventProps, styleProps, childrenProps] = splitProps(
+  const [styleProps, childrenProps] = splitProps(
     props,
-    EVENT_PROPS,
     ['style'],
     ['children'],
   );
@@ -27,7 +26,7 @@ export function View(props: ViewProps): JSX.Element {
 
   props.ref?.(element);
 
-  bindEventEffects(element, eventProps);
+  bindEventEffects(element, props);
 
   bindStyle<ViewStyles>(element, () => StyleSheet.flatten(styleProps.style));
 

@@ -1,5 +1,10 @@
 import { action, autorun, observable, untracked } from 'mobx';
-import { createOwner, getOwner, runWithOwner } from './owner';
+import {
+  type ContextOwner,
+  createOwner,
+  getOwner,
+  runWithOwner,
+} from './owner';
 import type { EffectFn, Fn, Getter, MemoOptions, RootFn } from './types';
 
 export function root<T>(fn: RootFn<T>) {
@@ -7,13 +12,26 @@ export function root<T>(fn: RootFn<T>) {
   return runWithOwner(owner, () =>
     untracked(() =>
       fn(() => {
-        const d = owner.disposables;
-        const len = d.length;
-        for (let k = 0; k < len; k++) d[k]();
-        owner.disposables = [];
+        disposeCallbacks(owner);
       }),
     ),
   );
+}
+
+function disposeCallbacks(owner: ContextOwner) {
+  const callbacks = owner.disposables;
+  owner.disposables = [];
+  let failure: unknown;
+  let failed = false;
+  for (const callback of callbacks) {
+    try {
+      callback();
+    } catch (error) {
+      if (!failed) failure = error;
+      failed = true;
+    }
+  }
+  if (failed) throw failure;
 }
 
 export function cleanup(fn: () => void) {
@@ -38,12 +56,10 @@ export function effect<Next extends Prev, Init, Prev>(
   const owner = createOwner();
   let currentValue: Next = value as unknown as Next;
   const cleanupFn = (final: boolean) => {
-    const d = owner.disposables;
-    owner.disposables = [];
-    for (let k = 0; k < d.length; k++) d[k]();
     if (final) {
       dispose();
     }
+    disposeCallbacks(owner);
   };
 
   const dispose = autorun(() => {

@@ -1,7 +1,7 @@
 import type { ViewStyles } from '../elements/layout/viewStyles';
 import { PScrollView } from '../elements/PScrollView';
 import type { PixiEventProps } from '../events';
-import { bindEventEffects, EVENT_PROPS } from '../events';
+import { bindEventEffects } from '../events';
 import { onTick } from '../hooks';
 import { children, effect } from '../reactivity/effects';
 import { splitProps } from '../reactivity/props';
@@ -19,9 +19,8 @@ export type ScrollViewProps = {
 } & PixiEventProps<PScrollView>;
 
 export function ScrollView(props: ScrollViewProps) {
-  const [eventProps, styleProps, childrenProps, behaviorProps] = splitProps(
+  const [styleProps, childrenProps, behaviorProps] = splitProps(
     props,
-    EVENT_PROPS,
     ['style'],
     ['children'],
     ['horizontal'],
@@ -32,7 +31,7 @@ export function ScrollView(props: ScrollViewProps) {
 
   onTick(element.update.bind(element));
 
-  bindEventEffects(element, eventProps);
+  bindEventEffects(element, props);
 
   bindStyle<ViewStyles>(element, () => StyleSheet.flatten(styleProps.style));
 
