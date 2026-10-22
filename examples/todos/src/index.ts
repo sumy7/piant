@@ -5,9 +5,6 @@ import { App } from './App';
 import './index.css';
 
 (async () => {
-  const { app } = await mount(App, {
-    target: document.body,
-    pixi: { background: '#1099bb' },
-  });
+  const { app } = await mount(App, document.body);
   await initDevtools({ app });
 })();

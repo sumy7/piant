@@ -52,8 +52,10 @@ vi.mock('pixi.js', async (original) => {
             this.screen.height = height;
             this.canvas.width = width * resolution;
             this.canvas.height = height * resolution;
-            this.canvas.style.width = `${width}px`;
-            this.canvas.style.height = `${height}px`;
+            if (options.autoDensity) {
+              this.canvas.style.width = `${width}px`;
+              this.canvas.style.height = `${height}px`;
+            }
             emitter.emit('resize', width, height, resolution);
           }),
           on: emitter.on.bind(emitter),
@@ -109,12 +111,13 @@ describe('mount', () => {
         onCleanup(disposed);
         return View({ style: { width: '100%', height: '100%' } });
       },
-      { target, resolution: 2 },
+      target,
+      { resolution: 2 },
     );
     cleanup.push(instance.destroy);
     expect(target.contains(instance.canvas)).toBe(true);
     expect(instance.canvas.width).toBe(640);
-    expect(instance.canvas.style.width).toBe('320px');
+    expect(instance.canvas.style.width).toBe('100%');
     const child = instance.root.firstChild!;
     expect(child._layoutNode.getComputedWidth()).toBe(320);
     const rootFree = vi.spyOn(instance.root._layoutNode, 'free');
@@ -146,8 +149,7 @@ describe('mount', () => {
     const original = target.outerHTML;
     const parent = host();
     parent.appendChild(target);
-    const instance = await mount(() => View({}), {
-      target,
+    const instance = await mount(() => View({}), target, {
       width: 240,
       height: 100,
       resolution: 2,
@@ -157,11 +159,11 @@ describe('mount', () => {
     expect(instance.root._layoutStyle.width).toBe(240);
     expect(target.width).toBe(480);
     expect(target.style.width).toBe('240px');
-    expect(state.observers).toHaveLength(0);
+    expect(state.observers[0].observe).toHaveBeenCalledWith(target);
     instance.destroy();
     expect(target.parentElement).toBe(parent);
     expect(target.outerHTML).toBe(original);
-    const rebuilt = await mount(() => View({}), { target });
+    const rebuilt = await mount(() => View({}), target);
     expect(rebuilt.app.screen).toMatchObject({ width: 777, height: 150 });
     cleanup.push(rebuilt.destroy);
   });
@@ -176,8 +178,8 @@ describe('mount', () => {
       onCleanup(disposed[index]);
       return View({ onClick: () => setValue(value() + 1) });
     };
-    const left = await mount(make(0), { target: host(300, 200) });
-    const right = await mount(make(1), { target: host(450, 250) });
+    const left = await mount(make(0), host(300, 200));
+    const right = await mount(make(1), host(450, 250));
     cleanup.push(left.destroy, right.destroy);
     left.root.firstChild!._view.emit(
       'pointertap',
@@ -203,13 +205,13 @@ describe('mount', () => {
   it('cleans initialization failure and permits retrying the same target', async () => {
     const target = host();
     state.init.mockRejectedValueOnce(new Error('GPU unavailable'));
-    await expect(mount(() => View({}), { target })).rejects.toThrow(
+    await expect(mount(() => View({}), target)).rejects.toThrow(
       'GPU unavailable',
     );
     expect(state.apps[0].stage.destroyed).toBe(true);
     expect(state.apps[0].destroy).not.toHaveBeenCalled();
     expect(target.children).toHaveLength(0);
-    cleanup.push((await mount(() => View({}), { target })).destroy);
+    cleanup.push((await mount(() => View({}), target)).destroy);
   });
 
   it('cancels initialization after it settles and does not execute the component', async () => {
@@ -222,7 +224,7 @@ describe('mount', () => {
     const controller = new AbortController();
     const target = host();
     const component = vi.fn();
-    const pending = mount(component, { target, signal: controller.signal });
+    const pending = mount(component, target, { signal: controller.signal });
     controller.abort();
     expect(state.apps[0].destroy).not.toHaveBeenCalled();
     finish();
@@ -235,22 +237,21 @@ describe('mount', () => {
   it('aborts a mounted instance, rejects occupied targets and validates size before allocation', async () => {
     const target = host();
     const controller = new AbortController();
-    const instance = await mount(() => View({}), {
-      target,
+    const instance = await mount(() => View({}), target, {
       signal: controller.signal,
     });
     cleanup.push(instance.destroy);
-    await expect(mount(() => View({}), { target })).rejects.toThrow('already');
-    await expect(
-      mount(() => View({}), { target: instance.canvas }),
-    ).rejects.toThrow('already');
+    await expect(mount(() => View({}), target)).rejects.toThrow('already');
+    await expect(mount(() => View({}), instance.canvas)).rejects.toThrow(
+      'already',
+    );
     controller.abort();
     expect(instance.isDestroyed).toBe(true);
-    await expect(mount(() => View({}), { target, width: NaN })).rejects.toThrow(
+    await expect(mount(() => View({}), target, { width: NaN })).rejects.toThrow(
       'positive',
     );
     await expect(
-      mount(() => View({}), { target, signal: controller.signal }),
+      mount(() => View({}), target, { signal: controller.signal }),
     ).rejects.toMatchObject({ name: 'AbortError' });
     expect(state.apps).toHaveLength(1);
   });
@@ -259,36 +260,52 @@ describe('mount', () => {
     const disposed = vi.fn();
     const target = host();
     await expect(
-      mount(
-        () => {
-          onCleanup(disposed);
-          throw new Error('bad component');
-        },
-        { target },
-      ),
+      mount(() => {
+        onCleanup(disposed);
+        throw new Error('bad component');
+      }, target),
     ).rejects.toThrow('bad component');
     expect(disposed).toHaveBeenCalledOnce();
     expect(state.apps[0].destroy).toHaveBeenCalledOnce();
     expect(target.children).toHaveLength(0);
   });
 
-  it('uses a separate canvas size source with a fixed height', async () => {
-    const source = host(510, 240);
+  it('follows canvas CSS while keeping only the configured axis fixed', async () => {
+    const parent = host(510, 240);
     const canvas = document.createElement('canvas');
-    source.appendChild(canvas);
-    const instance = await mount(() => View({}), {
-      target: canvas,
-      resizeTo: source,
-      height: 120,
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    parent.appendChild(canvas);
+    Object.defineProperties(canvas, {
+      clientWidth: {
+        get: () =>
+          canvas.style.width.endsWith('px')
+            ? parseFloat(canvas.style.width)
+            : parent.clientWidth,
+      },
+      clientHeight: {
+        get: () =>
+          canvas.style.height.endsWith('px')
+            ? parseFloat(canvas.style.height)
+            : parent.clientHeight,
+      },
     });
+    const instance = await mount(() => View({}), canvas, { height: 120 });
     cleanup.push(instance.destroy);
-    Object.defineProperty(source, 'clientWidth', { value: 600 });
+    Object.defineProperty(parent, 'clientWidth', { value: 600 });
     state.observers[0].callback();
     expect(instance.app.screen).toMatchObject({ width: 600, height: 120 });
-    expect(state.observers[0].observe).toHaveBeenCalledWith(source);
+    expect(canvas.style.width).toBe('100%');
+    expect(canvas.style.height).toBe('120px');
+    expect(state.observers[0].observe).toHaveBeenCalledWith(canvas);
+    instance.resize(480);
+    Object.defineProperty(parent, 'clientWidth', { value: 700 });
+    state.observers[0].callback();
+    expect(instance.app.screen).toMatchObject({ width: 480, height: 120 });
+    expect(canvas.style.width).toBe('480px');
   });
   it('keeps root geometry synchronized with direct renderer resize', async () => {
-    const instance = await mount(() => View({}), { target: host() });
+    const instance = await mount(() => View({}), host());
     cleanup.push(instance.destroy);
     instance.app.renderer.resize(700, 210, 2);
     expect(instance.root._layoutStyle).toMatchObject({
@@ -297,43 +314,41 @@ describe('mount', () => {
     });
   });
 
-  it('protects target ownership against untyped backend and deprecated view options', async () => {
+  it('ignores removed options from untyped callers and owns its renderer defaults', async () => {
     const target = host();
     const other = document.createElement('canvas');
-    const instance = await mount(() => View({}), {
-      target,
-      pixi: { view: other, webgl: { canvas: other, width: 999 } } as never,
-    });
+    const instance = await mount(() => View({}), target, {
+      target: other,
+      resizeTo: other,
+      pixi: { view: other, webgl: { canvas: other, width: 999 } },
+    } as never);
     cleanup.push(instance.destroy);
-    expect(state.init).toHaveBeenCalledWith(
-      expect.objectContaining({
-        canvas: instance.canvas,
-        view: undefined,
-        webgl: undefined,
-        canvasOptions: undefined,
-        webgpu: undefined,
-        sharedTicker: false,
-      }),
-    );
-    expect(instance.app.screen.width).toBe(320);
+    expect(state.init).toHaveBeenCalledExactlyOnceWith({
+      canvas: instance.canvas,
+      width: 320,
+      height: 180,
+      resolution: 1,
+      autoDensity: false,
+      sharedTicker: false,
+      backgroundAlpha: 0,
+      antialias: true,
+    });
+    expect(instance.canvas).not.toBe(other);
   });
 
   it('finishes renderer and canvas cleanup even when user cleanup throws', async () => {
     const target = host();
     const runs = vi.fn();
     let change = () => {};
-    const instance = await mount(
-      () => {
-        const [value, setValue] = createState(0);
-        change = () => setValue(1);
-        onCleanup(() => {
-          throw new Error('cleanup failed');
-        });
-        effect(() => runs(value()));
-        return View({});
-      },
-      { target },
-    );
+    const instance = await mount(() => {
+      const [value, setValue] = createState(0);
+      change = () => setValue(1);
+      onCleanup(() => {
+        throw new Error('cleanup failed');
+      });
+      effect(() => runs(value()));
+      return View({});
+    }, target);
     cleanup.push(instance.destroy);
     expect(instance.destroy).toThrow('cleanup failed');
     expect(state.apps[0].destroy).toHaveBeenCalledOnce();
@@ -353,10 +368,8 @@ describe('mount', () => {
           controller.abort();
           return View({});
         },
-        {
-          target,
-          signal: controller.signal,
-        },
+        target,
+        { signal: controller.signal },
       ),
     ).rejects.toMatchObject({ name: 'AbortError' });
     expect(state.apps[0].destroy).toHaveBeenCalledOnce();
@@ -366,7 +379,7 @@ describe('mount', () => {
   it('compensates DOM input coordinates for positioned scrolled hosts after each render', async () => {
     const target = host();
     target.style.position = 'relative';
-    const instance = await mount(() => View({}), { target });
+    const instance = await mount(() => View({}), target);
     cleanup.push(instance.destroy);
     const layer = state.apps[0].domContainerRoot;
     target.appendChild(layer);
@@ -401,7 +414,7 @@ describe('mount', () => {
     try {
       const canvas = document.createElement('canvas');
       host().appendChild(canvas);
-      const first = await mount(() => View({}), { target: canvas });
+      const first = await mount(() => View({}), canvas);
       cleanup.push(first.destroy);
       const restoreContext = vi.fn(() =>
         canvas.dispatchEvent(new Event('webglcontextrestored')),
@@ -417,7 +430,7 @@ describe('mount', () => {
         expect(lost.defaultPrevented).toBe(true);
       });
       first.destroy();
-      const second = mount(() => View({}), { target: canvas });
+      const second = mount(() => View({}), canvas);
       expect(state.init).toHaveBeenCalledTimes(1);
       await vi.advanceTimersByTimeAsync(1);
       cleanup.push((await second).destroy);
@@ -426,5 +439,86 @@ describe('mount', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+  it('preserves responsive canvas CSS while observing its own size and updating the DPR buffer', async () => {
+    const parent = host(400, 240);
+    const canvas = document.createElement('canvas');
+    canvas.style.width = '100%';
+    canvas.style.height = 'calc(100% - 20px)';
+    parent.appendChild(canvas);
+    Object.defineProperties(canvas, {
+      clientWidth: { get: () => parent.clientWidth },
+      clientHeight: { get: () => parent.clientHeight - 20 },
+    });
+    const instance = await mount(() => View({}), canvas, { resolution: 2 });
+    cleanup.push(instance.destroy);
+    expect(canvas.style.width).toBe('100%');
+    expect(canvas.style.height).toBe('calc(100% - 20px)');
+    expect(state.observers[0].observe).toHaveBeenCalledWith(canvas);
+    Object.defineProperty(parent, 'clientWidth', { value: 560 });
+    state.observers[0].callback();
+    expect(instance.app.screen).toMatchObject({ width: 560, height: 220 });
+    expect(canvas.width).toBe(1120);
+    expect(canvas.height).toBe(440);
+    expect(canvas.style.width).toBe('100%');
+    expect(canvas.style.height).toBe('calc(100% - 20px)');
+  });
+
+  it('keeps attribute-only canvas logical size stable when DPR changes its intrinsic buffer size', async () => {
+    const canvas = document.createElement('canvas');
+    host().appendChild(canvas);
+    Object.defineProperties(canvas, {
+      clientWidth: {
+        get: () => parseFloat(canvas.style.width) || canvas.width,
+      },
+      clientHeight: {
+        get: () => parseFloat(canvas.style.height) || canvas.height,
+      },
+    });
+    const instance = await mount(() => View({}), canvas, { resolution: 2 });
+    cleanup.push(instance.destroy);
+    expect(instance.app.screen).toMatchObject({ width: 300, height: 150 });
+    expect(canvas.clientWidth).toBe(300);
+    expect(canvas.clientHeight).toBe(150);
+    expect(state.observers[0].observe).toHaveBeenCalledWith(canvas);
+    state.observers[0].callback();
+    expect(canvas.width).toBe(600);
+    expect(canvas.height).toBe(300);
+  });
+  it('retains responsive CSS when the host changes size during asynchronous initialization', async () => {
+    let finish!: () => void;
+    state.init.mockReturnValueOnce(
+      new Promise<void>((resolve) => {
+        finish = resolve;
+      }),
+    );
+    const parent = host(400, 240);
+    const canvas = document.createElement('canvas');
+    parent.appendChild(canvas);
+    canvas.style.width = '100%';
+    canvas.style.height = 'calc(100% - 20px)';
+    Object.defineProperties(canvas, {
+      clientWidth: {
+        get: () =>
+          canvas.style.width.endsWith('px')
+            ? parseFloat(canvas.style.width)
+            : parent.clientWidth,
+      },
+      clientHeight: {
+        get: () =>
+          canvas.style.height.endsWith('px')
+            ? parseFloat(canvas.style.height)
+            : parent.clientHeight - 20,
+      },
+    });
+    const pending = mount(() => View({}), canvas, { resolution: 2 });
+    Object.defineProperty(parent, 'clientWidth', { value: 560 });
+    finish();
+    const instance = await pending;
+    cleanup.push(instance.destroy);
+    expect(canvas.style.width).toBe('100%');
+    expect(canvas.style.height).toBe('calc(100% - 20px)');
+    expect(instance.app.screen).toMatchObject({ width: 560, height: 220 });
+    expect(canvas.width).toBe(1120);
   });
 });

@@ -30,7 +30,7 @@
 
 | 导出 | 用途 |
 |------|------|
-| `mount` | [应用挂载与销毁](/reference/renderer#mount)，支持容器、已有 Canvas 和多个实例 |
+| `mount` | [应用挂载与销毁](/reference/renderer#mount)，第二个参数传入容器或已有 Canvas，支持响应式 CSS 和多个实例 |
 | `render`、`PRoot` | [底层渲染与清理边界](/reference/renderer#render)；`render` 返回 disposer |
 | `PNode` | 底层节点基类，也是 `render` 的挂载参数类型 |
 | `PScrollView` | [滚动节点与方法](/guide/components/scrollview) |

@@ -8,10 +8,7 @@
 import { mount } from '@piant/core';
 import { App } from './App';
 
-const instance = await mount(App, {
-  target: document.getElementById('app')!,
-  pixi: { background: '#1099bb' },
-});
+const instance = await mount(App, document.getElementById('app')!);
 
 // 页面或路由卸载时：
 instance.destroy();
@@ -20,28 +17,30 @@ instance.destroy();
 ```ts
 function mount(
   component: () => unknown,
-  options: MountOptions,
+  element: HTMLElement,
+  options?: MountOptions,
 ): Promise<MountedApp>;
 ```
 
 ### 参数与尺寸
 
-| `MountOptions` 字段 | 说明                                                                                                                                                          |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `target`            | 必填，普通 `HTMLElement` 容器或已有 `HTMLCanvasElement`                                                                                                       |
-| `width`、`height`   | 可选，正有限数的逻辑像素尺寸；指定的轴固定，不随观察对象变化                                                                                                            |
-| `resolution`        | 渲染分辨率，默认采用当前的 `window.devicePixelRatio`，调整尺寸时同步读取                                                                                                        |
-| `resizeTo`          | 可选，观察尺寸的 HTML 容器；`false` 关闭自动观察                                                                                                              |
-| `pixi`              | 其他 PixiJS `ApplicationOptions`，例如 `background`、`antialias`；不接受 `canvas`、`width`、`height`、`resolution`、`resizeTo`、`autoDensity`、`sharedTicker`、`view`、`webgl`、`webgpu`、`canvasOptions`、`context`、`multiView` |
-| `signal`            | 可选 `AbortSignal`，用于取消初始化或销毁已挂载实例                                                                                                            |
+第二个参数 `element` 是普通 `HTMLElement` 容器或已有 `HTMLCanvasElement`。可选的第三个参数配置尺寸与生命周期：
 
-当 `target` 是容器时，Piant 在其中创建 Canvas，默认使用 `ResizeObserver` 观察容器内容区。请先用 CSS 给容器明确尺寸，避免容器由 Canvas 反向撑开。设置 `width` 或 `height` 只固定对应轴，另一轴仍可跟随容器。
+| `MountOptions` 字段 | 说明 |
+| ------------------- | ---- |
+| `width`、`height` | 可选，正有限数的 CSS 像素尺寸；指定的轴固定，并覆盖该轴的 Canvas CSS 尺寸 |
+| `resolution` | 渲染分辨率，默认采用当前的 `window.devicePixelRatio`，调整尺寸时同步读取；只影响像素缓冲区 |
+| `signal` | 可选 `AbortSignal`，用于取消初始化或销毁已挂载实例 |
 
-窗口尺寸变化时也会同步布局与当前 DPR；`resizeTo: false` 关闭容器观察，未显式固定的轴使用初始尺寸快照。`resize(width, height)` 只对本次同步生效，后续自动同步仍读取挂载配置与尺寸来源。
+挂载到容器时，Piant 在其中创建 Canvas，并使用 `ResizeObserver` 观察容器内容区。请先用 CSS 给容器明确尺寸，避免容器由 Canvas 反向撑开。设置 `width` 或 `height` 只固定对应轴，另一轴仍跟随容器。
 
-当 `target` 是已有 Canvas 时，Piant 使用原位置，不移动或替换宿主 Canvas。默认尺寸取挂载时的 Canvas 客户区尺寸，未获得尺寸的轴回退到其 `width` / `height` 属性。需要跟随父区域变化时，显式指定 `resizeTo` 容器，示例见 [Canvas 布局](/guide/canvas-layout#嵌入页面与多个实例)。
+挂载到已有 Canvas 时，Piant 使用原位置，不移动或替换 Canvas，并观察 Canvas 本身的内容区尺寸。已有的响应式 CSS（例如 `width: 100%; height: 100%`）保持有效，调整渲染缓冲区不会把这些规则改为固定像素。未通过 CSS 指定尺寸的轴使用挂载时的尺寸；需要随父容器变化时，先为 Canvas 和父容器设置相应 CSS，示例见 [Canvas 布局](/guide/canvas-layout#嵌入页面与多个实例)。
 
-Piant 将布局尺寸与 Canvas 的 CSS 尺寸保持为相同的逻辑像素，使用 `autoDensity: true` 让像素缓冲区适配 `resolution`。例如逻辑宽度 `400`、分辨率 `2` 对应 CSS 宽度 `400px`、缓冲区宽度 `800`。Canvas 的边框和内边距请放在宿主容器上；DOM 输入层不支持祖先的旋转或斜切变换。不要在挂载期间另用 CSS 拉伸 Canvas；通过宿主容器或实例的 `resize` 方法调整尺寸。
+布局尺寸使用 CSS 像素，像素缓冲区按 `resolution` 缩放。例如 CSS 宽度 `400px`、分辨率 `2` 对应逻辑宽度 `400`、缓冲区宽度 `800`。Canvas 的边框和内边距请放在宿主容器上；DOM 输入层不支持祖先的旋转或斜切变换。
+
+窗口尺寸变化时也会同步布局与当前 DPR。`resize(width, height)` 会固定传入轴的逻辑与 Canvas CSS 尺寸，后续自动同步继续使用该固定值；未传入且尚未固定的轴仍跟随尺寸来源。`resize()` 则立即按当前规则同步，不改变尺寸规则。也可以在挂载时通过第三个参数的 `width` / `height` 固定尺寸。
+
+`mount` 默认使用透明背景并开启抗锯齿。应用背景通过组件或根节点样式设置；需要自行配置 PixiJS Application 时，使用底层 `render` / `PRoot` 接入方式。
 
 ### 返回实例
 
@@ -50,11 +49,11 @@ Piant 将布局尺寸与 Canvas 的 CSS 尺寸保持为相同的逻辑像素，�
 | `app`                     | 此实例的 PixiJS `Application`，可交给调试工具                |
 | `root`                    | 此实例的 `PRoot`                                             |
 | `canvas`                  | 实际使用的 `HTMLCanvasElement`                               |
-| `resize(width?, height?)` | 立即同步渲染器与布局尺寸；未传入的轴从配置或尺寸来源重新读取 |
+| `resize(width?, height?)` | 固定传入轴的 CSS 像素尺寸并同步布局；未传入的轴沿用当前规则 |
 | `destroy()`               | 幂等销毁此实例                                               |
 | `isDestroyed`             | 只读销毁状态                                                 |
 
-每次 `mount` 都创建独立 Application、Canvas 挂载关系、响应式作用域和尺寸观察器。同一 `target` 在销毁前只能挂载一次，重复挂载会拒绝。同一页面可挂载多个实例，销毁一个实例不会停止其他实例。各实例需要独立状态时，在组件函数中创建状态，而非复用模块顶层的单例状态。
+每次 `mount` 都创建独立 Application、Canvas 挂载关系、响应式作用域和尺寸观察器。同一挂载元素在销毁前只能挂载一次，重复挂载会拒绝。同一页面可挂载多个实例，销毁一个实例不会停止其他实例。各实例需要独立状态时，在组件函数中创建状态，而非复用模块顶层的单例状态。
 
 普通指针事件与 DOM `Input` 以各自 Canvas 为坐标和交互来源。PixiJS 的 `eventMode: 'dynamic'` 静止指针合成事件仍受上游全局单例机制影响；多个 Canvas 间不保证该模式的悬停合成事件完全隔离。
 
@@ -64,8 +63,7 @@ Piant 将布局尺寸与 Canvas 的 CSS 尺寸保持为相同的逻辑像素，�
 
 ```ts
 const controller = new AbortController();
-const pending = mount(App, {
-  target: document.getElementById('app')!,
+const pending = mount(App, document.getElementById('app')!, {
   signal: controller.signal,
 });
 

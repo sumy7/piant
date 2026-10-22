@@ -121,14 +121,14 @@ function createPanel(side: 'left' | 'right', color: string) {
   async function start() {
     lifecycleButton.disabled = true;
     try {
-      instance = await mount(Counter, {
-        target: existingCanvas ?? host,
-        resizeTo: host,
-        pixi: { background: '#f8fafc' },
-      });
+      instance = await mount(
+        Counter,
+        existingCanvas ?? host,
+        side === 'left' ? { resolution: 2 } : undefined,
+      );
       const mounted = instance;
       const updateStatus = () => {
-        status.textContent = `Running · ${mounted.app.screen.width} × ${mounted.app.screen.height} logical pixels · DPR ${mounted.app.renderer.resolution}`;
+        status.textContent = `Running · ${mounted.app.screen.width} × ${mounted.app.screen.height} logical · CSS ${mounted.canvas.clientWidth} × ${mounted.canvas.clientHeight} · buffer ${mounted.canvas.width} × ${mounted.canvas.height} · resolution ${mounted.app.renderer.resolution}`;
       };
       mounted.app.renderer.on('resize', updateStatus);
       updateStatus();

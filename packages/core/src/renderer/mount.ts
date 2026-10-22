@@ -1,34 +1,15 @@
-import { Application, type ApplicationOptions, EventsTicker } from 'pixi.js';
+import { Application, EventsTicker } from 'pixi.js';
 import type { PNode } from '../elements/PNode';
 import { PRoot } from '../elements/PRoot';
 import { render } from './runtime';
 
 export type MountOptions = {
-  target: HTMLElement | HTMLCanvasElement;
-  /** Fixed logical size for this axis; otherwise read from the size source. */
+  /** Fix this axis in logical/CSS pixels; otherwise follow the mounted element. */
   width?: number;
   height?: number;
-  /** Defaults to the current devicePixelRatio. */
+  /** Defaults to the current devicePixelRatio; affects the buffer, not CSS. */
   resolution?: number;
-  /** Containers observe themselves by default; existing canvases use a size snapshot. */
-  resizeTo?: HTMLElement | false;
   signal?: AbortSignal;
-  pixi?: Omit<
-    Partial<ApplicationOptions>,
-    | 'canvas'
-    | 'view'
-    | 'width'
-    | 'height'
-    | 'resolution'
-    | 'resizeTo'
-    | 'autoDensity'
-    | 'sharedTicker'
-    | 'webgl'
-    | 'webgpu'
-    | 'canvasOptions'
-    | 'context'
-    | 'multiView'
-  >;
 };
 
 export type MountedApp = {
@@ -36,7 +17,7 @@ export type MountedApp = {
   readonly root: PRoot;
   readonly canvas: HTMLCanvasElement;
   readonly isDestroyed: boolean;
-  /** Synchronize with the size source, or apply a one-time logical size. */
+  /** Synchronize with CSS, optionally fixing the specified axes in logical pixels. */
   resize(width?: number, height?: number): void;
   destroy(): void;
 };
@@ -105,40 +86,29 @@ function contentSize(element: HTMLElement) {
 /** Create an independently owned Piant application in a browser host. */
 export async function mount(
   component: () => unknown,
-  options: MountOptions,
+  target: HTMLElement | HTMLCanvasElement,
+  options: MountOptions = {},
 ): Promise<MountedApp> {
-  const { target, signal } = options;
+  const { signal } = options;
   signal?.throwIfAborted();
   if (targets.has(target))
     throw new Error('[piant] Target already has a mounted application.');
   const existingCanvas =
     target.tagName === 'CANVAS' ? (target as HTMLCanvasElement) : undefined;
-  const source =
-    options.resizeTo === false
-      ? undefined
-      : (options.resizeTo ?? (existingCanvas ? undefined : target));
-  if (source?.tagName === 'CANVAS') {
-    throw new Error('[piant] resizeTo must be a container, not a canvas.');
-  }
-  const initialSize = contentSize(source ?? target);
-  if (existingCanvas && !source) {
+  const initialSize = contentSize(target);
+  if (existingCanvas) {
     if (!existingCanvas.clientWidth)
       initialSize.width = Math.max(1, existingCanvas.width);
     if (!existingCanvas.clientHeight)
       initialSize.height = Math.max(1, existingCanvas.height);
   }
-  const width =
-    options.width === undefined
-      ? initialSize.width
-      : positive(options.width, 'width');
-  const height =
-    options.height === undefined
-      ? initialSize.height
-      : positive(options.height, 'height');
+  if (options.width !== undefined) positive(options.width, 'width');
+  if (options.height !== undefined) positive(options.height, 'height');
   const resolution = () =>
     positive(options.resolution ?? window.devicePixelRatio ?? 1, 'resolution');
   resolution();
   const canvas = existingCanvas ?? document.createElement('canvas');
+  const intrinsicSize = { width: canvas.width, height: canvas.height };
   const savedAttributes = new Map(
     ['width', 'height', 'style'].map((name) => [
       name,
@@ -153,6 +123,25 @@ export async function mount(
   let root: PRoot | undefined;
   let dispose: (() => void) | undefined;
   let observer: ResizeObserver | undefined;
+  let fixedWidth = options.width;
+  let fixedHeight = options.height;
+
+  function applyFixedSize() {
+    if (fixedWidth !== undefined) canvas.style.width = `${fixedWidth}px`;
+    if (fixedHeight !== undefined) canvas.style.height = `${fixedHeight}px`;
+  }
+
+  function preserveIntrinsicSize(width: number, height: number) {
+    if (!existingCanvas) return;
+    // Changing the backing attributes also changes an unstyled canvas's intrinsic CSS
+    // size. Stabilize only affected axes; explicit %, calc(), etc. keep controlling CSS.
+    if (canvas.clientWidth && contentSize(canvas).width !== width) {
+      canvas.style.width = `${width}px`;
+    }
+    if (canvas.clientHeight && contentSize(canvas).height !== height) {
+      canvas.style.height = `${height}px`;
+    }
+  }
 
   function syncDOM() {
     const layer = app.domContainerRoot;
@@ -187,14 +176,43 @@ export async function mount(
     syncDOM();
   }
 
+  function readSize() {
+    const size = contentSize(target);
+    if (existingCanvas) {
+      if (!canvas.clientWidth) size.width = initialSize.width;
+      if (!canvas.clientHeight) size.height = initialSize.height;
+    }
+    return size;
+  }
+
+  function readInitializedSize() {
+    if (!existingCanvas) return readSize();
+    const buffer = { width: canvas.width, height: canvas.height };
+    try {
+      // Init is async: CSS may have changed while Pixi acquired its renderer.
+      // Measure using the original intrinsic size so a DPR-scaled buffer cannot
+      // be mistaken for a change to the canvas's logical CSS size.
+      canvas.width = intrinsicSize.width;
+      canvas.height = intrinsicSize.height;
+      return readSize();
+    } finally {
+      canvas.width = buffer.width;
+      canvas.height = buffer.height;
+    }
+  }
+
   function resize(nextWidth?: number, nextHeight?: number) {
     if (destroyed) return;
-    const size = source ? contentSize(source) : { width, height };
-    app.renderer.resize(
-      positive(nextWidth ?? options.width ?? size.width, 'width'),
-      positive(nextHeight ?? options.height ?? size.height, 'height'),
-      resolution(),
-    );
+    if (nextWidth !== undefined) positive(nextWidth, 'width');
+    if (nextHeight !== undefined) positive(nextHeight, 'height');
+    fixedWidth = nextWidth ?? fixedWidth;
+    fixedHeight = nextHeight ?? fixedHeight;
+    applyFixedSize();
+    const size = readSize();
+    const width = fixedWidth ?? size.width;
+    const height = fixedHeight ?? size.height;
+    app.renderer.resize(width, height, resolution());
+    preserveIntrinsicSize(width, height);
   }
 
   function destroy() {
@@ -293,26 +311,33 @@ export async function mount(
       restoringCanvases.delete(canvas);
       signal?.throwIfAborted();
     }
+    if (!existingCanvas) {
+      canvas.style.display = 'block';
+      canvas.style.width = '100%';
+      canvas.style.height = '100%';
+    }
+    applyFixedSize();
+    const size = readSize();
+    const width = fixedWidth ?? size.width;
+    const height = fixedHeight ?? size.height;
     await app.init({
-      ...options.pixi,
-      // Backend-specific options and the deprecated view alias must not override ownership.
-      webgl: undefined,
-      webgpu: undefined,
-      canvasOptions: undefined,
-      view: undefined,
-      context: undefined,
-      multiView: false,
       canvas,
       width,
       height,
       resolution: resolution(),
-      autoDensity: true,
+      autoDensity: false,
       sharedTicker: false,
-      resizeTo: undefined,
+      backgroundAlpha: 0,
+      antialias: true,
     });
     initialized = true;
     applications.add(app);
     signal?.throwIfAborted();
+    const current = readInitializedSize();
+    const currentWidth = fixedWidth ?? current.width;
+    const currentHeight = fixedHeight ?? current.height;
+    app.renderer.resize(currentWidth, currentHeight, resolution());
+    preserveIntrinsicSize(currentWidth, currentHeight);
     if (!existingCanvas) target.appendChild(canvas);
     root = new PRoot(app.stage, {
       width: app.screen.width,
@@ -321,9 +346,9 @@ export async function mount(
     dispose = render(component, root);
     app.renderer.on('resize', syncRoot);
     app.renderer.runners.postrender.add(domRunner);
-    if (source && typeof ResizeObserver !== 'undefined') {
+    if (typeof ResizeObserver !== 'undefined') {
       observer = new ResizeObserver(() => resize());
-      observer.observe(source);
+      observer.observe(target);
     }
     window.addEventListener('resize', onWindowResize);
     window.addEventListener('scroll', syncDOM, true);

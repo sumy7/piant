@@ -111,6 +111,11 @@ button:disabled {
   display: block;
 }
 
+.left-host canvas {
+  width: 100%;
+  height: calc(100% - 12px);
+}
+
 .scroll-footer {
   margin-top: 48px;
   color: #64748b;

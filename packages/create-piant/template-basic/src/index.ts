@@ -4,8 +4,5 @@ import { App } from './App';
 import './index.css';
 
 (async () => {
-  await mount(App, {
-    target: document.body,
-    pixi: { background: '#1099bb' },
-  });
+  await mount(App, document.body);
 })();

@@ -38,6 +38,11 @@ Canvas 可以只占普通页面的一块区域。为容器设定尺寸，再将�
   min-width: 0;
   height: 320px;
 }
+#left-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
 ```
 
 ```ts
@@ -48,32 +53,26 @@ const leftHost = document.getElementById('left')!;
 const leftCanvas = document.querySelector<HTMLCanvasElement>('#left-canvas')!;
 const rightHost = document.getElementById('right')!;
 
-const left = await mount(Counter, {
-  target: leftCanvas,
-  resizeTo: leftHost,
-});
-const right = await mount(Counter, { target: rightHost });
+const left = await mount(Counter, leftCanvas);
+const right = await mount(Counter, rightHost);
 
 // 容器调整后分别同步；销毁左侧不会停止右侧。
 leftHost.style.height = '400px';
 left.destroy();
 
 // 已有 Canvas 保留，可再次挂载。
-const replacement = await mount(Counter, {
-  target: leftCanvas,
-  resizeTo: leftHost,
-});
+const replacement = await mount(Counter, leftCanvas);
 
 // 页面卸载时：
 replacement.destroy();
 right.destroy();
 ```
 
-容器挂载默认观察内容区尺寸；已有 Canvas 默认读取挂载时的客户区尺寸，需要响应容器变化时显式传入 `resizeTo`。容器的高度应由 CSS 或页面布局决定，不能依赖内部 Canvas 撑开。页面滚动和容器偏移不会改变 Piant 的逻辑坐标原点；指针交互和 `Input` 的 DOM 输入层以各自 Canvas 的实际位置对齐。
+容器挂载观察内容区尺寸；已有 Canvas 则观察 Canvas 自身，保留其响应式 CSS。示例中 Canvas 的 `100%` 宽高随父容器变化，Piant 同步更新布局与渲染缓冲区。容器必须先有明确尺寸，不能依赖内部 Canvas 撑开。页面滚动和容器偏移不会改变 Piant 的逻辑坐标原点；指针交互和 `Input` 的 DOM 输入层以各自 Canvas 的实际位置对齐。
 
-设置 `width` / `height` 可以按轴固定尺寸，例如 `{ target: rightHost, height: 240 }` 保持高度固定，宽度仍跟随容器。调用 `instance.resize(480, 240)` 可立即更新画布和根布局；参数只对本次同步生效，后续容器或窗口尺寸变化会重新读取配置与尺寸来源。设置 `resizeTo: false` 可关闭容器观察；需要稳定尺寸时，在挂载选项中指定 `width` / `height`。
+第三个参数中的 `width` / `height` 按轴固定 CSS 像素尺寸，并覆盖对应轴的 Canvas CSS 尺寸。例如 `mount(Counter, rightHost, { height: 240 })` 保持高度固定，宽度仍跟随容器。调用 `instance.resize(480, 240)` 可立即更新画布和根布局，并固定这两个轴的 CSS 像素尺寸。只传一个轴时，另一个尚未固定的轴继续跟随尺寸来源；`instance.resize()` 按当前规则立即同步。
 
-布局尺寸使用逻辑像素，默认渲染分辨率为当前设备 DPR，调整尺寸时会同步读取。`mount` 同步设置 Canvas CSS 尺寸与像素缓冲区，不应再单独通过 CSS 拉伸 Canvas。已有 Canvas 在销毁时保留并恢复挂载前的尺寸及样式属性，自动创建的 Canvas 在销毁时移除。取消初始化和完整清理边界见[渲染 API](/reference/renderer#mount)。
+布局尺寸使用 CSS 像素，默认渲染分辨率为当前设备 DPR，调整尺寸时会同步读取。`resolution` 只影响像素缓冲区，不改变 CSS 尺寸。已有 Canvas 在销毁时保留并恢复挂载前的尺寸及样式属性，自动创建的 Canvas 在销毁时移除。取消初始化和完整清理边界见[渲染 API](/reference/renderer#mount)。
 
 ## Flexbox 支持
 

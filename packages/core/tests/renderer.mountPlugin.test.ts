@@ -28,7 +28,7 @@ vi.mock('pixi.js', async (original) => {
 it('releases real Application plugins and their ticker after a later plugin fails', async () => {
   const target = document.createElement('div');
   await expect(
-    mount(() => undefined, { target, width: 100, height: 100 }),
+    mount(() => undefined, target, { width: 100, height: 100 }),
   ).rejects.toThrow('later plugin failed');
   expect(observed.app.ticker).toBeNull();
   expect(observed.app.stage).toBeNull();

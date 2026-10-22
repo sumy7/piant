@@ -13,11 +13,10 @@ export async function mountExample(
       onError(reportError);
       return component();
     },
+    host,
     {
-      target: host,
       signal,
       resolution: Math.min(window.devicePixelRatio || 1, 2),
-      pixi: { background: '#f8fafc', antialias: true },
     },
   );
   return instance.destroy;

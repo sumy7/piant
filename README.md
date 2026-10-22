@@ -75,10 +75,7 @@ export default defineConfig({
 import { mount } from '@piant/core';
 import { App } from './App';
 
-const instance = await mount(App, {
-  target: document.getElementById('app')!,
-  pixi: { background: '#1099bb' },
-});
+const instance = await mount(App, document.getElementById('app')!);
 
 // 页面或路由卸载时调用。
 // instance.destroy();

@@ -28,7 +28,8 @@ it('uses the shared mount lifecycle and registers example error handling in the 
   );
   expect(mocks.mount).toHaveBeenCalledWith(
     expect.any(Function),
-    expect.objectContaining({ target: host, signal: controller.signal }),
+    host,
+    expect.objectContaining({ signal: controller.signal }),
   );
   expect(mocks.onError).toHaveBeenCalledWith(report);
   expect(component).toHaveBeenCalledOnce();
