@@ -53,7 +53,7 @@ cd examples/todos
 pnpm dev
 ```
 
-`@piant/core` 仅提供 ESM 入口，以下示例使用 `import`。脚手架和仓库示例已显式声明 PixiJS `^8.17.1`；已有项目的依赖安装见[安装与配置](/guide/installation)。
+`@piant/core` 仅提供 ESM 入口，以下示例使用 `import`。脚手架和仓库示例已声明 PixiJS 依赖；手动接入项目时，按[安装与配置](/guide/installation)安装所需依赖。
 
 ## 项目结构示例
 

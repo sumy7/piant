@@ -2,6 +2,12 @@
 
 `Show` 组件用于条件渲染，相当于 `if/else` 语句。
 
+## 在线示例
+
+点击按钮隐藏或显示内容，观察主内容与 fallback 的切换，再展开代码查看 `when` 如何关联响应式状态。
+
+<LiveExample example="show" title="切换条件渲染" />
+
 ## 基本用法
 
 ```tsx
@@ -32,8 +38,6 @@ function Toggle() {
   <UserDashboard />
 </Show>
 ```
-
-<LiveExample example="show" title="切换条件渲染" />
 
 ## 访问条件值
 

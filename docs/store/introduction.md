@@ -10,6 +10,12 @@
 - **TypeScript 友好**：完整泛型类型推导，无需额外配置。
 - **可选历史记录**：显式启用 `createStoreHistory` 后记录状态，按需接入独立的 [Piant Devtools](/devtools/store-history) 预览与恢复；普通 Store 不自动记录。
 
+## 在线体验
+
+先点击加减按钮，观察两个组件如何同步读取同一份状态。异步加载与失败重试可继续体验[异步 action 示例](./async-actions)，恢复旧状态可体验[Store 历史示例](/devtools/store-history#在线体验状态恢复)。
+
+<LiveExample example="store" title="两个组件，共享一份状态" />
+
 ## 适用场景
 
 | 场景                    | 推荐方案                           |

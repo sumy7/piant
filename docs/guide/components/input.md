@@ -44,6 +44,6 @@
 - 当前 Props 不包含 `children`、`readOnly`、`maxLength`、`onKeyDown` 或任意 HTML 属性透传，也不包含 `PixiEventProps`。这里的回调接收原生 DOM 事件；`onInput` / `onChange` 的参数顺序与 Pixi 事件不同。
 - 组件在响应式 owner 清理时移除自己注册的四个 DOM 监听器；`ref` 中额外添加的监听器应由调用方通过 `onCleanup` 清理。节点树与宿主资源的释放边界见 [render](/reference/renderer#render)。
 
-底层 DOM 与场景的集成行为还受 [PixiJS DOMContainer](https://pixijs.download/release/docs/scene.DOMContainer.html) 约束；复杂裁剪、滤镜等效果应在实际浏览器中核验。将画布嵌入带定位的容器时，也需检查原生输入框是否对齐；本站对 PixiJS 8.22 的定位补偿见[示例宿主说明](https://github.com/sumy7/piant/blob/main/docs/.vitepress/README.md)。
+底层 DOM 与场景的集成行为还受 [PixiJS DOMContainer](https://pixijs.download/release/docs/scene.DOMContainer.html) 约束；复杂裁剪、滤镜等效果应在实际浏览器中核验。将画布嵌入带定位的容器时，也需检查原生输入框是否对齐；本站的定位补偿见[示例宿主说明](https://github.com/sumy7/piant/blob/main/docs/.vitepress/README.md)。
 
 详见：[Input API](/reference/components#input)、[生命周期](/guide/lifecycle)。

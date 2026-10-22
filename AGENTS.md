@@ -46,6 +46,8 @@
 
 ## Conventions
 
+- 文档与 README 默认描述最新版本的能力、用法与限制，不嵌入历史版本差异、升级过程或未来版本猜测；安装要求与依赖兼容范围按当前配置说明，发布历史由 Changesets/Git 记录维护。
+- Core 组件指南中每个组件至少包含一个可在线运行的示例；合并介绍多个组件时分别覆盖，优先让读者通过操作和画面变化理解效果。
 - 涉及 PixiJS API 时，优先参考官方 LLM 文档：<https://pixijs.com/llms.txt>。
 - JSX 使用前提是配置 `@piant/babel-preset-piant`（参考示例与 README 中 rsbuild 配置）。
 - 修改 `Text` 相关逻辑时，避免在 JSX 内部写复杂内联条件/插值表达式；优先先计算再传值，以减少不必要的响应式副作用。

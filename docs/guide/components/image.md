@@ -2,6 +2,12 @@
 
 `Image` 组件用于在 Canvas 上渲染 PixiJS 的 `Sprite` 或 `Graphics` 对象。
 
+## 在线示例
+
+点击按钮依次切换 contain、cover、fill 和 none，观察圆形是否变形、两侧色块是否被裁剪。图形在本地生成，无需加载网络图片；容器固定为 168 × 140，源图形为 240 × 120。
+
+<LiveExample example="image" title="对比图像适配方式" :height="320" />
+
 ## 基本用法
 
 ```tsx

@@ -15,6 +15,7 @@
     "@piant/animation": "workspace:*",
     "@piant/babel-preset-piant": "workspace:*",
     "@piant/core": "workspace:*",
+    "@piant/hooks": "workspace:*",
     "@piant/router": "workspace:*",
     "@piant/store": "workspace:*",
     "@types/babel__core": "^7.20.5",

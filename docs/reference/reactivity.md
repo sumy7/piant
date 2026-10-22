@@ -165,7 +165,6 @@ function onError(fn: (error: any) => void): void;
 > 当前 `splitProps` 仅作为内部工具使用，**不是** `@piant/core` 对外导出的公共 API。
 > 因此，应用代码不应将其视为稳定可用的参考接口。
 
-如果后续版本对外导出该能力，再补充完整的函数签名与使用示例。
 ---
 
 ## 类型定义

@@ -2,6 +2,12 @@
 
 `Text` 是 Piant 中用于渲染富文本内容的组件，支持内联样式、多字体、图文混排等功能。所有文本内容都必须包裹在 `Text` 中。
 
+## 在线示例
+
+观察同一行中的 Text、Span 和 Img：彩色粗体、斜体与图标共享文本布局。点击按钮切换两行省略与完整段落，缩窄预览还能观察自动换行。
+
+<LiveExample example="text" title="富文本与行数截断" :height="420" />
+
 ## 基本用法
 
 ```tsx
@@ -85,6 +91,8 @@ import { Text, Span } from '@piant/core';
 | `textOverflow`  | `'clip' \| 'ellipsis'`                                 | `'clip'`       | 超出可见行时的截断策略                                        |
 | `lineClamp`     | `number`                                               | `0`            | 最大可见行数；`0` 或未设置表示不限制                          |
 | `verticalAlign` | `'baseline' \| 'middle' \| 'top' \| 'bottom'`          | `'baseline'`   | 垂直对齐（用于 Img）                                          |
+
+`wordBreak` 是段落级配置：目前仅 `keep-all` 启用独立模式；`normal`、兼容值 `break-word` 及其他字符串（包括 `break-all`）均使用默认断行，尚未提供独立 CSS `break-all` / `break-word` 语义。`whiteSpace` 同样按段落处理，只有 `pre-wrap` 保留空白，其余字符串使用 `normal`。
 
 ### textOverflow + lineClamp
 

@@ -65,13 +65,13 @@ const TextList = () => {
 
           <View style={styles.section}>
             <Text style={styles.label}>
-              <Span>Break all</Span>
+              <Span>Default word wrapping</Span>
             </Text>
             <Text
               style={{
                 fontSize: 50,
                 color: '#00ff00',
-                wordBreak: 'break-all',
+                wordBreak: 'normal',
               }}
             >
               <Span style={{ fontSize: 40, color: 'red' }}>

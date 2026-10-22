@@ -2,6 +2,12 @@
 
 `Switch` 和 `Match` 组合用于多条件分支渲染，类似于 JavaScript 的 `switch/case` 语句。
 
+## 在线示例
+
+点击切换状态，依次观察加载、成功、失败以及没有匹配分支时的 fallback。
+
+<LiveExample example="switch" title="切换多个匹配分支" />
+
 ## 基本用法
 
 ```tsx
