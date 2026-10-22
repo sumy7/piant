@@ -35,6 +35,7 @@ export const DEFAULT_INLINE_PROPS: TextStyles = {
   fontWeight: 'normal',
   fontStyle: 'normal',
   letterSpacing: 0,
+  textDecoration: 'none',
   textTransform: 'none',
   whiteSpace: 'normal',
   wordBreak: 'break-word',

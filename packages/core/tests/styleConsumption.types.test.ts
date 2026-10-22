@@ -1,7 +1,8 @@
 import { describe, expectTypeOf, it } from 'vitest';
+import type { TextDecoration } from '../src';
 import { bindStyle } from '../src/components/bindStyle';
 import type { ImageProps } from '../src/components/Image';
-import type { TextProps } from '../src/components/Text';
+import type { SpanProps, TextProps } from '../src/components/Text';
 import type { ViewProps } from '../src/components/View';
 import type { PText } from '../src/elements/PText';
 import type { TextLayoutStyle } from '../src/elements/text';
@@ -139,6 +140,46 @@ describe('style consumption types', () => {
 
     // @ts-expect-error resolved values must match the target style
     bindStyle<ExampleStyle>(target, () => ({ width: 'wide' }));
+  });
+
+  it('shares the exact decoration contract across layout, Text and Span', () => {
+    type Decoration =
+      | 'none'
+      | 'underline'
+      | 'line-through'
+      | 'underline line-through'
+      | 'line-through underline';
+    expectTypeOf<TextDecoration>().toEqualTypeOf<Decoration>();
+    expectTypeOf<
+      TextLayoutStyle['textDecoration']
+    >().toEqualTypeOf<Decoration>();
+    expectTypeOf<TextStyles['textDecoration']>().toEqualTypeOf<
+      Decoration | undefined
+    >();
+    type PTextStyle = NonNullable<Parameters<PText['setStyle']>[0]>;
+    expectTypeOf<PTextStyle['textDecoration']>().toEqualTypeOf<
+      Decoration | undefined
+    >();
+
+    const style = [{ textDecoration: 'underline line-through' }] as const;
+    const text: TextProps = { style };
+    const span: SpanProps = { style };
+    expectTypeOf(text.style).toMatchTypeOf<StyleValue<TextStyles>>();
+    expectTypeOf(span.style).toMatchTypeOf<StyleValue<TextStyles>>();
+
+    const checkCalls = (element: PText) => {
+      element.setStyle({ textDecoration: 'none' });
+      element.setStyle({ textDecoration: 'underline' });
+      element.setStyle({ textDecoration: 'line-through' });
+      element.setStyle({ textDecoration: 'underline line-through' });
+      element.setStyle({ textDecoration: 'line-through underline' });
+      element.setStyle({ textDecoration: undefined });
+      // @ts-expect-error decoration spellings must match the public contract
+      element.setStyle({ textDecoration: 'strikethrough' });
+      // @ts-expect-error none cannot be combined with a decoration
+      element.setStyle({ textDecoration: 'none underline' });
+    };
+    expectTypeOf(checkCalls).toBeFunction();
   });
 
   it('projects text styles onto the text layout state', () => {

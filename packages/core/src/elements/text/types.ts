@@ -5,6 +5,13 @@ export type VerticalAlign = 'top' | 'middle' | 'bottom' | 'baseline';
 
 export type LineHeight = number | `${number}x` | 'normal';
 
+export type TextDecoration =
+  | 'none'
+  | 'underline'
+  | 'line-through'
+  | 'underline line-through'
+  | 'line-through underline';
+
 export type TextLayoutStyle = {
   fontSize: number;
   color: string;
@@ -14,6 +21,7 @@ export type TextLayoutStyle = {
   fontWeight: string | number;
   fontStyle: 'normal' | 'italic' | 'oblique' | string;
   letterSpacing: number;
+  textDecoration: TextDecoration;
   textTransform: 'none' | 'uppercase' | 'lowercase' | 'capitalize';
   whiteSpace: 'normal' | 'pre-wrap' | string;
   wordBreak: 'break-word' | 'normal' | 'keep-all' | string;

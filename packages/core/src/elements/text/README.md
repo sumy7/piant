@@ -17,12 +17,18 @@ pretext 对 Canvas 无法识别的字体字符串和非有限字距抛出 `Range
 
 布局限制：独立零宽空格片段在超宽内容或行尾空白之后可能少占一行。
 
+## 文本装饰
+
+`textDecoration` 支持 `none`、`underline`、`line-through` 与两种顺序的组合值。Text / Span 继承父级值，显式子级值整体覆盖（`none` 取消）。装饰由 Canvas 在最终可见文字片段上绘制，不参与 pretext 测量或断行；使用片段的 `occupiedWidth`、基线与字体度量确定范围和位置，线色跟随文字颜色。Canvas 无字体原生装饰表，删除线采用实测 x 字高估算；没有独立线色、粗细或线型配置。
+
+换行、字距、对齐与混合样式沿用最终排版片段；截断后只绘制可见片段，省略号沿用来源样式。行内图片和制表符不画装饰。样式切换为 `none` 后随文本纹理重绘清除旧线条。
+
 ## TODO
 
 - [x] letter spacing
 - [x] 基础自动断行与 `keep-all`（`normal` / 兼容值 `break-word` 使用默认断行）
 - [x] ellipsis（由 Piant 实现）
-- [ ] decoration (underline, strikethrough)，见 [COD-132](https://linear.app/codepuppies/issue/COD-132)
+- [x] decoration (underline, strikethrough)，见 [COD-132](https://linear.app/codepuppies/issue/COD-132)
 
 断行范围：段落级 `wordBreak` 仅将 `keep-all` 作为独立模式，其余字符串（包括 `break-all`）均回退到 pretext 的 `normal`；尚未提供独立 CSS `break-all` / `break-word` 语义。`whiteSpace` 支持 `normal` / `pre-wrap`。样式类型接受字符串不代表实现了对应 CSS 模式。
 

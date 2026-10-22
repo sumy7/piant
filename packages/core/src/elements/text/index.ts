@@ -44,6 +44,7 @@ const DEFAULT_TEXT_STYLE: TextLayoutStyle = {
   fontWeight: 'normal',
   fontStyle: 'normal',
   letterSpacing: 0,
+  textDecoration: 'none',
   textTransform: 'none',
   whiteSpace: 'normal',
   wordBreak: 'break-word',
@@ -175,6 +176,7 @@ export class Typesetter {
               currentX,
               lineBox,
               metrics,
+              fragment.occupiedWidth,
             );
             hasText = true;
           }
@@ -734,6 +736,7 @@ export class Typesetter {
     x: number,
     lineBox: LineBox,
     metrics: { width: number; ascent: number; descent: number; height: number },
+    occupiedWidth: number,
   ) {
     const { ctx } = surface;
     const font = this.toFont(style);
@@ -762,6 +765,38 @@ export class Typesetter {
         }
       } else {
         ctx.fillText(text, x, drawY + metrics.ascent);
+      }
+    }
+
+    if (style.textDecoration && style.textDecoration !== 'none') {
+      // Canvas does not expose underline/strike font-table metrics. Use a
+      // stable font sample and x-height rather than each fragment's glyphs,
+      // so adjacent words in the same font keep their decorations aligned.
+      const fontMetrics = this.getTextMetrics('Mg', style);
+      const thickness = fontMetrics.height / 16;
+      const baseline = drawY + metrics.ascent;
+      if (style.textDecoration.includes('underline')) {
+        ctx.fillRect(
+          x,
+          // Tight line heights and text without descenders can leave less
+          // space than the font sample. Keep the line inside the line box
+          // without changing text measurement or wrapping.
+          Math.min(
+            baseline + fontMetrics.descent / 2 - thickness / 2,
+            lineBox.y + lineBox.height - thickness,
+          ),
+          occupiedWidth,
+          thickness,
+        );
+      }
+      if (style.textDecoration.includes('line-through')) {
+        const xHeight = this.getTextMetrics('x', style).ascent;
+        ctx.fillRect(
+          x,
+          baseline - xHeight / 2 - thickness / 2,
+          occupiedWidth,
+          thickness,
+        );
       }
     }
   }

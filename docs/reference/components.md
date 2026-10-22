@@ -44,10 +44,13 @@ interface TextProps {
 }
 ```
 
-常用文本截断样式（通过 `style` 传入）：
+常用文本样式（通过 `style` 传入）：
 
 - `textOverflow: 'clip' | 'ellipsis'`
 - `lineClamp: number`
+- `textDecoration: 'none' | 'underline' | 'line-through' | 'underline line-through' | 'line-through underline'`（默认 `'none'`）
+
+`textDecoration` 从 Text 继承到嵌套 Span；子级显式值替换父级值，`none` 取消装饰。线色跟随文字颜色，不改变排版；行内图片和制表符不画线，省略号沿用来源片段样式。支持响应式切换，详细绘制边界见 [文本装饰](/guide/components/text#下划线与删除线)。
 
 详见：[Text 组件文档](/guide/components/text)
 

@@ -18,7 +18,9 @@ import './index.css';
     width: app.screen.width,
     height: app.screen.height,
   });
-  root.setDebugOptions({ textRendering: true });
+  root.setDebugOptions({
+    textRendering: new URLSearchParams(window.location.search).has('textDebug'),
+  });
 
   render(() => App({ renderer: app.renderer }), root);
 
