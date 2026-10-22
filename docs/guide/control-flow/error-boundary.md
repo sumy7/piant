@@ -10,24 +10,17 @@
 
 ## 基本用法
 
-使用 `children` getter 按需创建受保护子树，并把边界封装为父容器中的独立组件。Piant 的 JSX 属性会提前求值并缓存 `children`；直接把 `<RiskyComponent />` 嵌进 `<ErrorBoundary>`，可能在边界安装错误处理前就创建子组件，也可能在重置时复用已清理的节点。需要捕获构造错误或支持重试时，使用下面的工厂写法。
+将需要保护的组件放在 `ErrorBoundary` 内。子组件在边界的独立错误作用域中创建，构造或响应式渲染过程中的同步错误会显示降级界面，父级与同级内容继续工作。
 
 ```tsx
 import { ErrorBoundary, Text, View } from '@piant/core';
 
-function SafePanel() {
-  return ErrorBoundary({
-    get children() {
-      return <RiskyComponent />;
-    },
-    fallback: <Text>发生了错误，请重试</Text>,
-  });
-}
-
 function App() {
   return (
     <View>
-      <SafePanel />
+      <ErrorBoundary fallback={<Text>发生了错误</Text>}>
+        <RiskyComponent />
+      </ErrorBoundary>
     </View>
   );
 }
@@ -35,33 +28,38 @@ function App() {
 
 ## 带重置功能
 
-`fallback` 可以是一个接受错误和重置函数的回调。让 `children` getter 创建子树，重置时才能创建新的组件状态和节点：
+`fallback` 可以是一个接受错误和重置函数的回调。调用 `reset()` 重新创建受保护子树，并初始化新的局部状态：
 
 ```tsx
 function SafePanel() {
-  return ErrorBoundary({
-    get children() {
-      return <RiskyComponent />;
-    },
-    fallback: (error, reset) => {
-      const message = `错误：${error.message}`;
-      return (
-        <View>
-          <Text>{message}</Text>
-          <View
-            onClick={reset}
-            style={{ backgroundColor: '#0066cc', padding: 8, borderRadius: 4 }}
-          >
-            <Text style={{ color: 'white' }}>重试</Text>
+  return (
+    <ErrorBoundary
+      fallback={(error, reset) => {
+        const message = `错误：${error.message}`;
+        return (
+          <View>
+            <Text>{message}</Text>
+            <View
+              onClick={reset}
+              style={{
+                backgroundColor: '#0066cc',
+                padding: 8,
+                borderRadius: 4,
+              }}
+            >
+              <Text style={{ color: 'white' }}>重试</Text>
+            </View>
           </View>
-        </View>
-      );
-    },
-  });
+        );
+      }}
+    >
+      <RiskyComponent />
+    </ErrorBoundary>
+  );
 }
 ```
 
-调用 `reset()` 会清除错误状态，再次读取 `children`。不要把提前创建好的节点作为可重试子树反复返回；导致错误的数据或资源也应先修复，否则重试仍会进入降级界面。在线示例每次恢复都会创建全新的局部状态，可连续触发、恢复。
+导致错误的数据或资源应先修复，否则重试仍会进入降级界面。使用 JSX 子组件创建新节点，不要反复返回提前创建并已从渲染树移除的节点。在线示例可以连续触发错误与恢复。
 
 ## Props
 
@@ -72,11 +70,11 @@ function SafePanel() {
 
 ## 工作原理
 
-`ErrorBoundary` 内部使用 `onError` 钩子捕获子树中的错误，并将错误状态保存在 `createState` 中。当错误发生时，显示 `fallback`；调用 `reset()` 时，将错误状态重置为 `null`，恢复正常渲染。
+`ErrorBoundary` 为受保护子树创建独立的响应式作用域，用 `onError` 捕获错误。当错误发生时，释放失败子树的响应式副作用并显示 `fallback`；调用 `reset()` 时清除错误、创建新的子树。渲染节点的替换与移除仍由渲染器处理。
 
 ## 注意事项
 
 - `ErrorBoundary` 捕获的是组件树**渲染过程**中的同步错误
-- 将边界封装成组件后放在父容器中，隔离其响应式作用域；避免在应用根作用域直接注册边界，与根级错误处理混在一起
+- `fallback` 自身抛出的错误交给外层边界或应用错误处理，不会由同一个边界反复捕获
 - 异步错误（如 `setTimeout`、`Promise` 中的错误）不会被自动捕获
 - 可以嵌套使用多个 `ErrorBoundary` 来隔离不同区域的错误

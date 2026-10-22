@@ -1,4 +1,5 @@
 import { untracked } from 'mobx';
+import { ErrorBoundary } from '../components/ErrorBoundary';
 import { memo } from '../reactivity/effects';
 
 function stabilizeProps(props: Record<string, any>) {
@@ -45,6 +46,9 @@ export function createComponent(type: any, props: Record<string, any>) {
     return null;
   }
 
-  const normalizedProps = stabilizeProps(props);
+  // The boundary must install its error scope before creating its children,
+  // and must create them again after reset rather than reuse a cached tree.
+  const normalizedProps =
+    Comp === ErrorBoundary ? props : stabilizeProps(props);
   return untracked(() => Comp(normalizedProps));
 }

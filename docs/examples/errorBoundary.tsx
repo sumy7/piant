@@ -45,32 +45,25 @@ function RecoverablePanel() {
   );
 }
 
-function RecoverableBoundary() {
-  // A direct getter creates a fresh child tree after reset. Pre-creating the
-  // Show would reuse its disposed effects and already-destroyed render nodes.
-  return ErrorBoundary({
-    get children() {
-      return <RecoverablePanel />;
-    },
-    fallback: (error, reset) => {
-      const message = `已捕获：${error.message}`;
-      return (
-        <View style={styles.panel}>
-          <Text style={styles.text}>{message}</Text>
-          <View style={styles.button} onClick={reset}>
-            <Text style={styles.buttonText}>修复并重置</Text>
-          </View>
-        </View>
-      );
-    },
-  });
-}
-
 export default function App() {
   return (
     <View style={styles.root}>
       <Text style={styles.text}>外层界面始终可用</Text>
-      <RecoverableBoundary />
+      <ErrorBoundary
+        fallback={(error, reset) => {
+          const message = `已捕获：${error.message}`;
+          return (
+            <View style={styles.panel}>
+              <Text style={styles.text}>{message}</Text>
+              <View style={styles.button} onClick={reset}>
+                <Text style={styles.buttonText}>修复并重置</Text>
+              </View>
+            </View>
+          );
+        }}
+      >
+        <RecoverablePanel />
+      </ErrorBoundary>
     </View>
   );
 }
