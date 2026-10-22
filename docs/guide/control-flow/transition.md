@@ -24,6 +24,26 @@ Piant 提供了两个过渡动画组件：`Transition` 和 `TransitionGroup`，�
 
 ### 基本用法
 
+常见效果可直接使用可复用预设：
+
+```tsx
+import { fade } from '@piant/animation';
+
+Transition({ ...fade({ duration: 300 }), appear: true, children: content });
+```
+
+`slide({ x, y })` 和 `scale({ from })` 使用相同写法，参见[状态绑定与预设在线示例](/animation/quick-start)。路由使用 [`RouteView.transition`](/router/transitions)。
+
+自定义 `onEnter` / `onExit` 可以返回清理函数。Transition 在快速切换或卸载时调用它取消旧动画，并忽略旧阶段迟到的 `done()`；已完成阶段的资源应由 hook 自行释放。回调务必只调用一次 `done()`，或在取消时清理并停止回调。
+
+```ts
+onExit: (node, done) => {
+  const animation = animate(node, [{ alpha: 1 }, { alpha: 0 }], { duration: 300 });
+  void animation.finished.then(done, () => {});
+  return () => animation.cancel({ preserve: true });
+}
+```
+
 `@piant/animation` 的 `animate(node, keyframes, options)` 返回动画控制器。将 `finished` 的成功回调连接到 `done()`，离开动画完成后才移除节点。时长单位为毫秒。
 
 下面片段的 import 声明放在模块顶部，其余初始化与清理逻辑写在组件函数体内；`visible` 是该组件的响应式 getter，`Card` 每次调用创建新节点。完整组件见上方「展示代码」。

@@ -14,7 +14,9 @@ describe('Transition', () => {
 
   it('returns single-element array on initial mount without appear', () => {
     root(() => {
-      const result = Transition({ children: 'hello' as any }) as unknown as () => JSX.Element[];
+      const result = Transition({
+        children: 'hello' as any,
+      }) as unknown as () => JSX.Element[];
       expect(result()).toEqual(['hello']);
     });
   });
@@ -310,12 +312,12 @@ describe('Transition', () => {
       setChild('B');
       expect(result()).toEqual(['A']);
 
-      // B → C before A finishes: B starts exiting
+      // B → C before A finishes: A remains the visible exiting element
       setChild('C');
 
       // Stale callback (A's exit) should be ignored
       exitDones[0]();
-      expect(result()).not.toContain('A');
+      expect(result()).toEqual(['A']);
 
       // B's exit completes: C should be shown
       exitDones[1]();
@@ -426,7 +428,9 @@ describe('Transition', () => {
       const [child, setChild] = createState<string>('A');
       // Pass signal function directly as children — it is a 0-arg function so
       // Transition calls it inside the effect and MobX tracks the dependency.
-      const result = Transition({ children: child as any }) as unknown as () => JSX.Element[];
+      const result = Transition({
+        children: child as any,
+      }) as unknown as () => JSX.Element[];
 
       expect(result()).toEqual(['A']);
       setChild('B');
@@ -470,5 +474,107 @@ describe('Transition', () => {
       exitDone!();
       expect(result()).toEqual(['viewB']);
     });
+  });
+  it('cancels phase resources and suppresses queued/stale hooks after disposal', async () => {
+    let dispose!: () => void;
+    const enter = vi.fn();
+    const after = vi.fn();
+    const cancel = vi.fn();
+    let stale!: () => void;
+    const set = root((stop) => {
+      dispose = stop;
+      const [child, update] = createState('A');
+      Transition({
+        children: child as any,
+        onEnter: enter,
+        onExit: (_el, done) => {
+          stale = done;
+          return cancel;
+        },
+        onAfterExit: after,
+      });
+      return update;
+    });
+    set('B');
+    dispose();
+    stale();
+    await Promise.resolve();
+    expect(cancel).toHaveBeenCalledTimes(1);
+    expect(enter).not.toHaveBeenCalled();
+    expect(after).not.toHaveBeenCalled();
+  });
+
+  it('skips pending out-in nodes and cancels the previous exit', () => {
+    root(() => {
+      const [child, setChild] = createState('A');
+      const exits: string[] = [];
+      const complete: Array<() => void> = [];
+      const cancel = vi.fn();
+      const output = Transition({
+        children: child as any,
+        mode: 'out-in',
+        onExit: (el, done) => {
+          exits.push(el);
+          complete.push(done);
+          return cancel;
+        },
+      }) as unknown as () => any[];
+      setChild('B');
+      setChild('C');
+      expect(exits).toEqual(['A', 'A']);
+      expect(cancel).toHaveBeenCalledTimes(1);
+      complete[0]();
+      expect(output()).toEqual(['A']);
+      complete[1]();
+      expect(output()).toEqual(['C']);
+    });
+  });
+
+  it('does not start a stale exit when an after-enter hook switches children', async () => {
+    await root(async () => {
+      const [child, setChild] = createState('A');
+      const enters: Array<() => void> = [];
+      const exited: string[] = [];
+      const result = Transition({
+        children: child as any,
+        mode: 'in-out',
+        onEnter: (_el, done) => {
+          enters.push(done);
+        },
+        onAfterEnter: (el) => {
+          if (el === 'B') setChild('C');
+        },
+        onExit: (el) => {
+          exited.push(el);
+        },
+      }) as unknown as () => any[];
+      setChild('B');
+      await Promise.resolve();
+      enters[0]();
+      expect(result()).toEqual(['C', 'B']);
+      expect(exited).toEqual([]);
+      await Promise.resolve();
+      enters[1]();
+      expect(exited).toEqual(['B']);
+    });
+  });
+
+  it('runs cleanup returned after a synchronous hook disposes its owner', async () => {
+    const cancel = vi.fn();
+    let dispose!: () => void;
+    root((stop) => {
+      dispose = stop;
+      Transition({
+        children: 'A' as any,
+        appear: true,
+        onEnter: (_el, done) => {
+          done();
+          return cancel;
+        },
+        onAfterEnter: () => dispose(),
+      });
+    });
+    await Promise.resolve();
+    expect(cancel).toHaveBeenCalledTimes(1);
   });
 });

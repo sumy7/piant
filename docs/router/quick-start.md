@@ -47,10 +47,12 @@ export function App() {
     <View>
       <RouterProvider router={router}>
         {() => (
-          <RouterErrorBoundary fallback={(error) => <ErrorPage error={error} />}>
+          <RouterErrorBoundary
+            fallback={(error) => <ErrorPage error={error} />}
+          >
             <RouteView
               fallback={<NotFoundPage />}
-              loadingFallback={<LoadingPage />}
+              loadingFallback={() => <LoadingPage />}
             />
           </RouterErrorBoundary>
         )}
@@ -137,3 +139,20 @@ function goProfile() {
 ```bash
 pnpm --filter @piant/examples-router-basic dev
 ```
+
+## 路由切场动画
+
+安装 `@piant/animation`，把预设传给 `RouteView.transition`：
+
+```tsx
+import { fade } from '@piant/animation';
+import { RouteView } from '@piant/router';
+
+<RouteView
+  transition={{ ...fade({ duration: 240 }), mode: 'out-in', appear: true }}
+  loadingFallback={() => <LoadingPage />}
+  errorFallback={(error) => <ErrorPage error={error} />}
+/>;
+```
+
+参见[路由切场动画](/router/transitions)，了解快速导航、lazy 页面、取消与资源所有权。

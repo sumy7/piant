@@ -1,8 +1,8 @@
 import type { PNode } from '@piant/core';
 import { Ticker } from 'pixi.js';
 import { interpolateKeyframes, normalizeKeyframes } from './interpolate';
+import { applyProps, captureInitialProps, type PropertySnapshot } from './properties';
 import type {
-  AnimatableProps,
   AnimationOptions,
   AnimationPlaybackEvent,
   KeyframeEffect,
@@ -35,107 +35,6 @@ function resolveOptions(opts: AnimationOptions | undefined): ResolvedOptions {
     fill: opts?.fill ?? 'none',
     playbackRate: opts?.playbackRate ?? 1,
   };
-}
-
-/**
- * Snapshot the current animated properties of a node for "fill: none" restore.
- */
-function captureInitialProps(
-  node: PNode,
-  keyframes: NormalizedKeyframe[],
-): AnimatableProps {
-  const initial: AnimatableProps = {
-    x: node._animTranslate.x,
-    y: node._animTranslate.y,
-    alpha: node._animAlpha ?? undefined,
-    scaleX: node._view.scale.x,
-    scaleY: node._view.scale.y,
-    rotation: node._view.rotation,
-    opacity: node._layoutStyle.opacity,
-    backgroundColor: node._layoutStyle.backgroundColor,
-    borderRadius: node._layoutStyle.borderRadius,
-    borderTopLeftRadius: node._layoutStyle.borderTopLeftRadius,
-    borderTopRightRadius: node._layoutStyle.borderTopRightRadius,
-    borderBottomRightRadius: node._layoutStyle.borderBottomRightRadius,
-    borderBottomLeftRadius: node._layoutStyle.borderBottomLeftRadius,
-    width:
-      typeof node._layoutStyle.width === 'number'
-        ? node._layoutStyle.width
-        : undefined,
-    height:
-      typeof node._layoutStyle.height === 'number'
-        ? node._layoutStyle.height
-        : undefined,
-  };
-  const animatedKeys = new Set(keyframes.flatMap((frame) => Object.keys(frame)));
-  if (animatedKeys.has('scale')) {
-    animatedKeys.add('scaleX');
-    animatedKeys.add('scaleY');
-  }
-  // Restoring one animation must not reset independent animations on this node.
-  return Object.fromEntries(
-    Object.entries(initial).filter(([key]) => animatedKeys.has(key)),
-  );
-}
-
-/**
- * Apply a set of AnimatableProps to a PNode.
- * Transform props are set on the Pixi Container directly;
- * style props go through PNode.setStyle() to trigger layout.
- */
-function applyProps(node: PNode, props: AnimatableProps): void {
-  let needsDirty = false;
-
-  if (props.x !== undefined || props.y !== undefined) {
-    node._animTranslate.x = props.x ?? node._animTranslate.x;
-    node._animTranslate.y = props.y ?? node._animTranslate.y;
-    needsDirty = true;
-  }
-
-  if (props.alpha !== undefined) {
-    node._animAlpha = props.alpha;
-    needsDirty = true;
-  }
-
-  if (props.scale !== undefined) {
-    node._view.scale.x = props.scale;
-    node._view.scale.y = props.scale;
-  }
-  if (props.scaleX !== undefined) node._view.scale.x = props.scaleX;
-  if (props.scaleY !== undefined) node._view.scale.y = props.scaleY;
-  if (props.rotation !== undefined) node._view.rotation = props.rotation;
-
-  // Style props that go through layout
-  const styleKeys: Array<keyof AnimatableProps> = [
-    'opacity',
-    'backgroundColor',
-    'borderRadius',
-    'borderTopLeftRadius',
-    'borderTopRightRadius',
-    'borderBottomRightRadius',
-    'borderBottomLeftRadius',
-    'width',
-    'height',
-  ];
-  const styleUpdate: Record<string, unknown> = {};
-  let hasStyle = false;
-  for (const key of styleKeys) {
-    // Check own properties so that restore calls with undefined-valued keys (i.e.
-    // props that were unset initially) still call setStyle() and clear any
-    // animated value — preventing stale values after fill:'none' or cancel().
-    if (Object.hasOwn(props, key)) {
-      styleUpdate[key] = props[key];
-      hasStyle = true;
-    }
-  }
-  if (hasStyle) {
-    node.setStyle(styleUpdate as Parameters<PNode['setStyle']>[0]);
-    needsDirty = false; // setStyle already marks dirty
-  }
-
-  if (needsDirty) {
-    node.markDirty();
-  }
 }
 
 /**
@@ -174,7 +73,8 @@ export class PNodeAnimation {
   private _tickerFn: ((ticker: Ticker) => void) | null = null;
   private _finishResolve: ((a: PNodeAnimation) => void) | null = null;
   private _finishReject: ((err: Error) => void) | null = null;
-  private readonly _initialProps: AnimatableProps;
+  private readonly _initialProps: PropertySnapshot;
+  private _removeDestroyListener: (() => void) | undefined;
 
   // ── Constructor ───────────────────────────────────────────────────────────
 
@@ -189,7 +89,14 @@ export class PNodeAnimation {
       this._finishResolve = resolve;
       this._finishReject = reject;
     });
+    // Keep cancellation observable to awaiters without producing an unhandled rejection
+    // when a fire-and-forget animation is replaced or disposed.
+    void this.finished.catch(() => {});
     this.ready = Promise.resolve(this);
+    if (node.isDestroyed) {
+      this.cancel({ preserve: true });
+      return;
+    }
 
     // Apply fill='backwards' / 'both' initial state during delay
     if (this._opts.fill === 'backwards' || this._opts.fill === 'both') {
@@ -230,9 +137,10 @@ export class PNodeAnimation {
    * To replay, create a new `PNodeAnimation` via `node.animate()`.
    */
   play(): void {
-    if (this._playState === 'finished') return;
+    if (this._node.isDestroyed || this._playState === 'finished') return;
     if (this._playState === 'running') return;
     this._playState = 'running';
+    this._removeDestroyListener ??= this._node.onDestroy?.(() => this.cancel({ preserve: true }));
     this._attachTicker();
   }
 
@@ -243,19 +151,24 @@ export class PNodeAnimation {
     this._detachTicker();
   }
 
-  /** Cancel the animation and restore properties to their initial state. */
-  cancel(): void {
+  /** Cancel and restore initial properties; `preserve` freezes the current values. */
+  cancel(options?: { preserve?: boolean }): void {
     this._detachTicker();
+    this._removeDestroyListener?.();
+    this._removeDestroyListener = undefined;
     this._playState = 'idle';
 
     // Restore pre-animation state
-    this._restoreInitialProps();
+    if (!options?.preserve) this._restoreInitialProps();
 
     const event = this._makeEvent('cancel');
-    this.oncancel?.(event);
-    this._finishReject?.(new Error('Animation cancelled'));
-    this._finishResolve = null;
-    this._finishReject = null;
+    try {
+      this.oncancel?.(event);
+    } finally {
+      this._finishReject?.(new Error('Animation cancelled'));
+      this._finishResolve = null;
+      this._finishReject = null;
+    }
   }
 
   /** Jump to the end of the animation immediately. */
@@ -382,14 +295,19 @@ export class PNodeAnimation {
   private _completeAnimation(boundary: 'start' | 'end' = 'end'): void {
     this._detachTicker();
     this._playState = 'finished';
+    this._removeDestroyListener?.();
+    this._removeDestroyListener = undefined;
 
     this._applyBoundary(boundary);
 
     const event = this._makeEvent('finish');
-    this.onfinish?.(event);
-    this._finishResolve?.(this);
-    this._finishResolve = null;
-    this._finishReject = null;
+    try {
+      this.onfinish?.(event);
+    } finally {
+      this._finishResolve?.(this);
+      this._finishResolve = null;
+      this._finishReject = null;
+    }
   }
 
   /** Apply directional fill or clear a previously sampled active value. */

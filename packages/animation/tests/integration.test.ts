@@ -13,7 +13,7 @@ beforeEach(() => {
   autoStart = ticker.autoStart;
   ticker.autoStart = false;
   ticker.stop();
-  time = performance.now();
+  time = Math.ceil(performance.now());
   ticker.update(time);
 });
 

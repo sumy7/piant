@@ -13,6 +13,7 @@ export default defineConfig({
     },
     alias: {
       '@': path.resolve(import.meta.dirname, './src'),
+      '@piant/core': path.resolve(import.meta.dirname, '../core/src/index.ts'),
     },
   },
 });

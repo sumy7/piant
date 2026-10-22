@@ -199,6 +199,9 @@ importers:
 
   examples/router-basic:
     dependencies:
+      '@piant/animation':
+        specifier: workspace:*
+        version: link:../../packages/animation
       '@piant/core':
         specifier: workspace:*
         version: link:../../packages/core

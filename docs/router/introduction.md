@@ -12,10 +12,11 @@
 - 守卫与重定向：`beforeEnter` / `redirect`
 - 懒加载页面：`loader` + 组件缓存
 - 错误边界联动：`RouterErrorBoundary`
+- 切场动画：`RouteView.transition` 配合 `fade` / `slide` / `scale` 预设
 
 ## 在线体验
 
-点击「首页」「关于」，观察页面内容与路径一起变化。示例使用内存路由，操作不会修改文档的地址或浏览记录。
+点击「首页」「关于」观察淡入淡出，尝试异步页面、加载错误与快速切换。示例使用内存路由，操作不会修改文档的地址或浏览记录。
 
 <LiveExample example="router" title="点击导航，切换画布中的页面" />
 
@@ -44,5 +45,6 @@
 
 ## 下一步
 
+- 阅读 [切场动画](/router/transitions)
 - 阅读 [快速开始](/router/quick-start)
 - 查阅 [API 参考](/router/api)

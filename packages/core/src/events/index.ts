@@ -83,24 +83,44 @@ function createBinding<TNode extends PNode, Prop extends PixiEventProp>(
   };
 }
 
+const interactiveLeases = new WeakMap<Container, {
+  count: number;
+  previousMode: EventMode | undefined;
+}>();
+
+/** Temporarily enable default interactivity without overriding explicit modes. */
+export function acquireInteractive(node: PNode): () => void {
+  const element = node._view;
+  let lease = interactiveLeases.get(element);
+  if (!lease) {
+    const mode = element.eventMode;
+    const enable = mode === undefined || mode === 'passive' || mode === 'auto';
+    lease = { count: 0, previousMode: enable ? (mode ?? 'passive') : undefined };
+    interactiveLeases.set(element, lease);
+    if (enable) element.eventMode = 'static';
+  }
+  lease.count++;
+  let active = true;
+  return () => {
+    if (!active) return;
+    active = false;
+    if (--lease.count !== 0) return;
+    interactiveLeases.delete(element);
+    if (lease.previousMode !== undefined && element.eventMode === 'static') {
+      element.eventMode = lease.previousMode;
+    }
+  };
+}
+
 export function bindEventEffects<TNode extends PNode>(
   node: TNode,
   eventProps: PixiEventProps<TNode>,
 ) {
-  const element = node._view;
   const bindings = EVENT_PROPS.filter((prop) =>
     Object.hasOwn(eventProps, prop),
   ).map((prop) => createBinding(node, eventProps, prop));
   let hasHandlers = false;
-  let previousMode: EventMode | undefined;
-
-  function restoreEventMode() {
-    // Restore only the value we still own; preserve later external mode changes.
-    if (previousMode !== undefined && element.eventMode === 'static') {
-      element.eventMode = previousMode;
-    }
-    previousMode = undefined;
-  }
+  let releaseInteractive: (() => void) | undefined;
 
   effect(() => {
     let enabled = false;
@@ -110,22 +130,17 @@ export function bindEventEffects<TNode extends PNode>(
     if (enabled === hasHandlers) return;
     hasHandlers = enabled;
     if (!enabled) {
-      restoreEventMode();
-    } else if (
-      element.eventMode === undefined ||
-      element.eventMode === 'passive' ||
-      element.eventMode === 'auto'
-    ) {
-      // Pixi initializes its passive default only when the renderer starts.
-      previousMode = element.eventMode ?? 'passive';
-      element.eventMode = 'static';
+      releaseInteractive?.();
+      releaseInteractive = undefined;
+    } else {
+      releaseInteractive = acquireInteractive(node);
     }
   });
 
   // This cleanup belongs to the component lifetime, not each effect rerun.
   cleanup(() => {
     for (const binding of bindings) binding.dispose();
-    restoreEventMode();
+    releaseInteractive?.();
   });
 }
 
