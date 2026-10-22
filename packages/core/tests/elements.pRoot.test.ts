@@ -1,4 +1,4 @@
-import { Container, Ticker } from 'pixi.js';
+import { Container, type Renderer, Ticker } from 'pixi.js';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { PRoot } from '../src/elements/PRoot';
 import { PView } from '../src/elements/PView';
@@ -14,6 +14,176 @@ function createRoot() {
 afterEach(() => {
   for (const root of roots.splice(0)) root.destroy();
   vi.restoreAllMocks();
+});
+
+describe('PRoot render scheduling', () => {
+  it('preserves the host callback and lays out changes it makes before drawing', () => {
+    const child = new PView();
+    const stage = new Container({ isRenderGroup: true });
+    const renderer = {} as Renderer;
+    const onRender = vi.fn(function (this: Container, value: Renderer) {
+      expect(this).toBe(stage);
+      expect(value).toBe(renderer);
+      child.setStyle({ width: 80, height: 30 });
+    });
+    stage.onRender = onRender;
+    const root = new PRoot(stage, { width: 300, height: 200 });
+    roots.push(root);
+    root.appendChild(child);
+
+    stage.renderGroup.runOnRender(renderer);
+
+    expect(onRender).toHaveBeenCalledTimes(1);
+    expect(child._view.width).toBe(80);
+    root.destroy();
+    expect(stage.onRender).toBe(onRender);
+  });
+
+  it('does not overwrite a host callback replaced by its owner', () => {
+    const stage = new Container();
+    const root = new PRoot(stage);
+    roots.push(root);
+    const replacement = vi.fn();
+    stage.onRender = replacement;
+
+    root.destroy();
+
+    expect(stage.onRender).toBe(replacement);
+  });
+
+  it('flushes roots created by a layout observer during the same draw', () => {
+    const stage = new Container({ isRenderGroup: true });
+    const first = new PRoot(stage);
+    roots.push(first);
+    const child = new PView();
+    child.setStyle({ width: 80, height: 30 });
+    first.observe((event) => {
+      if (event.type !== 'layout') return;
+      const second = new PRoot(stage);
+      roots.push(second);
+      second.appendChild(child);
+    });
+
+    stage.renderGroup.runOnRender({} as Renderer);
+
+    expect(child._view.width).toBe(80);
+    expect(child._view.parent).toBe(roots.at(-1)!._viewContent);
+  });
+
+  it('releases the last render subscription safely after an observer destroys its root', async () => {
+    const stage = new Container({ isRenderGroup: true });
+    const root = new PRoot(stage);
+    roots.push(root);
+    const later = vi.fn();
+    stage.addChild(new Container({ onRender: later }));
+    root.observe((event) => {
+      if (event.type === 'layout') root.destroyRecursive();
+    });
+
+    stage.renderGroup.runOnRender({} as Renderer);
+
+    expect(root.isDestroyed).toBe(true);
+    expect(later).toHaveBeenCalledTimes(1);
+    await Promise.resolve();
+    expect(stage.onRender).toBeNull();
+    stage.renderGroup.runOnRender({} as Renderer);
+    expect(later).toHaveBeenCalledTimes(2);
+  });
+
+  it('retains a new subscription created before pending hook cleanup', async () => {
+    const stage = new Container({ isRenderGroup: true });
+    const first = new PRoot(stage);
+    roots.push(first);
+    first.observe((event) => {
+      if (event.type === 'layout') first.destroy();
+    });
+    stage.renderGroup.runOnRender({} as Renderer);
+    const second = new PRoot(stage);
+    roots.push(second);
+    const child = new PView();
+    child.setStyle({ width: 80, height: 30 });
+    second.appendChild(child);
+
+    await Promise.resolve();
+    stage.renderGroup.runOnRender({} as Renderer);
+
+    expect(child._view.width).toBe(80);
+    expect(second._isDirty).toBe(false);
+    second.destroy();
+    expect(stage.onRender).toBeNull();
+  });
+
+  it.each(['destroy', 'destroyRecursive'] as const)(
+    'keeps other render callbacks running when an observer calls %s',
+    (destroy) => {
+      const stage = new Container({ isRenderGroup: true });
+      const first = new PRoot(stage, { width: 300, height: 200 });
+      const second = new PRoot(stage, { width: 300, height: 200 });
+      roots.push(first, second);
+      const child = new PView();
+      second.appendChild(child);
+      const later = vi.fn();
+      stage.addChild(new Container({ onRender: later }));
+      first.observe((event) => {
+        if (event.type === 'layout') first[destroy]();
+      });
+
+      stage.renderGroup.runOnRender({} as Renderer);
+
+      expect(first.isDestroyed).toBe(true);
+      expect(second._isDirty).toBe(false);
+      expect(child._view.parent).toBe(second._viewContent);
+      expect(later).toHaveBeenCalledTimes(1);
+      second.removeAllChildren();
+    },
+  );
+
+  it('lays out a replacement before Pixi draws, even without a shared ticker update', () => {
+    const stage = new Container({ isRenderGroup: true });
+    const root = new PRoot(stage, { width: 300, height: 200 });
+    roots.push(root);
+    const previous = new PView();
+    previous.setStyle({ width: 40, height: 20 });
+    root.appendChild(previous);
+    root.doLayout();
+    const replacement = new PView();
+    replacement.setStyle({ width: 80, height: 30 });
+    root.replaceChild(replacement, previous);
+    expect(previous._view.parent).toBeNull();
+
+    // Pixi runs these callbacks before building transforms/render instructions.
+    // The application's ticker can draw before Ticker.shared next runs layout.
+    stage.renderGroup.runOnRender({} as Renderer);
+
+    expect(root._viewContent.children).toEqual([replacement._view]);
+    expect(replacement._view.width).toBe(80);
+    expect(replacement._view.height).toBe(30);
+    expect(root._isDirty).toBe(false);
+    root.removeAllChildren();
+  });
+
+  it('batches rapid changes and skips clean draws, then releases its render callback', () => {
+    const stage = new Container({ isRenderGroup: true });
+    const root = new PRoot(stage, { width: 300, height: 200 });
+    roots.push(root);
+    const child = new PView();
+    root.appendChild(child);
+    const layout = vi.spyOn(root._layoutNode, 'calculateLayout');
+    for (let width = 10; width <= 100; width += 10) {
+      child.setStyle({ width, height: 20 });
+    }
+
+    stage.renderGroup.runOnRender({} as Renderer);
+    stage.renderGroup.runOnRender({} as Renderer);
+    expect(child._view.width).toBe(100);
+    expect(layout).toHaveBeenCalledTimes(1);
+    Ticker.shared.update(performance.now());
+    expect(layout).toHaveBeenCalledTimes(1);
+    root.destroy();
+    root.markDirty();
+    stage.renderGroup.runOnRender({} as Renderer);
+    expect(layout).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('PRoot observation', () => {
