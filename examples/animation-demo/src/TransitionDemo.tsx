@@ -131,8 +131,10 @@ export function TransitionDemo() {
   const [showA, setShowA] = createState(true);
   const [mode, setMode] = createState<Mode>('out-in');
 
-  const cardA = CardA();
-  const cardB = CardB();
+  const modeStyle = (value: Mode) =>
+    mode() === value ? styles.modeBtnActive : styles.modeBtn;
+  const modeTextStyle = (value: Mode) =>
+    mode() === value ? styles.modeBtnTextActive : styles.modeBtnText;
 
   const handleToggle = () => setShowA(!showA());
 
@@ -145,8 +147,8 @@ export function TransitionDemo() {
     get when() {
       return showA();
     },
-    children: cardA,
-    fallback: cardB,
+    children: (_value) => CardA(),
+    get fallback() { return CardB(); },
   });
 
   // Pre-create Transition outside JSX so it is instantiated once and holds
@@ -164,13 +166,15 @@ export function TransitionDemo() {
       el.markDirty();
     },
     onEnter: (el, done) => {
-      el.animate(
+      const animation = el.animate(
         [
           { alpha: 0, x: showA() ? -SLIDE : SLIDE },
           { alpha: 1, x: 0 },
         ],
         { duration: DURATION, easing: 'ease-out', fill: 'forwards' },
-      ).finished.then(done);
+      );
+      void animation.finished.then(done, () => {});
+      return () => animation.cancel({ preserve: true });
     },
     onAfterEnter: (el) => {
       el._animAlpha = null;
@@ -178,13 +182,15 @@ export function TransitionDemo() {
       el.markDirty();
     },
     onExit: (el, done) => {
-      el.animate(
+      const animation = el.animate(
         [
           { alpha: 1, x: 0 },
           { alpha: 0, x: showA() ? SLIDE : -SLIDE },
         ],
         { duration: DURATION, easing: 'ease-in', fill: 'forwards' },
-      ).finished.then(done);
+      );
+      void animation.finished.then(done, () => {});
+      return () => animation.cancel({ preserve: true });
     },
     children: showContent,
   });
@@ -199,13 +205,11 @@ export function TransitionDemo() {
       <View style={styles.modeRow}>
         {MODES.map((m) => (
           <View
-            style={mode() === m ? styles.modeBtnActive : styles.modeBtn}
+            style={modeStyle(m)}
             onClick={() => setMode(m)}
           >
             <Text
-              style={
-                mode() === m ? styles.modeBtnTextActive : styles.modeBtnText
-              }
+              style={modeTextStyle(m)}
             >
               {m}
             </Text>

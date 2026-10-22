@@ -76,3 +76,9 @@ export function animate(
 ): PNodeAnimation {
   return new PNodeAnimation(node, keyframes, options);
 }
+
+
+export { type DragOptions, drag, hover, type InteractionHandle, type InteractionOptions, press } from './interactions';
+export { type AnimationBinding, type BindAnimationOptions, bindAnimation } from './motion';
+export { type AnimationGroup, type AnimationGroupState, type AnimationStep, type AnimationTask, sequence, stagger } from './orchestration';
+export { fade, type PresetOptions, type ScaleOptions, type SlideOptions, scale, slide } from './presets';

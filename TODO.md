@@ -152,15 +152,15 @@ MVP 范围：
 - [x] 创建包目录：`packages/animation`
 - [x] 基础动画：位移 / 透明度 / 缩放，以及通过 `Transition` / `TransitionGroup` hooks 实现进入 / 离开
 - [x] 基础核心 API：`animate`、`PNode.animate()`、`PNodeAnimation`（关键帧、播放控制与 `finished`）
-- [ ] 状态变化自动驱动补间的声明式接入（见 [COD-136](https://linear.app/codepuppies/issue/COD-136)）
-- [ ] 可复用的基础预设效果集（`fade`、`slide`、`scale`，见 [COD-136](https://linear.app/codepuppies/issue/COD-136)）
+- [x] 状态变化自动驱动补间的声明式接入（见 [COD-136](https://linear.app/codepuppies/issue/COD-136)）
+- [x] 可复用的基础预设效果集（`fade`、`slide`、`scale`，见 [COD-136](https://linear.app/codepuppies/issue/COD-136)）
 - [x] 最小示例（已新增 `examples/animation-demo`）
 
 增强项（第二阶段）：
 
-- [ ] 可复用的动画编排接口（sequence / stagger，手写 `await finished` 不等于编排 API，见 [COD-137](https://linear.app/codepuppies/issue/COD-137)）
-- [ ] 手势与交互动画封装（hover / press / drag，见 [COD-138](https://linear.app/codepuppies/issue/COD-138)）
-- [ ] 路由切场动画（与 `@piant/router` 协同，见 [COD-139](https://linear.app/codepuppies/issue/COD-139)）
+- [x] 可复用的动画编排接口（`sequence` / `stagger`，见 [COD-137](https://linear.app/codepuppies/issue/COD-137)）
+- [x] 手势与交互动画封装（hover / press / drag，见 [COD-138](https://linear.app/codepuppies/issue/COD-138)）
+- [x] 路由切场动画（与 `@piant/router` 协同，见 [COD-139](https://linear.app/codepuppies/issue/COD-139)）
 - [x] 显式注册动画的播放状态、当前时间与 running 观测帧统计（[DevTools 指南](docs/guide/devtools.md)、[测试](packages/devtools/tests/devtools.test.ts)）
 - [ ] 动画引擎执行耗时与自动捕获等调试增强（[COD-133](https://linear.app/codepuppies/issue/COD-133)；现有帧间隔不等同于执行耗时）
 
@@ -168,17 +168,17 @@ MVP 范围：
 
 - [x] `@piant/animation` 可独立构建与类型导出
 - [x] 已提供 enter/exit 与 `createState` 切换子节点的完整示例源码（`examples/animation-demo`）
-- [ ] 示例浏览器运行与视觉验收（含状态自动驱动补间，后者仍待 [COD-136](https://linear.app/codepuppies/issue/COD-136)）
+- [x] 示例浏览器运行与视觉验收（状态反转、三个预设、编排、交互和路由切场）
 - [x] 核心动画行为有测试覆盖（触发时机、结束回调、清理逻辑）
-- [ ] 在不启用动画时无额外行为回归（对现有组件渲染零影响）
+- [x] 在不启用动画时无额外行为回归（对现有组件渲染零影响）
 - [x] 文档包含现有 API、手写关键帧效果与 `@piant/core` / `Transition` 集成
-- [ ] 文档包含可复用预设与 `@piant/router` 集成（[COD-136](https://linear.app/codepuppies/issue/COD-136)、[COD-139](https://linear.app/codepuppies/issue/COD-139)）
+- [x] 文档包含可复用预设与 `@piant/router` 集成（[COD-136](https://linear.app/codepuppies/issue/COD-136)、[COD-139](https://linear.app/codepuppies/issue/COD-139)）
 
-核对依据（2026-10-22）：
+核对依据：
 
-- [公开 API](packages/animation/src/index.ts)、[动画实现](packages/animation/src/PNodeAnimation.ts) 与 [动画指南](docs/animation/introduction.md) 已对应当前方案；基础节点动画已实现，声明式状态绑定与预设仍缺失。
-- [动画测试](packages/animation/tests/animation.test.ts)、[集成测试](packages/animation/tests/integration.test.ts) 以及 [Transition](packages/core/tests/components.Transition.test.ts) / [TransitionGroup 测试](packages/core/tests/components.TransitionGroup.test.ts) 已覆盖基础生命周期；不据此勾选未启用动画时的完整渲染回归。
-- [Transition 示例](examples/animation-demo/src/TransitionDemo.tsx) / [列表示例](examples/animation-demo/src/TransitionGroupDemo.tsx) 通过 `createState` 改变子节点，并在 hooks 中手写关键帧；这与自动监听状态并补间任意属性的高级 API 有不同范围。现有 [快速开始](docs/animation/quick-start.md) 展示的串联与 fade / slide / scale 同样是手写方式。
+- [状态绑定与预设](packages/animation/tests/declarative.test.ts)、[编排](packages/animation/tests/orchestration.test.ts)、[指针交互](packages/animation/tests/interactions.test.ts) 验证替换、时序、取消及 owner/节点销毁清理；[公开 API](packages/animation/src/index.ts) 和[在线示例](docs/animation/quick-start.md) 对应这些能力。
+- [路由切场测试](packages/router/tests/routeView.transition.test.ts) 使用真实 renderer 验证快速导航、lazy/error、守卫取消、重复加载和页面 owner；[路由指南](docs/router/transitions.md) 提供可运行示例。
+- [Transition](packages/core/tests/components.Transition.test.ts) 与现有 renderer/控制流回归验证过期回调、重入和未启用动画的行为。真实浏览器操作覆盖状态反转、三个预设、sequence/stagger、hover/press、变换父容器拖拽、路由前进后退及 lazy 离开后不回跳。
 
 ---
 

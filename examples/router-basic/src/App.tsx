@@ -1,13 +1,32 @@
-import { Match, Show, StyleSheet, Switch, Text, View } from '@piant/core';
+import { fade } from '@piant/animation';
+import { onCleanup, Show, StyleSheet, Text, View } from '@piant/core';
 import {
   createRouter,
   RouterProvider,
+  RouteView,
   useNavigate,
   useRoute,
 } from '@piant/router';
 
 const router = createRouter({
-  routes: [{ path: '/' }, { path: '/users/:id' }, { path: '/search' }],
+  routes: [
+    { path: '/', component: HomePage },
+    { path: '/users/:id', component: UserPage },
+    { path: '/search', component: SearchPage },
+    {
+      path: '/lazy',
+      loader: () =>
+        new Promise((resolve) =>
+          setTimeout(() => resolve({ default: LazyPage }), 800),
+        ),
+    },
+    {
+      path: '/error',
+      loader: async () => {
+        throw new Error('Example loader failed');
+      },
+    },
+  ],
 });
 
 const styles = StyleSheet.create({
@@ -156,6 +175,14 @@ function SearchPage() {
   );
 }
 
+function LazyPage() {
+  return (
+    <View style={styles.card}>
+      <Text style={styles.cardTitle}>Lazy page loaded</Text>
+    </View>
+  );
+}
+
 function RouterDemo() {
   const navigate = useNavigate();
   const route = useRoute();
@@ -189,33 +216,49 @@ function RouterDemo() {
         <View style={styles.navItem} onClick={navTo('/not-found')}>
           <Text style={styles.navItemText}>404 Route</Text>
         </View>
+        <View style={styles.navItem} onClick={navTo('/lazy')}>
+          <Text style={styles.navItemText}>Lazy page</Text>
+        </View>
+        <View style={styles.navItem} onClick={navTo('/error')}>
+          <Text style={styles.navItemText}>Loader error</Text>
+        </View>
+        <View style={styles.navItem} onClick={() => window.history.back()}>
+          <Text style={styles.navItemText}>Back</Text>
+        </View>
+        <View style={styles.navItem} onClick={() => window.history.forward()}>
+          <Text style={styles.navItemText}>Forward</Text>
+        </View>
       </View>
 
       <View style={styles.activeTag}>
         <Text style={styles.activeTagText}>active: {current()}</Text>
       </View>
 
-      <Switch
-        fallback={
+      <RouteView
+        transition={{
+          ...fade({ duration: 240 }),
+          mode: 'out-in',
+          appear: true,
+        }}
+        fallback={() => (
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Not Found</Text>
-            <Text style={styles.cardBody}>
-              No route matched. Try going back to{' '}
-              <Text style={styles.inlineCode}>/</Text>.
-            </Text>
           </View>
-        }
-      >
-        <Match when={route().match?.route.path === '/'}>
-          <HomePage />
-        </Match>
-        <Match when={route().match?.route.path === '/users/:id'}>
-          <UserPage />
-        </Match>
-        <Match when={route().match?.route.path === '/search'}>
-          <SearchPage />
-        </Match>
-      </Switch>
+        )}
+        loadingFallback={() => (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Loading…</Text>
+          </View>
+        )}
+        errorFallback={(error: Error) => {
+          const label = `Route error: ${error.message}`;
+          return (
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>{label}</Text>
+            </View>
+          );
+        }}
+      />
 
       <Show when={true}>
         <RouteInspector />
@@ -225,6 +268,7 @@ function RouterDemo() {
 }
 
 export function App() {
+  onCleanup(() => router.destroy());
   return (
     <View style={styles.page}>
       <RouterProvider router={router}>{() => <RouterDemo />}</RouterProvider>

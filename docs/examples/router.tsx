@@ -1,3 +1,4 @@
+import { fade } from '@piant/animation';
 import { onCleanup, StyleSheet, Text, View } from '@piant/core';
 import {
   createRouter,
@@ -50,7 +51,34 @@ function Navigation() {
           <Text style={styles.buttonText}>关于</Text>
         </View>
       </View>
-      <RouteView />
+      <View style={styles.controls}>
+        <View style={styles.button} onClick={() => navigate('/lazy')}>
+          <Text style={styles.buttonText}>异步页面</Text>
+        </View>
+        <View style={styles.button} onClick={() => navigate('/error')}>
+          <Text style={styles.buttonText}>加载错误</Text>
+        </View>
+        <View
+          style={styles.button}
+          onClick={() => {
+            navigate('/about');
+            queueMicrotask(() => navigate('/'));
+          }}
+        >
+          <Text style={styles.buttonText}>快速切换</Text>
+        </View>
+      </View>
+      <RouteView
+        transition={{
+          ...fade({ duration: 400 }),
+          mode: 'out-in',
+          appear: true,
+        }}
+        loadingFallback={() => <Text style={styles.text}>正在加载…</Text>}
+        errorFallback={() => (
+          <Text style={styles.text}>加载失败；点击首页恢复</Text>
+        )}
+      />
       <Text style={styles.text}>{pathLabel()}</Text>
     </View>
   );
@@ -63,6 +91,19 @@ export default function App() {
     routes: [
       { path: '/', component: HomePage },
       { path: '/about', component: AboutPage },
+      {
+        path: '/lazy',
+        loader: () =>
+          new Promise((resolve) =>
+            setTimeout(() => resolve({ default: AboutPage }), 1200),
+          ),
+      },
+      {
+        path: '/error',
+        loader: async () => {
+          throw new Error('演示加载失败');
+        },
+      },
     ],
   });
   onCleanup(() => router.destroy());

@@ -14,6 +14,23 @@ const getNextId = () => {
 export class PNode {
   _id = getNextId();
 
+  private destroyCallbacks = new Set<() => void>();
+  private disposed = false;
+
+  get isDestroyed(): boolean {
+    return this.disposed;
+  }
+
+  /** Release a node-owned resource on destruction, including recursive removal. */
+  onDestroy(callback: () => void): () => void {
+    if (this.disposed) {
+      callback();
+      return () => {};
+    }
+    this.destroyCallbacks.add(callback);
+    return () => this.destroyCallbacks.delete(callback);
+  }
+
   displayName = 'PNode';
 
   // 所属的根节点
@@ -456,6 +473,21 @@ export class PNode {
   }
 
   destroy() {
+    if (this.disposed) return;
+    this.disposed = true;
+    const callbacks = [...this.destroyCallbacks];
+    this.destroyCallbacks.clear();
+    let failure: unknown;
+    let failed = false;
+    for (const callback of callbacks) {
+      try {
+        callback();
+      } catch (error) {
+        if (!failed) failure = error;
+        failed = true;
+      }
+    }
+    if (failed) throw failure;
     // todo 区分销毁和移除
     // this._layoutNode.free();
     // this._layoutNode = null as any;

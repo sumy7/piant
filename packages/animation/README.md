@@ -2,6 +2,10 @@
 
 Piant 的节点动画扩展，提供类似 Web Animations API 的关键帧接口，支持位移、缩放、透明度、颜色及布局属性动画。
 
+状态驱动动画使用 `bindAnimation(node, targetGetter, options)`；`fade` / `slide` / `scale` 预设可直接展开到 `Transition` 和 `RouteView.transition`。`sequence` / `stagger` 接收惰性动画工厂，支持嵌套、取消和 owner 清理；`hover` / `press` / `drag` 提供按实例管理的交互动画。
+
+可操作示例与资源所有权见[快速开始](https://piant.sumygg.com/animation/quick-start)，路由集成见[路由切场](https://piant.sumygg.com/router/transitions)。
+
 ## 安装
 
 ```bash

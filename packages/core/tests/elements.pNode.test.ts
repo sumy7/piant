@@ -3,6 +3,51 @@ import { describe, expect, it } from 'vitest';
 import { PRoot } from '../src/elements/PRoot';
 import { PView } from '../src/elements/PView';
 
+describe('PNode destruction resources', () => {
+  it('releases owned resources exactly once, with independent unsubscribe', () => {
+    const node = new PView();
+    const calls: string[] = [];
+    node.onDestroy(() => calls.push('retained'));
+    const unsubscribe = node.onDestroy(() => calls.push('removed'));
+    unsubscribe();
+    node.destroy();
+    node.destroy();
+    node.onDestroy(() => calls.push('late'));
+    expect(calls).toEqual(['retained', 'late']);
+    expect(node.isDestroyed).toBe(true);
+  });
+
+  it('drains callbacks after a failure and cleans descendants on recursive removal', () => {
+    const parent = new PView();
+    const child = new PView();
+    const calls: string[] = [];
+    parent.appendChild(child);
+    child.onDestroy(() => calls.push('child'));
+    parent.onDestroy(() => {
+      throw new Error('cleanup failed');
+    });
+    parent.onDestroy(() => calls.push('parent'));
+    expect(() => parent.destroyRecursive()).toThrow('cleanup failed');
+    expect(calls).toEqual(['child', 'parent']);
+  });
+
+  it('preserves resources when reconciliation detaches and reattaches a node', () => {
+    const parent = new PView();
+    const nextParent = new PView();
+    const child = new PView();
+    let released = false;
+    child.onDestroy(() => {
+      released = true;
+    });
+    parent.appendChild(child);
+    child.detach();
+    nextParent.appendChild(child);
+    expect(released).toBe(false);
+    nextParent.destroyRecursive();
+    expect(released).toBe(true);
+  });
+});
+
 /** Build a minimal root + child tree and run one layout pass. */
 function createRootWithChild(styles: Record<string, unknown> = {}) {
   const root = new PRoot(new Container(), { width: 200, height: 200 });

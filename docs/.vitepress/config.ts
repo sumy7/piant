@@ -144,6 +144,7 @@ export default defineConfig({
           items: [
             { text: '简介', link: '/router/introduction' },
             { text: '快速开始', link: '/router/quick-start' },
+            { text: '路由切场动画', link: '/router/transitions' },
             { text: 'API 参考', link: '/router/api' },
           ],
         },

@@ -9,6 +9,9 @@
 - **丰富的缓动支持**：内置 `linear`、`ease`、`ease-in`、`ease-out`、`ease-in-out`、`cubic-bezier(…)` 及 popmotion 专属缓动（`backIn`、`anticipate` 等）。
 - **与布局无缝集成**：位移（`x`/`y`）不修改 Yoga Flexbox 布局值，仅叠加偏移；`opacity`/`width` 等样式属性通过 `setStyle()` 正确触发布局更新。
 - **Pixi.js Ticker 驱动**：与渲染帧完全同步，无需 `requestAnimationFrame` 手动管理。
+- **状态与预设**：`bindAnimation` 自动补间响应式目标，`fade` / `slide` / `scale` 直接接入 `Transition`。
+- **编排与交互**：`sequence` / `stagger` 惰性启动任务；`hover` / `press` / `drag` 按实例管理事件与清理。
+- **路由切场**：`RouteView` 可选择启用同一套过渡 hooks，支持加载、错误和快速导航状态。
 
 ## 在线体验
 
@@ -27,7 +30,7 @@
 | 视觉样式 | `backgroundColor`、`borderRadius`、`borderTopLeftRadius`、`borderTopRightRadius`、`borderBottomRightRadius`、`borderBottomLeftRadius` |
 | 尺寸     | `width`、`height`                                                                                                                     |
 
-> **`alpha` vs `opacity`**：`alpha` 直接操作 Pixi Container 的 alpha 属性（动画结束后恢复），`opacity` 通过 `setStyle` 触发布局更新。两者均可动画，建议优先使用 `alpha`。
+> **`alpha` vs `opacity`**：`alpha` 设置 Pixi 透明度覆盖值，`opacity` 通过 `setStyle` 触发布局更新。低层动画是否在结束后恢复由 `fill` 决定；状态绑定保持目标值。两者均可动画，建议优先使用 `alpha`。
 
 ## 安装
 
@@ -60,3 +63,4 @@ const anim = animate(node, keyframes, options);
 
 - [快速开始](./quick-start) — 常见动画场景示例
 - [API 参考](./api) — 完整 API 文档
+- [路由切场](/router/transitions) — 路由、加载与错误界面过渡

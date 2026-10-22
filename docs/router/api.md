@@ -83,6 +83,9 @@ Props：
 - `fallback?`: 未匹配时内容
 - `loadingFallback?`: lazy 加载中内容
 - `errorFallback?`: lazy/路由错误时内容
+- `transition?: Omit<TransitionProps, 'children'>`：启用切场；支持 `mode`、`appear` 和 `TransitionEvents`。可直接展开 `fade()`、`slide()`、`scale()` 的结果。省略时保持默认渲染行为。
+
+每个启用切场的页面拥有独立资源作用域，离场完成或被替换后清理。进入钩子在节点挂载后的微任务中执行，退出钩子立即执行；`onEnter` / `onExit` 可返回取消函数，取消后的完成回调无效。预设需要单个可动画根节点。详见[切场与取消规则](/router/transitions)。
 
 ## useRoute
 

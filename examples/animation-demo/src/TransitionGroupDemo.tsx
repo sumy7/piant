@@ -2,6 +2,7 @@ import '@piant/animation';
 import {
   createState,
   For,
+  Show,
   StyleSheet,
   Text,
   TransitionGroup,
@@ -172,6 +173,14 @@ export function TransitionGroupDemo() {
   };
 
   const DURATION = 320;
+  const emptyHint = Show({
+    get when() { return items().length === 0; },
+    children: (_value) => (
+      <View style={styles.emptyHint}>
+        <Text style={styles.emptyText}>列表为空，点击"+ 添加"</Text>
+      </View>
+    ),
+  });
 
   return (
     <View style={styles.root}>
@@ -196,10 +205,12 @@ export function TransitionGroupDemo() {
             el.markDirty();
           },
           onEnter: (el, done) => {
-            el.animate(
+            const animation = el.animate(
               [{ alpha: 0, x: -30 }, { alpha: 1, x: 0 }],
               { duration: DURATION, easing: 'ease-out', fill: 'forwards' },
-            ).finished.then(done);
+            );
+            void animation.finished.then(done, () => {});
+            return () => animation.cancel({ preserve: true });
           },
           onAfterEnter: (el) => {
             el._animAlpha = null;
@@ -207,10 +218,12 @@ export function TransitionGroupDemo() {
             el.markDirty();
           },
           onExit: (el, done) => {
-            el.animate(
+            const animation = el.animate(
               [{ alpha: 1, x: 0 }, { alpha: 0, x: 30 }],
               { duration: DURATION, easing: 'ease-in', fill: 'forwards' },
-            ).finished.then(done);
+            );
+            void animation.finished.then(done, () => {});
+            return () => animation.cancel({ preserve: true });
           },
           children: For({
             get each() {
@@ -222,11 +235,7 @@ export function TransitionGroupDemo() {
         })}
       </View>
 
-      {items().length === 0 && (
-        <View style={styles.emptyHint}>
-          <Text style={styles.emptyText}>列表为空，点击"+ 添加"</Text>
-        </View>
-      )}
+      {emptyHint}
     </View>
   );
 }

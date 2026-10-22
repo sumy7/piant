@@ -1,11 +1,20 @@
-import { createState, ScrollView, StyleSheet, Text, View } from '@piant/core';
+import {
+  createState,
+  ScrollView,
+  Show,
+  StyleSheet,
+  Text,
+  View,
+} from '@piant/core';
 import { AnimationDemo } from './AnimationDemo';
 import { TransitionDemo } from './TransitionDemo';
 import { TransitionGroupDemo } from './TransitionGroupDemo';
+import { WorkflowDemo } from './WorkflowDemo';
 
-type Tab = 'transition' | 'transition-group' | 'animation';
+type Tab = 'transition' | 'transition-group' | 'animation' | 'workflows';
 
 const TABS: { key: Tab; label: string }[] = [
+  { key: 'workflows', label: '动画工作流' },
   { key: 'transition', label: 'Transition' },
   { key: 'transition-group', label: 'TransitionGroup' },
   { key: 'animation', label: '@piant/animation' },
@@ -90,11 +99,11 @@ const styles = StyleSheet.create({
 });
 
 export function App() {
-  const [activeTab, setActiveTab] = createState<Tab>('transition');
-
-  const transitionContent = TransitionDemo();
-  const transitionGroupContent = TransitionGroupDemo();
-  const animationContent = AnimationDemo();
+  const [activeTab, setActiveTab] = createState<Tab>('workflows');
+  const tabStyle = (key: Tab) =>
+    activeTab() === key ? styles.tabActive : styles.tab;
+  const tabTextStyle = (key: Tab) =>
+    activeTab() === key ? styles.tabTextActive : styles.tabText;
 
   return (
     <View style={styles.root}>
@@ -108,13 +117,11 @@ export function App() {
       <View style={styles.tabBar}>
         {TABS.map(({ key, label }) => (
           <View
-            style={activeTab() === key ? styles.tabActive : styles.tab}
+            style={tabStyle(key)}
             onClick={() => setActiveTab(key)}
           >
             <Text
-              style={
-                activeTab() === key ? styles.tabTextActive : styles.tabText
-              }
+              style={tabTextStyle(key)}
             >
               {label}
             </Text>
@@ -127,9 +134,30 @@ export function App() {
       <ScrollView style={styles.content}>
         <View style={styles.contentInner}>
           <View style={styles.demoPanel}>
-            {activeTab() === 'transition' && transitionContent}
-            {activeTab() === 'transition-group' && transitionGroupContent}
-            {activeTab() === 'animation' && animationContent}
+            {Show({
+              get when() {
+                return activeTab() === 'workflows';
+              },
+              children: (_value) => WorkflowDemo(),
+            })}
+            {Show({
+              get when() {
+                return activeTab() === 'transition';
+              },
+              children: (_value) => TransitionDemo(),
+            })}
+            {Show({
+              get when() {
+                return activeTab() === 'transition-group';
+              },
+              children: (_value) => TransitionGroupDemo(),
+            })}
+            {Show({
+              get when() {
+                return activeTab() === 'animation';
+              },
+              children: (_value) => AnimationDemo(),
+            })}
           </View>
         </View>
       </ScrollView>

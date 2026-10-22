@@ -11,7 +11,8 @@
     "@piant/core": "workspace:*",
     "@piant/router": "workspace:*",
     "@pixi/devtools": "^2.0.1",
-    "pixi.js": "^8.22.0"
+    "pixi.js": "^8.22.0",
+    "@piant/animation": "workspace:*"
   },
   "devDependencies": {
     "@rsbuild/core": "2.2.14",

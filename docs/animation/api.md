@@ -298,3 +298,81 @@ const kfs = normalizeKeyframes([{ x: 0 }, { x: 100 }]);
 const props = interpolateKeyframes(kfs, 0.5);
 // { x: 50 }
 ```
+
+## bindAnimation()
+
+```ts
+bindAnimation(node: PNode, target: () => AnimatableProps,
+  options?: BindAnimationOptions): AnimationBinding
+```
+
+`BindAnimationOptions` 提供 `duration`、`delay`、`endDelay`、`easing` 和 `initial?: AnimatableProps`。`initial` 只在首次采样时立即应用；未指定时从当前值补间。目标属性按 `Object.is` 比较，相同目标不重新启动；`scale` 展开为两个轴。更新会冻结旧动画，从当前值开始新动画，快速反转连续。结束强制保持终值（`fill: 'forwards'`）。从目标对象删去的属性保留其当前值；需要恢复时显式提供目标或调用 `reset()`。
+
+| 成员 | 行为 |
+| --- | --- |
+| `animation` | 最近创建的 `PNodeAnimation`，无变化时可为 `undefined` |
+| `cancel()` | 冻结当前值，目标再次变化时继续响应 |
+| `reset()` | 取消动画，恢复各属性首次绑定前的快照，目标再次变化时继续响应 |
+| `dispose()` | 永久解除响应式订阅，取消当前动画并冻结当前值；幂等 |
+
+owner 清理与 `PNode.destroy()` 自动 dispose。reset 恢复目标及 `initial` 中出现过的属性。目标依赖应为响应式状态；外部修改节点属性本身不会使 getter 重跑。颜色会归一化为 RGBA 后逐通道比较；相同颜色的不同合法表示不会反复重启动画。
+
+## fade() / slide() / scale()
+
+```ts
+fade(options?: PresetOptions): TransitionEvents
+slide(options?: PresetOptions & { x?: number; y?: number }): TransitionEvents
+scale(options?: PresetOptions & { from?: number }): TransitionEvents
+```
+
+返回可展开到 `Transition` 或 `RouteView.transition` 的 hooks。`PresetOptions` 提供 `duration`、`delay`、`endDelay`、`easing`，预设强制 `fill: 'forwards'`。每个节点首次执行时保存原始显示值。
+
+| 预设 | 隐藏状态 | 显示状态 |
+| --- | --- | --- |
+| `fade` | `alpha: 0` | 原透明度 |
+| `slide` | 原偏移加 `{ x: 0, y: 24 }`，可覆盖 x/y | 原偏移 |
+| `scale` | 原始两个轴比例乘 `from`（默认 0.9） | 原始两个轴比例 |
+
+进入从隐藏状态到显示状态，离开从当前值到隐藏状态。中断冻结当前值；替代阶段继续补间。只有成功完成才调用 `done()`。Transition 通过 hooks 返回的 disposer 取消旧阶段，节点销毁或预设创建 owner 卸载也会释放资源。预设接受实际 `PNode` 子节点；多根组件应包裹在一个 `View` 中。
+
+## sequence() / stagger()
+
+```ts
+interface AnimationTask {
+  readonly finished: Promise<unknown>;
+  cancel(): void;
+}
+type AnimationStep = () => AnimationTask;
+sequence(steps: readonly AnimationStep[]): AnimationGroup
+stagger(steps: readonly AnimationStep[], interval?: number): AnimationGroup
+```
+
+每个 factory 到启动时才调用，返回低层动画或另一编排组。首步立即启动；`sequence` 等上一步成功完成再创建下一步；`stagger` 后续任务通过定时器按 `index * interval` 排队（默认 50ms），不等待前一步完成。间隔必须是有限非负数；0ms 仍通过定时器启动后续任务。后台页面定时器可能延后，不承诺硬实时精度。
+
+`AnimationGroup` 提供 `finished: Promise<void>`、`cancel()` 和 `playState: 'running' | 'finished' | 'cancelled' | 'failed'`。空集合立即成功。完成后 cancel 无操作。取消会清除全部定时器、取消所有已启动任务并立即拒绝 finished，即使自定义任务的 cancel 不结算也不悬挂。自定义任务必须在 cancel 中释放自身资源。
+
+factory 抛错或任务拒绝时，组以原始原因失败，取消兄弟任务并跳过后续步骤。取消/失败不回滚已经成功的步骤；运行中低层动画按其 `cancel()` 契约恢复，未启动任务从未创建。组内以及组的 Promise 均内部观察拒绝；调用方仍可 await/catch 失败。owner 卸载自动取消；在事件中创建的组应另在组件 owner 中注册清理。
+
+## hover() / press() / drag()
+
+```ts
+hover(node: PNode, target: AnimatableProps, options?: InteractionOptions): InteractionHandle
+press(node: PNode, target: AnimatableProps, options?: InteractionOptions): InteractionHandle
+drag(node: PNode, options?: DragOptions): InteractionHandle
+```
+
+`InteractionOptions`：`duration?: number`（默认 150）、`easing?: string`（默认 `'ease-out'`）。初始属性在绑定时捕获。所有返回句柄均提供 `reset()`（立即恢复，继续监听）与 `dispose()`（清理本实例监听与动画、恢复初始属性，幂等）。owner 卸载或节点销毁会自动 dispose。
+
+- `hover`：首个指针进入后补间到目标，离开或 pointercancel 恢复，重复进入不重播。
+- `press`：主键按下补间到目标，离开、pointerup、pointerupoutside 或 pointercancel 恢复；忽略其他指针及非主键。
+- `drag`：在实际 Pixi 父容器局部坐标计算位移，包含父级旋转/缩放；多指针隔离。父节点改变时终止并恢复。默认释放后保留位置；`returnToOrigin: true` 释放后返回，pointercancel 总会返回。
+
+`DragOptions` 还提供 `axis?: 'x' | 'y' | 'both'`（默认 both）、`bounds?: { minX?, maxX?, minY?, maxY? }`，边界为动画偏移值而非布局坐标。reset 终止当前拖拽。
+
+绑定通过独立 Pixi 监听器保留事件别名、业务 handler 及 emitter `this`，共享交互模式持有计数。显式 `eventMode: 'none'` 不会被覆盖；启用拖拽须保留 Pixi 的 `globalMove` 事件特性。使用 [`Container.toLocal`](https://pixijs.download/v8.22.0/docs/scene.Container.html#toLocal) 与 [Pixi 指针事件](https://pixijs.com/8.x/guides/components/events)。
+
+## 属性与资源所有权
+
+每个绑定、交互、预设拥有自己的订阅、监听器及动画句柄。不同节点或同一节点的不同属性可以组合；同一个属性同时只应由一个控制器管理，没有属性混合/优先级仲裁。尤其不要同时对同一节点的 scale 安装 hover 与 press；需要组合时使用单个状态 getter 计算目标。外部手动改写同一属性会在下一帧被当前动画覆盖。
+
+低层 `cancel()` 恢复动画前的属性；`cancel({ preserve: true })` 取消并保留当前值，方便替代动画继续。取消会拒绝 `finished`，内部附加观察分支以避免清理产生无人处理的拒绝，调用方的 await 仍能捕获。节点销毁自动取消低层动画。监听 owner 清理仅适用于在 owner 执行期间创建的高级绑定/组；事件回调创建的组需显式关联组件清理。

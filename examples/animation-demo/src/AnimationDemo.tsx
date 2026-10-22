@@ -1,5 +1,5 @@
-import '@piant/animation';
-import { createState, StyleSheet, Text, View } from '@piant/core';
+import { type AnimationGroup, sequence } from '@piant/animation';
+import { createState, onCleanup, Show, StyleSheet, Text, View } from '@piant/core';
 
 const styles = StyleSheet.create({
   root: {
@@ -108,12 +108,20 @@ const DEMOS: { key: Demo; label: string }[] = [
 export function AnimationDemo() {
   const [activeDemo, setActiveDemo] = createState<Demo>('fade');
   const [seqStep, setSeqStep] = createState('');
+  const demoStyle = (value: Demo) =>
+    activeDemo() === value ? styles.btnActive : styles.btn;
+  const demoTextStyle = (value: Demo) =>
+    activeDemo() === value ? styles.btnTextActive : styles.btnText;
+  let group: AnimationGroup | undefined;
+  onCleanup(() => group?.cancel());
 
   let boxRef: any = null;
 
   const getBox = () => boxRef;
 
   const runDemo = (key: Demo) => {
+    group?.cancel();
+    setSeqStep('');
     setActiveDemo(key);
     const el = getBox();
     if (!el) return;
@@ -185,31 +193,45 @@ export function AnimationDemo() {
         break;
 
       case 'sequence': {
-        setSeqStep('Step 1: 淡出');
-        el.animate(
-          [{ alpha: 1 }, { alpha: 0 }],
-          { duration: 350, fill: 'forwards' },
-        ).finished.then(() => {
-          el._animTranslate.x = -60;
-          el.markDirty();
-          setSeqStep('Step 2: 位移 + 淡入');
-          return el.animate(
-            [{ alpha: 0, x: -60 }, { alpha: 1, x: 0 }],
-            { duration: 400, easing: 'ease-out', fill: 'forwards' },
-          ).finished;
-        }).then(() => {
-          setSeqStep('Step 3: 缩放弹出');
-          return el.animate(
-            [{ scale: 1 }, { scale: 1.4 }, { scale: 1 }],
-            { duration: 400, easing: 'ease-in-out' },
-          ).finished;
-        }).then(() => {
-          setSeqStep('完成 ✓');
-        });
+        group = sequence([
+          () => {
+            setSeqStep('Step 1: 淡出');
+            return el.animate(
+              [{ alpha: 1 }, { alpha: 0 }],
+              { duration: 350, fill: 'forwards' },
+            );
+          },
+          () => {
+            el._animTranslate.x = -60;
+            el.markDirty();
+            setSeqStep('Step 2: 位移 + 淡入');
+            return el.animate(
+              [{ alpha: 0, x: -60 }, { alpha: 1, x: 0 }],
+              { duration: 400, easing: 'ease-out', fill: 'forwards' },
+            );
+          },
+          () => {
+            setSeqStep('Step 3: 缩放弹出');
+            return el.animate(
+              [{ scale: 1 }, { scale: 1.4 }, { scale: 1 }],
+              { duration: 400, easing: 'ease-in-out' },
+            );
+          },
+        ]);
+        void group.finished.then(() => setSeqStep('完成 ✓'), () => {});
         break;
       }
     }
   };
+
+  const sequenceStatus = Show({
+    get when() { return activeDemo() === 'sequence' && seqStep() !== ''; },
+    children: (_value) => (
+      <View style={styles.sequenceArea}>
+        <Text style={styles.seqLabel}>{seqStep()}</Text>
+      </View>
+    ),
+  });
 
   return (
     <View style={styles.root}>
@@ -230,13 +252,11 @@ export function AnimationDemo() {
       <View style={styles.btnGrid}>
         {DEMOS.map(({ key, label }) => (
           <View
-            style={activeDemo() === key ? styles.btnActive : styles.btn}
+            style={demoStyle(key)}
             onClick={() => runDemo(key)}
           >
             <Text
-              style={
-                activeDemo() === key ? styles.btnTextActive : styles.btnText
-              }
+              style={demoTextStyle(key)}
             >
               {label}
             </Text>
@@ -244,11 +264,7 @@ export function AnimationDemo() {
         ))}
       </View>
 
-      {activeDemo() === 'sequence' && seqStep() !== '' && (
-        <View style={styles.sequenceArea}>
-          <Text style={styles.seqLabel}>{seqStep()}</Text>
-        </View>
-      )}
+      {sequenceStatus}
     </View>
   );
 }
