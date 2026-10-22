@@ -1,4 +1,4 @@
-import type { Container } from 'pixi.js';
+import type { Container, Renderer } from 'pixi.js';
 import { Ticker } from 'pixi.js';
 import type { ViewStyles } from './layout/viewStyles';
 import type { PNode } from './PNode';
@@ -6,6 +6,52 @@ import { PText } from './PText';
 import { PView } from './PView';
 
 const layoutTicker = Ticker.shared;
+
+const renderLayouts = new WeakMap<
+  Container,
+  { roots: Set<PRoot>; release: () => void }
+>();
+
+function subscribeRenderLayout(container: Container, root: PRoot): () => void {
+  let subscription = renderLayouts.get(container);
+  if (!subscription) {
+    const roots = new Set<PRoot>();
+    const previous = container.onRender;
+    let rendering = 0;
+    const onRender = (renderer: Renderer) => {
+      rendering++;
+      try {
+        previous?.call(container, renderer);
+        // Set iteration also visits roots added by a synchronous layout observer.
+        for (const root of roots) root.doLayout();
+      } finally {
+        rendering--;
+      }
+    };
+    const release = () => {
+      if (renderLayouts.get(container)?.roots !== roots) return;
+      if (roots.size) return;
+      if (rendering) {
+        // Pixi iterates a live onRender array. Unregistering its current entry
+        // would skip the next callback; only hook cleanup waits, never layout.
+        queueMicrotask(release);
+        return;
+      }
+      if (container.onRender === onRender)
+        container.onRender = previous ?? null;
+      renderLayouts.delete(container);
+    };
+    subscription = { roots, release };
+    renderLayouts.set(container, subscription);
+    container.onRender = onRender;
+  }
+  const { roots, release } = subscription;
+  roots.add(root);
+  return () => {
+    roots.delete(root);
+    if (!roots.size) release();
+  };
+}
 
 export type PRootDebugOptions = {
   textRendering: boolean;
@@ -24,6 +70,7 @@ export class PRoot extends PView {
   _debugOptions: PRootDebugOptions = { ...DEFAULT_DEBUG_OPTIONS };
   private observers?: Set<(event: PRootObservation) => void>;
   private destroyed = false;
+  private readonly stopRenderLayout: () => void;
 
   get isDestroyed(): boolean {
     return this.destroyed;
@@ -40,6 +87,9 @@ export class PRoot extends PView {
     this.setStyle(styles);
     this.setDebugOptions(debugOptions);
     layoutTicker.add(this.doLayout, this);
+    // Applications may draw on a different ticker (or render manually). Flush
+    // pending tree/geometry changes before Pixi builds this frame's instructions.
+    this.stopRenderLayout = subscribeRenderLayout(renderContainer, this);
     renderContainer.on('destroyed', this.destroy, this);
   }
 
@@ -118,6 +168,7 @@ export class PRoot extends PView {
     this.destroyed = true;
     this.renderContainer.off('destroyed', this.destroy, this);
     layoutTicker.remove(this.doLayout, this);
+    this.stopRenderLayout();
     this.notifyObservers({ type: 'destroy' });
     this.observers?.clear();
     super.destroy();
