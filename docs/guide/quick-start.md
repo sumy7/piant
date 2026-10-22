@@ -57,35 +57,31 @@ pnpm dev
 
 ## 项目结构示例
 
-一个典型的 Piant 应用入口文件如下：
+先在页面中准备一个有明确尺寸的容器：
+
+```html
+<div id="app" style="width: 100%; height: 400px"></div>
+```
+
+应用入口只需调用 `mount`。它负责 PixiJS 异步初始化、创建根节点、渲染、尺寸同步和实例清理：
 
 ```ts
 // src/index.ts
-import { PRoot, render } from '@piant/core';
-import { Application } from 'pixi.js';
+import { mount } from '@piant/core';
 import { App } from './App';
 
-(async () => {
-  // 1. 初始化 PixiJS Application
-  const app = new Application();
-  await app.init({ background: '#1099bb', resizeTo: window });
-  document.body.appendChild(app.canvas);
+const instance = await mount(App, {
+  target: document.getElementById('app')!,
+  pixi: { background: '#1099bb' },
+});
 
-  // 2. 创建根节点
-  const root = new PRoot(app.stage, {
-    width: app.screen.width,
-    height: app.screen.height,
-  });
-
-  // 3. 渲染应用
-  render(App, root);
-
-  // 4. 响应窗口大小变化
-  window.onresize = () => {
-    root.setStyle({ width: app.screen.width, height: app.screen.height });
-  };
-})();
+// 页面或路由卸载时调用。
+// instance.destroy();
 ```
+
+`await mount(...)` 完成后，实例已可使用。容器尺寸变化时，Canvas 和 Piant 根布局会一起更新，无需注册 `window.onresize`。若使用全屏布局，可给 `html`、`body` 和宿主容器设置 `height: 100%`，并清除 `body` 默认外边距。
+
+同一页面可多次挂载 `App`，每次获得独立 Canvas、根节点和清理方法。将 `createState` 写在组件函数内即可让各实例拥有独立状态。已有 Canvas、并排实例和尺寸配置见 [Canvas 布局](/guide/canvas-layout#嵌入页面与多个实例)；完整参数和取消初始化见 [渲染 API](/reference/renderer#mount)。
 
 ## 编写第一个组件
 

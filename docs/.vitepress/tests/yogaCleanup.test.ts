@@ -11,8 +11,16 @@ vi.mock('pixi.js', async (importOriginal) => {
       canvas = document.createElement('canvas');
       stage = new pixi.Container();
       screen = { width: 320, height: 300 };
-      renderer = { resize: vi.fn() };
-      async init() {}
+      renderer = {
+        resize: vi.fn(),
+        on: vi.fn(),
+        off: vi.fn(),
+        runners: { postrender: { add: vi.fn(), remove: vi.fn() } },
+      };
+      domContainerRoot = undefined;
+      async init(options: { canvas: HTMLCanvasElement }) {
+        this.canvas = options.canvas;
+      }
       destroy() {
         this.stage.destroy({ children: true });
         this.canvas.remove();
@@ -53,12 +61,12 @@ it('disposes a real reactive owner and frees the real Yoga tree on stop', async 
   );
   const root = child!._root!;
   expect(root._layoutNode.getChildCount()).toBe(1);
-  const free = vi.spyOn(root._layoutNode, 'freeRecursive');
+  const freeChild = vi.spyOn(child!._layoutNode, 'free');
   const freeRoot = vi.spyOn(root._layoutNode, 'free');
 
   cleanup();
   cleanup();
   expect(disposeOwner).toHaveBeenCalledOnce();
-  expect(free).toHaveBeenCalledOnce();
+  expect(freeChild).toHaveBeenCalledOnce();
   expect(freeRoot).toHaveBeenCalledOnce();
 });

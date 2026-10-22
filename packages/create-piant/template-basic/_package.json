@@ -7,7 +7,7 @@
     "preview": "rsbuild preview"
   },
   "dependencies": {
-    "@piant/core": "^0.1.0",
+    "@piant/core": "^0.2.0",
     "pixi.js": "^8.22.0"
   },
   "devDependencies": {

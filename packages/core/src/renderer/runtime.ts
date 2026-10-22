@@ -102,7 +102,16 @@ export function render(code: () => any, element: PNode) {
   let disposer: () => void;
   root((dispose) => {
     disposer = dispose;
-    insert(element, code());
+    try {
+      insert(element, code());
+    } catch (error) {
+      try {
+        dispose();
+      } catch {
+        // Retain the render failure after draining any failing cleanup callbacks.
+      }
+      throw error;
+    }
   });
   return disposer!;
 }

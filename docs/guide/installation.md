@@ -133,6 +133,24 @@ module.exports = {
 }
 ```
 
+## 挂载到页面
+
+JSX 配置完成后，使用 `mount` 挂载根组件：
+
+```ts
+import { mount } from '@piant/core';
+import { App } from './App';
+
+const instance = await mount(App, {
+  target: document.getElementById('app')!,
+  pixi: { background: '#1099bb' },
+});
+```
+
+`target` 可以是已有的 `HTMLCanvasElement`，也可以是供 Piant 创建 Canvas 的普通 HTML 容器。容器应先通过 CSS 获得明确尺寸，例如 `height: 400px`。脚手架已为全屏页面配置 `html` / `body` 尺寸，入口使用 `document.body` 作为容器；嵌入已有页面时改为自己的区域即可。
+
+页面或路由卸载时调用 `instance.destroy()`。`mount` 返回 Promise，初始化失败时会清理已分配的实例资源并拒绝；需要在初始化完成前取消时传入 `AbortSignal`。参数、所有权和底层 `render` / `PRoot` 接入方式见[渲染 API](/reference/renderer)。
+
 ## 版本要求
 
 | 依赖                  | 版本要求                         |

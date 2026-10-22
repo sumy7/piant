@@ -1,5 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
-import { children, cleanup, effect, memo, root, untrack } from '../src/reactivity/effects';
+import {
+  children,
+  cleanup,
+  effect,
+  memo,
+  root,
+  untrack,
+} from '../src/reactivity/effects';
 import { createState } from '../src/reactivity/hooks';
 
 describe('root', () => {
@@ -201,4 +208,37 @@ describe('children', () => {
       expect(c.toArray()).toEqual(['a', 'b']);
     });
   });
+});
+
+it('drains all root and nested effect cleanup even when an earlier cleanup throws', () => {
+  const [value, setValue] = createState(0);
+  const run = vi.fn();
+  const nested = vi.fn();
+  const later = vi.fn();
+  const dispose = root((dispose) => {
+    cleanup(() => {
+      throw 0;
+    });
+    effect(() => {
+      run(value());
+      cleanup(() => {
+        throw new Error('nested cleanup');
+      });
+      cleanup(nested);
+    });
+    cleanup(later);
+    return dispose;
+  });
+  let caught: unknown = 'none';
+  try {
+    dispose();
+  } catch (error) {
+    caught = error;
+  }
+  expect(caught).toBe(0);
+  expect(nested).toHaveBeenCalledOnce();
+  expect(later).toHaveBeenCalledOnce();
+  setValue(1);
+  expect(run).toHaveBeenCalledOnce();
+  expect(dispose).not.toThrow();
 });

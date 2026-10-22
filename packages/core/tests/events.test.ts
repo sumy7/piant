@@ -12,7 +12,7 @@ import { ScrollView } from '../src/components/ScrollView';
 import { View, type ViewProps } from '../src/components/View';
 import type { PNode } from '../src/elements/PNode';
 import type { PView } from '../src/elements/PView';
-import { eventMap } from '../src/events';
+import { eventMap, type PixiEventProps } from '../src/events';
 import { root } from '../src/reactivity/effects';
 import { createState } from '../src/reactivity/hooks';
 
@@ -288,11 +288,20 @@ describe('event initialization and aliases', () => {
 });
 
 describe('component event integration', () => {
-  const components: [string, (handler: () => void) => PNode][] = [
-    ['View', (onClick) => View({ onClick }) as PView],
-    ['Image', (onClick) => Image({ src: new Graphics(), onClick })],
-    ['ScrollView', (onClick) => ScrollView({ onClick })],
-    ['CustomView', (onClick) => CustomView({ onClick })],
+  const components: [string, (props: PixiEventProps) => PNode][] = [
+    ['View', (props) => View(props) as PView],
+    [
+      'Image',
+      (props) =>
+        Image(
+          Object.defineProperties(
+            { src: new Graphics() },
+            Object.getOwnPropertyDescriptors(props),
+          ),
+        ),
+    ],
+    ['ScrollView', (props) => ScrollView(props)],
+    ['CustomView', (props) => CustomView(props)],
   ];
 
   it.each(components)(
@@ -300,7 +309,7 @@ describe('component event integration', () => {
     (_name, create) => {
       const handler = vi.fn<(...args: unknown[]) => void>();
       root((dispose) => {
-        const node = create(handler);
+        const node = create({ onClick: handler });
         const event = pointerEvent();
         node._view.emit('pointertap', event);
         expect(handler).toHaveBeenCalledTimes(1);
@@ -311,6 +320,56 @@ describe('component event integration', () => {
       });
     },
   );
+
+  it.each(components)(
+    'updates and disables the %s callback through reactive props',
+    (_name, create) => {
+      const [version, setVersion] = createState(0);
+      const first = vi.fn();
+      const second = vi.fn();
+      root((dispose) => {
+        const node = create({
+          get onClick() {
+            return version() === 0
+              ? first
+              : version() === 1
+                ? second
+                : undefined;
+          },
+        });
+        const listener = node._view.listeners('pointertap')[0];
+        node._view.emit('pointertap', pointerEvent());
+        expect(first).toHaveBeenCalledTimes(1);
+        setVersion(1);
+        expect(node._view.listeners('pointertap')[0]).toBe(listener);
+        node._view.emit('pointertap', pointerEvent());
+        expect(second).toHaveBeenCalledTimes(1);
+        setVersion(2);
+        expect(node._view.listenerCount('pointertap')).toBe(0);
+        setVersion(0);
+        expect(node._view.listeners('pointertap')[0]).toBe(listener);
+        dispose();
+        expect(node._view.listenerCount('pointertap')).toBe(0);
+      });
+    },
+  );
+
+  it('keeps business callbacks and unknown on* props outside Pixi event binding', () => {
+    const onDraw = vi.fn();
+    const onUnknown = vi.fn();
+    root((dispose) => {
+      const node = CustomView({ onDraw, onUnknown } as Parameters<
+        typeof CustomView
+      >[0]);
+      expect(onDraw).toHaveBeenCalledTimes(1);
+      expect(node._view.listenerCount('draw')).toBe(0);
+      expect(node._view.listenerCount('unknown')).toBe(0);
+      node._view.emit('sizeChange', { width: 42, height: 24 });
+      expect(onDraw).toHaveBeenLastCalledWith(node._graphic, 42, 24);
+      expect(onUnknown).not.toHaveBeenCalled();
+      dispose();
+    });
+  });
 
   it('ignores invalid handlers supplied by untyped callers', () => {
     const { node, dispose } = mountView({
