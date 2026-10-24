@@ -26,12 +26,25 @@ npm create piant@latest
 yarn create piant
 ```
 
-运行后，脚手架会询问项目名称并自动完成项目初始化。创建完成后执行：
+运行后，脚手架会询问项目名称、模板与是否启用 DevTools。默认使用 `basic` 模板且不启用 DevTools；非交互运行默认创建 `piant-app`。也可直接指定：
+
+```bash
+pnpm create piant my-app --template router --devtools
+# npm 需要用 -- 转发选项
+npm create piant@latest my-app -- --template router --devtools
+```
+
+`router` 模板提供首页与 `/users/:id` 用户页，演示动态参数和前进、后退。`--devtools` 可与 `basic` 或 `router` 组合，仅在开发态接入调试面板。完整选项和部署要求见[安装与配置](/guide/installation)。创建完成后执行：
 
 ```bash
 cd <project-name>
 pnpm install
+pnpm typecheck
 pnpm dev
+
+# 生产构建与本地预览
+pnpm build
+pnpm preview
 ```
 
 > 详细说明请参阅 [安装与配置](/guide/installation)。
