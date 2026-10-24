@@ -30,42 +30,15 @@ pnpm --filter @piant/examples-devtools-demo dev
 
 ## 开发环境接入
 
-发布包需要 `@piant/core ^0.1.1`（包含 `PRoot.observe` 与 `isDestroyed`）；本仓库通过 workspace 使用同一份核心实现。安装调试包可使用 `pnpm add -D @piant/devtools`。
+调试包的 Core peer 范围为 `^0.1.1 || ^0.2.0`。安装可使用 `pnpm add -D @piant/devtools`，也可创建项目时使用 `pnpm create piant my-app --template basic --devtools`（`router` 同样支持）。
 
-在应用已经初始化、`PRoot` 已创建并完成 `render` 后接入。将动态导入放在构建工具可静态替换的开发条件内部；仅向 `enabled` 传入 `false` 不能代替生产依赖剔除。
+推荐通过 `mount` 获取应用实例，将实例的 `root`、`app` 传给 `attachDevtools`。在根组件 owner 内同步注册 `onCleanup`，以便 `instance.destroy()` 同时清理调试会话；异步动态导入完成后检查 `instance.isDestroyed`，避免在已销毁实例上接入。完整示例见 [DevTools 快速开始](/devtools/quick-start#_2-在开发环境显式接入)。
 
-```ts
-import { PRoot, render } from '@piant/core';
-import type { DevtoolsSession } from '@piant/devtools';
+将动态导入放在构建工具可静态替换的开发条件内部：Rsbuild 使用 `process.env.NODE_ENV === 'development'`，Vite 使用 `import.meta.env.DEV`。两者都需要构建工具将条件静态替换并消除不可达分支。`import type` 不产生运行时导入。发布前检查实际生产产物，确保没有 DevTools 动态 chunk；仅向 `enabled` 传入 `false` 不能代替生产依赖剔除。
 
-// app 是已初始化的 PixiJS Application。
-const root = new PRoot(app.stage, {
-  width: app.screen.width,
-  height: app.screen.height,
-});
-const dispose = render(App, root);
-let tools: DevtoolsSession | null = null;
+脚手架使用 `defaultOpen: false`，先显示打开入口；该选择不改变 API 的 `defaultOpen` 默认值。入口将会话与根 owner 绑定，并通过 `mount` 的 `AbortSignal` 管理热更新时的挂载与清理。模板不自动注册业务状态、Store 历史或动画。
 
-if (process.env.NODE_ENV === 'development') {
-  const { attachDevtools } = await import('@piant/devtools');
-  tools = attachDevtools({
-    enabled: true,
-    defaultOpen: true,
-    root,
-    app,
-    getState: () => ({ count: count() }),
-  });
-}
-
-function destroy() {
-  tools?.detach();
-  dispose();
-  root.destroy();
-  app.destroy(true);
-}
-```
-
-上例的 `App`、`app` 和 `count` 来自业务应用。Vite 应使用 `import.meta.env.DEV`；Rsbuild 示例使用 `process.env.NODE_ENV === 'development'`。两者都需要构建工具将条件静态替换并消除不可达分支。`import type` 不产生运行时导入。发布前检查实际生产产物，确保没有 DevTools 动态 chunk；如果先在顶层导入再判断开发环境，不能据此声称完全剔除。
+需要使用底层 `render` / `PRoot` 的宿主，应在渲染完成后接入，并在停止业务渲染、销毁根节点和 PixiJS Application 前调用 `tools?.detach()`。尺寸同步与底层资源所有权由宿主管理，见 [渲染 API](/reference/renderer)。
 
 `attachDevtools` 只有在 `enabled === true` 时创建会话。未启用时返回 `null`，不会创建面板、订阅或启动采样。生产应用自身仍按正常路径初始化与渲染。
 

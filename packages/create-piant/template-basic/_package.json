@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "dev": "rsbuild dev",
+    "typecheck": "tsc --noEmit",
     "build": "rsbuild build",
     "preview": "rsbuild preview"
   },
@@ -11,6 +12,7 @@
     "pixi.js": "^8.22.0"
   },
   "devDependencies": {
+    "@babel/core": "^7.29.0",
     "@rsbuild/core": "^2.2.14",
     "@rsbuild/plugin-babel": "^2.1.0",
     "@piant/babel-preset-piant": "^0.1.0",

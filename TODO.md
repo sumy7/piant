@@ -105,7 +105,7 @@ MVP 范围：
 - Piant 自管入口、停靠、拖动高度与主题；收起后保留面板浏览状态、暂停自动采样并清除高亮，Disconnect 或应用销毁时清理会话。仅保存高度与主题，每次接入遵循 `defaultOpen`。独立窗口、浏览器扩展或远程协议仍属后续范围，上方对应增强项保留未勾选。
 - 已提供有界布局更新时间线、CPU 布局耗时、Ticker 帧间隔与布局次数；基础观测已勾选，完整渲染追踪/性能分析仍未勾选，不将这些值等同于 GPU 渲染耗时。
 - 已提供显式注册动画的 `playState` / `currentTime`、running 观测帧数与帧间隔总和；不自动捕获所有动画或测量动画引擎执行耗时。动画调试增强项仍保留后续范围。
-- 接入与限制见 [DevTools 指南](docs/guide/devtools.md)，真实示例见 `examples/devtools-demo`。Store 历史与恢复（COD-134）已实现，见 [Piant Devtools](docs/devtools/introduction.md)；模板集成（COD-140）仍独立跟踪。
+- 接入与限制见 [DevTools 指南](docs/guide/devtools.md)，真实示例见 `examples/devtools-demo`。Store 历史与恢复（COD-134）已实现，见 [Piant Devtools](docs/devtools/introduction.md)；脚手架已提供 `basic` / `router` 与可选 DevTools 的组合，创建与限制见 [create-piant](packages/create-piant/README.md)（[COD-140](https://linear.app/codepuppies/issue/COD-140)）。
 
 ### 4. 新包：@piant/state（状态管理）
 
@@ -191,8 +191,8 @@ MVP 范围：
 - [x] 创建脚手架入口（`packages/create-piant`，以 `create-piant` 发布）
 - [x] 模板内容
   - [x] 基础应用模板（单页，`template-basic`）
-  - [ ] 路由模板（依赖 `@piant/router`，见 [COD-140](https://linear.app/codepuppies/issue/COD-140)）
-  - [ ] 含调试模板（可选 `@piant/devtools`，见 [COD-140](https://linear.app/codepuppies/issue/COD-140)）
+  - [x] 路由模板（依赖 `@piant/router`，见 [COD-140](https://linear.app/codepuppies/issue/COD-140)）
+  - [x] 含调试模板（可选 `@piant/devtools`，见 [COD-140](https://linear.app/codepuppies/issue/COD-140)）
 - [x] 默认集成 JSX preset（`@piant/babel-preset-piant`）
 - [x] 默认 rsbuild 配置与 TypeScript 配置
 - [x] 初始化后可一键运行（`pnpm install` + `pnpm dev`）
@@ -209,6 +209,12 @@ MVP 范围：
 - 已创建 `template-basic` 基础应用模板（rsbuild + @piant/core + TypeScript）
 - CLI 交互式询问项目名、复制模板、替换包名、输出操作提示
 - 已更新 `docs/guide/quick-start.md` 与 `docs/guide/installation.md` 说明创建流程
+
+核对备注（2026-10-25，COD-140）：
+
+- CLI 支持 `basic` / `router` 模板与可选 `--devtools`，提供交互选择、非交互参数、帮助与目录保护；模板共用工程配置，入口使用 `mount` 和实例所有权清理。
+- 实际 pack 的脚手架在仓库外生成四种组合，使用隔离 tarball 安装对应 Piant 包，通过 strict peer 检查、类型检查、生产构建与浏览器开发启动。Router 验证首页、用户 42 / 99 动态参数、前进后退与刷新；DevTools 验证收起、断开后业务仍可用，两种 DevTools 组合的生产预览没有调试入口。
+- 模板依赖范围需要 registry 中存在对应版本；本地 tarball 验证不代表这些版本已发布。模板选项、命令、浏览器 history 部署回退和发布依赖见 [create-piant README](packages/create-piant/README.md)。三分钟首屏的计时验收仍保留未勾选。
 
 ---
 
