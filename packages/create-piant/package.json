@@ -11,9 +11,12 @@
   "bin": {
     "create-piant": "./index.js"
   },
+  "scripts": {
+    "test": "node --test tests/*.test.js"
+  },
   "files": [
     "index.js",
-    "template-*"
+    "template-*/**"
   ],
   "engines": {
     "node": ">=18.12.0"

@@ -29,6 +29,17 @@ Piant 是一个基于 [PixiJS](https://pixijs.com/) 的高性能画布（Canvas�
 
 [Piant Devtools](https://piant.sumygg.com/devtools/introduction) 是独立可选包：`pnpm add -D @piant/devtools`，在开发条件内动态导入并显式启用后才会创建面板。支持元素检查、只读状态与显式注册的 Store 历史恢复；业务 Store 不依赖调试包。
 
+## 创建项目
+
+```bash
+pnpm create piant my-app --template router --devtools
+cd my-app
+pnpm install
+pnpm dev
+```
+
+模板可选 `basic`（默认）或 `router`；DevTools 默认关闭，通过 `--devtools` 可为两种模板添加开发态调试入口。生成项目提供 `typecheck`、`build` 和 `preview` 脚本。选项、npm 用法及 Router 部署要求见[安装与配置](https://piant.sumygg.com/guide/installation)。
+
 ## 安装
 
 ```bash

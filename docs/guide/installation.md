@@ -15,25 +15,44 @@ npm create piant@latest
 yarn create piant
 ```
 
-也可以直接指定项目名称：
+也可以直接指定项目名称与模板：
 
 ```bash
-pnpm create piant my-app
+pnpm create piant my-app --template router --devtools
+# npm 的选项需放在 -- 后
+npm create piant@latest my-app -- --template router --devtools
 ```
+
+| 选项                              | 默认值与说明                           |
+| --------------------------------- | -------------------------------------- |
+| `--template <name>` / `-t <name>` | `basic`；可选 `basic`、`router`        |
+| `--devtools` / `--no-devtools`    | 默认关闭；显式选择是否添加开发调试面板 |
+| `--help` / `-h`                   | 查看 CLI 用法                          |
+
+交互终端会询问未指定的项目名称、模板和 DevTools 选项。非交互运行使用 `piant-app`、`basic`、不启用 DevTools 的默认值。CLI 会拒绝无效选项与非空目录；包含空格的路径需要加引号。
+
+| 模板     | 内容                                                                              |
+| -------- | --------------------------------------------------------------------------------- |
+| `basic`  | 基础计数器应用，使用 `@piant/core`                                                |
+| `router` | 首页与 `/users/:id` 用户页，使用 `@piant/router`，包含用户 42 / 99 导航和参数示例 |
+
+两种模板都支持可选的 `--devtools`。未选择时不会安装或启用调试包；选择后初始显示打开入口，开发态动态导入调试实现，生产构建移除该分支。模板使用 `mount` 管理 Canvas、尺寸同步与实例清理。Router 使用浏览器 history，部署服务器需要将 `/users/42` 等页面请求回退到 `index.html`；详见 [Router 快速开始](/router/quick-start)。
 
 创建完成后进入项目目录，安装依赖并启动开发服务器：
 
 ```bash
 cd my-app
 pnpm install
+pnpm typecheck
 pnpm dev
 ```
 
-> **可用模板**
->
-> | 模板    | 说明                                  |
-> | ------- | ------------------------------------- |
-> | `basic` | 基础应用模板（rsbuild + @piant/core） |
+使用 `typecheck` 单独检查类型，`build` 输出生产产物到 `dist`；可在本地预览：
+
+```bash
+pnpm build
+pnpm preview
+```
 
 ---
 

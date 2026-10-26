@@ -1,8 +1,23 @@
 # 快速开始
 
-本节在已有 Piant 应用中接入调试面板。先完成 [Piant 安装与配置](/guide/installation)，初始化 PixiJS `Application`，并创建、渲染 `PRoot`。
+本节在使用 `mount` 的 Piant 应用中接入调试面板。先完成 [Piant 安装与配置](/guide/installation)。
+
+## 使用脚手架
+
+```bash
+pnpm create piant my-app --template basic --devtools
+cd my-app
+pnpm install
+pnpm dev
+```
+
+也可使用 `--template router --devtools`。两种模板的 DevTools 默认关闭；选择后初始显示右下角「Open Piant Devtools」入口。生成入口在开发条件内动态导入，使用根 owner 清理会话，并通过 `mount` 的 `AbortSignal` 处理热更新期间尚未完成的初始化。`pnpm build` 生成的生产应用没有调试入口或实现。
+
+模板提供元素检查，不自动注册 Store 历史；需要历史预览与恢复时，按 [Store 历史](/devtools/store-history)显式注册。
 
 ## 1. 单独安装调试包
+
+在已有应用中安装：
 
 ```bash
 pnpm add -D @piant/devtools
@@ -12,31 +27,46 @@ pnpm add -D @piant/devtools
 
 ## 2. 在开发环境显式接入
 
-下面的函数接收应用已有的 `root` 与 `app`，返回调试会话的清理函数：
+`mount` 返回的实例包含所需的 `root` 和 `app`。在根组件的 owner 内同步注册 `onCleanup`，让调试会话随应用实例释放：
 
 ```ts
-import type { PRoot } from '@piant/core';
-import type { Application } from 'pixi.js';
+// src/index.ts
+import { mount, onCleanup } from '@piant/core';
+import type { DevtoolsSession } from '@piant/devtools';
+import { App } from './App';
 
-export async function connectDevtools(root: PRoot, app: Application) {
-  if (process.env.NODE_ENV !== 'development') return () => {};
+async function start() {
+  let tools: DevtoolsSession | null = null;
+  function Root() {
+    onCleanup(() => tools?.detach());
+    return App();
+  }
 
-  const { attachDevtools } = await import('@piant/devtools');
-  const tools = attachDevtools({
-    enabled: true,
-    defaultOpen: true,
-    root,
-    app,
-    getState: () => ({ screen: 'main' }),
-  });
+  const instance = await mount(Root, document.getElementById('app')!);
 
-  return () => tools?.detach();
+  if (process.env.NODE_ENV === 'development') {
+    const { attachDevtools } = await import('@piant/devtools');
+    // 动态导入期间应用可能已卸载。
+    if (!instance.isDestroyed) {
+      tools = attachDevtools({
+        enabled: true,
+        defaultOpen: false,
+        root: instance.root,
+        app: instance.app,
+      });
+    }
+  }
+
+  return instance;
 }
+
+const instance = await start();
+// 页面卸载时调用 instance.destroy()，同步清理业务与调试资源。
 ```
 
-这是 Rsbuild 的开发条件写法；Vite 应将条件改为 `if (!import.meta.env.DEV)`。构建工具必须静态替换条件并移除不可达分支，动态导入必须留在该分支内。默认入口包含真实实现，不是生产空实现。
+这是 Rsbuild 的开发条件写法；Vite 应使用 `import.meta.env.DEV`。构建工具必须静态替换条件并移除不可达分支，动态导入必须留在该分支内。默认入口包含真实实现，只有 `enabled: false` 无法保证生产剔除。发布前检查实际产物。
 
-在初始化流程中等待 `connectDevtools` 完成，保存返回的清理函数；应用销毁时先调用它，再清理渲染、根节点和 PixiJS 应用。若应用可能在导入完成前销毁，需在导入后检查应用是否仍然存活；仓库示例演示了完整处理。
+支持热更新或异步取消的宿主，还应把 `AbortSignal` 传入 `mount`，在卸载时调用对应 controller 的 `abort()`；它会取消尚未完成的初始化，或销毁已经完成的实例。完整入口可参考脚手架模板；取消和所有权见 [渲染 API](/reference/renderer#mount)。
 
 `enabled` 未设置或不为 `true` 时，`attachDevtools` 返回 `null`，不创建面板、订阅或采样。`getState` 是可选的只读状态源，不应触发请求或写入业务状态；[Store 历史](./store-history) 通过单独的 `stores` 选项注册。
 

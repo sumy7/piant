@@ -38,7 +38,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "peerDependencies": {
-    "@piant/core": "^0.1.0"
+    "@piant/core": "^0.1.0 || ^0.2.0"
   },
   "devDependencies": {
     "@piant/core": "workspace:*",

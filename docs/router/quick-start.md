@@ -2,18 +2,36 @@
 
 本页演示如何在 Piant 应用中接入 `@piant/router`。
 
+## 使用 Router 模板
+
+从脚手架创建包含首页与动态用户页的应用：
+
+```bash
+pnpm create piant my-app --template router --no-devtools
+cd my-app
+pnpm install
+pnpm typecheck
+pnpm dev
+```
+
+需要调试面板时，将 `--no-devtools` 换成 `--devtools`。使用 npm 时，创建命令为 `npm create piant@latest my-app -- --template router --devtools`。
+
+模板的首页提供用户 42 / 99 的导航，`/users/:id` 页面读取当前参数，并可返回首页；使用浏览器前进、后退可恢复路径。模板采用浏览器 history。开发服务器支持页面回退；部署生产产物时，需配置静态服务器将 `/users/42` 等页面路径回退到 `index.html`，以支持直接访问与刷新。不要把不存在的静态资源请求重写为应用页面。
+
+```bash
+pnpm build
+pnpm preview
+```
+
+下面介绍在已有应用中手动接入。
+
 ## 1. 安装
 
-在 monorepo 内使用 workspace 依赖：
-
-```json
-{
-  "dependencies": {
-    "@piant/core": "workspace:*",
-    "@piant/router": "workspace:*"
-  }
-}
+```bash
+pnpm add @piant/router
 ```
+
+先按 [Piant 安装与配置](/guide/installation)安装 Core、PixiJS 并配置 JSX。入口使用 `mount(App, container)` 挂载应用；无需额外创建 PixiJS Application 或全局 resize 处理。
 
 ## 2. 创建 Router
 
