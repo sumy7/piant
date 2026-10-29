@@ -1,6 +1,6 @@
 {
   "name": "@piant/store",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "基于 MobX 的 Piant 状态管理库，支持类型化动作、持久化和状态组合",
   "keywords": [
     "piant",

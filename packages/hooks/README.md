@@ -8,7 +8,7 @@ Piant 的键盘交互 hooks，提供 `useKey`、`useKeyPress`、`useKeyPressEven
 pnpm add @piant/hooks @piant/core "pixi.js@^8.22.0"
 ```
 
-Peer 依赖为 `@piant/core ^0.1.0`。
+Peer 依赖为 `@piant/core ^0.2.0`。
 
 本包仅提供 ESM 入口，使用 `import` 导入。
 

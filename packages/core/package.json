@@ -1,6 +1,6 @@
 {
   "name": "@piant/core",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "基于 PixiJS 和 Yoga 的声明式 Canvas UI 框架，支持 JSX、Flexbox 布局和细粒度响应式状态管理",
   "keywords": [
     "piant",

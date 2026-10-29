@@ -38,7 +38,7 @@
 pnpm add @piant/animation @piant/core "pixi.js@^8.22.0"
 ```
 
-> Peer 依赖为 `@piant/core ^0.1.0` 和 `pixi.js ^8.22.0`。本包仅提供 ESM 入口，使用 `import` 导入。
+> Peer 依赖为 `@piant/core ^0.2.0` 和 `pixi.js ^8.22.0`。本包仅提供 ESM 入口，使用 `import` 导入。
 
 ## 引入方式
 

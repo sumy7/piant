@@ -12,7 +12,7 @@ Piant 的节点动画扩展，提供类似 Web Animations API 的关键帧接口
 pnpm add @piant/animation @piant/core "pixi.js@^8.22.0"
 ```
 
-Peer 依赖为 `@piant/core ^0.1.0` 和 `pixi.js ^8.22.0`。
+Peer 依赖为 `@piant/core ^0.2.0` 和 `pixi.js ^8.22.0`。
 
 本包仅提供 ESM 入口，使用 `import` 导入。
 

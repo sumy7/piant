@@ -1,6 +1,6 @@
 {
   "name": "@piant/babel-preset-piant",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "将 JSX 编译为 Piant 声明式 UI 的 Babel 预设",
   "keywords": [
     "piant",

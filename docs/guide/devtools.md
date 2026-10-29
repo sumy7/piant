@@ -30,7 +30,7 @@ pnpm --filter @piant/examples-devtools-demo dev
 
 ## 开发环境接入
 
-调试包的 Core peer 范围为 `^0.1.1 || ^0.2.0`。安装可使用 `pnpm add -D @piant/devtools`，也可创建项目时使用 `pnpm create piant my-app --template basic --devtools`（`router` 同样支持）。
+调试包的 Core peer 范围为 `^0.2.0`。安装可使用 `pnpm add -D @piant/devtools`，也可创建项目时使用 `pnpm create piant my-app --template basic --devtools`（`router` 同样支持）。
 
 推荐通过 `mount` 获取应用实例，将实例的 `root`、`app` 传给 `attachDevtools`。在根组件 owner 内同步注册 `onCleanup`，以便 `instance.destroy()` 同时清理调试会话；异步动态导入完成后检查 `instance.isDestroyed`，避免在已销毁实例上接入。完整示例见 [DevTools 快速开始](/devtools/quick-start#_2-在开发环境显式接入)。
 

@@ -213,7 +213,7 @@ async function main() {
     const packagePath = join(targetDir, 'package.json');
     const pkg = JSON.parse(readFileSync(packagePath, 'utf-8'));
     if (template === 'router') pkg.dependencies['@piant/router'] = '^0.2.0';
-    if (devtools) pkg.devDependencies['@piant/devtools'] = '^0.1.0';
+    if (devtools) pkg.devDependencies['@piant/devtools'] = '^0.2.0';
     writeFileSync(packagePath, `${JSON.stringify(pkg, null, 2)}\n`);
 
     console.log(

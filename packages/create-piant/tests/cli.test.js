@@ -115,14 +115,20 @@ for (const template of ['basic', 'router']) {
       assert.equal(pkg.scripts.typecheck, 'tsc --noEmit');
       assert.equal(pkg.scripts.build, 'rsbuild build');
       assert.equal(pkg.scripts.preview, 'rsbuild preview');
-      assert.ok(pkg.dependencies['@piant/core']);
+      assert.equal(pkg.dependencies['@piant/core'], '^0.2.0');
       assert.ok(pkg.dependencies['pixi.js']);
-      assert.ok(pkg.devDependencies['@piant/babel-preset-piant']);
+      assert.equal(pkg.devDependencies['@piant/babel-preset-piant'], '^0.2.0');
       assert.equal(
         Boolean(pkg.dependencies['@piant/router']),
         template === 'router',
       );
       assert.equal(Boolean(pkg.devDependencies['@piant/devtools']), devtools);
+      if (template === 'router') {
+        assert.equal(pkg.dependencies['@piant/router'], '^0.2.0');
+      }
+      if (devtools) {
+        assert.equal(pkg.devDependencies['@piant/devtools'], '^0.2.0');
+      }
       assert.equal(Boolean(pkg.dependencies['@piant/devtools']), false);
       assert.equal(
         files.get('src/App.tsx').includes('@piant/router'),

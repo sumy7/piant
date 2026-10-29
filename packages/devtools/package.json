@@ -1,6 +1,6 @@
 {
   "name": "@piant/devtools",
-  "version": "0.0.0",
+  "version": "0.2.0",
   "description": "Optional Piant element inspector and development diagnostics",
   "keywords": [
     "piant",
@@ -37,7 +37,7 @@
     "test:types": "tsc --noEmit -p tsconfig.test.json"
   },
   "peerDependencies": {
-    "@piant/core": "^0.1.1 || ^0.2.0",
+    "@piant/core": "^0.2.0",
     "pixi.js": "^8.22.0"
   },
   "devDependencies": {

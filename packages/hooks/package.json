@@ -1,6 +1,6 @@
 {
   "name": "@piant/hooks",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Piant 键盘交互 hooks，支持按键状态、键盘事件和组合键",
   "keywords": [
     "piant",
@@ -41,7 +41,7 @@
     "@rwh/keystrokes": "^1.5.6"
   },
   "peerDependencies": {
-    "@piant/core": "^0.1.0"
+    "@piant/core": "^0.2.0"
   },
   "devDependencies": {
     "@piant/core": "workspace:*",

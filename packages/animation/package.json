@@ -1,6 +1,6 @@
 {
   "name": "@piant/animation",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Piant 节点动画库，提供关键帧、缓动和播放时间轴控制",
   "keywords": [
     "piant",
@@ -41,7 +41,7 @@
     "popmotion": "^11.0.5"
   },
   "peerDependencies": {
-    "@piant/core": "^0.1.0",
+    "@piant/core": "^0.2.0",
     "pixi.js": "^8.22.0"
   },
   "devDependencies": {

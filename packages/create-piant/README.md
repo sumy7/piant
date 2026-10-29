@@ -61,7 +61,7 @@ pnpm preview
 
 `typecheck` 单独检查 TypeScript，`build` 输出生产产物到 `dist`。部署 Router 应用时配置上述 history 回退。
 
-模板声明 `@piant/core ^0.2.0`、`pixi.js ^8.22.0` 与 `@piant/babel-preset-piant ^0.1.0`；Router 选项增加 `@piant/router ^0.2.0`，DevTools 选项增加 `@piant/devtools ^0.1.0`。安装需要 registry 中存在满足这些范围的包。发布前验证使用隔离目录和本地 pack tarball 安装对应包，不代表 registry 已提供这些版本；具体发布依赖与验证结果见变更对应的 PR。
+模板声明 `@piant/core ^0.2.0`、`pixi.js ^8.22.0` 与 `@piant/babel-preset-piant ^0.2.0`；Router 选项增加 `@piant/router ^0.2.0`，DevTools 选项增加 `@piant/devtools ^0.2.0`。
 
 ## 更多信息
 

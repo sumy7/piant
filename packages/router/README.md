@@ -8,7 +8,7 @@ Piant 的路由扩展，支持嵌套路由、动态参数、异步组件、导�
 pnpm add @piant/router @piant/core "pixi.js@^8.22.0"
 ```
 
-Peer 依赖为 `@piant/core ^0.1.0`。
+Peer 依赖为 `@piant/core ^0.2.0`。
 
 本包仅提供 ESM 入口，使用 `import` 导入。
 

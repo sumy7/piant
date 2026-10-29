@@ -1,6 +1,6 @@
 {
   "name": "@piant/router",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Piant 路由库，支持声明式路由、导航守卫和懒加载",
   "keywords": [
     "piant",
@@ -38,7 +38,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "peerDependencies": {
-    "@piant/core": "^0.1.0 || ^0.2.0"
+    "@piant/core": "^0.2.0"
   },
   "devDependencies": {
     "@piant/core": "workspace:*",
