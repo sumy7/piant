@@ -17,7 +17,6 @@ it('releases the render owner when initial rendering throws', () => {
     expect(cleanup).toHaveBeenCalledOnce();
   } finally {
     root.destroy();
-    root._layoutNode.freeRecursive();
   }
 });
 
@@ -37,6 +36,5 @@ it('preserves an initial render error while still draining failing cleanup callb
     expect(later).toHaveBeenCalledOnce();
   } finally {
     root.destroy();
-    root._layoutNode.freeRecursive();
   }
 });

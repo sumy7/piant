@@ -133,13 +133,19 @@ describe('interaction animations with real Pixi nodes and events', () => {
     expect(node._view.eventMode).toBe('static');
     emit(node, 'pointerdown'); tick();
     expect(node._view.scale.x).toBeLessThan(1);
+    const restored = vi.fn(() => {
+      expect(node._view.listenerCount('pointerdown')).toBe(0);
+      expect(node._view.eventMode).toBe('passive');
+      expect(node._view.scale.x).toBe(1);
+      expect(node._animAlpha).toBeNull();
+    });
+    node.onDestroy(restored);
     node.destroy();
+    expect(restored).toHaveBeenCalledOnce();
     expect(node._view.listenerCount('pointerdown')).toBe(0);
-    expect(node._view.eventMode).toBe('passive');
-    expect(node._view.scale.x).toBe(1);
-    expect(node._animAlpha).toBeNull();
+    expect(node._view.destroyed).toBe(true);
     pressing.dispose(); tick();
-    expect(node._view.scale.x).toBe(1);
+    expect(node._view.destroyed).toBe(true);
   });
 
   it('keeps independent hover and press properties isolated during disposal', () => {
@@ -195,6 +201,22 @@ describe('interaction animations with real Pixi nodes and events', () => {
     emit(node, 'pointerdown', 2); tick();
     expect(node._view.scale.x).toBeLessThan(1);
     effect.dispose();
+  });
+
+  it('keeps every interaction handle inert when its node is already destroyed', () => {
+    const node = new PNode();
+    node.destroy();
+    const markDirty = vi.spyOn(node, 'markDirty');
+    const handles = [hover(node, { scale: 2 }), press(node, { scale: 0.8 }), drag(node)];
+    for (const handle of handles) {
+      handle.reset();
+      handle.dispose();
+    }
+    tick();
+    expect(node._view.destroyed).toBe(true);
+    expect(node._view.listenerCount('pointerdown')).toBe(0);
+    expect(node._view.listenerCount('pointerenter')).toBe(0);
+    expect(markDirty).not.toHaveBeenCalled();
   });
 
   it('shares eventMode ownership with reactive JSX handlers and preserves explicit mode changes', () => {

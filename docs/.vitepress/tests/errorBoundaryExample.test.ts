@@ -84,7 +84,7 @@ describe('ErrorBoundary live example', () => {
         expect(button._view.listenerCount('pointertap')).toBe(0);
       }
       host.destroyRecursive();
-      for (const node of seenNodes) node._layoutNode.free();
+      for (const node of seenNodes) expect(node.isDestroyed).toBe(true);
     }
     expect(host._children).toHaveLength(0);
     expect(reportError).not.toHaveBeenCalled();

@@ -12,4 +12,12 @@ export class PCustomView extends PNode {
     const viewContentIndex = this._view.getChildIndex(this._viewContent);
     this._view.addChildAt(this._graphic, viewContentIndex);
   }
+
+  protected getDestroyTasks() {
+    return [
+      () => {
+        if (!this._graphic.destroyed) this._graphic.destroy();
+      },
+    ];
+  }
 }

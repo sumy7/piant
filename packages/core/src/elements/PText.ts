@@ -52,6 +52,7 @@ export class PText extends PNode {
   _textSprite: Sprite;
   _textTexture: Texture;
   _debugTextRendering = false;
+  private stopImageUpdates: (() => void)[] = [];
 
   constructor(items: InlineItem[] | string = []) {
     super();
@@ -104,6 +105,7 @@ export class PText extends PNode {
   }
 
   setContents(contents: any[]) {
+    this.clearImageUpdates();
     const items: InlineItem[] = contents.map((content) => {
       if (content.type === 'text') {
         return { ...content, type: 'text' };
@@ -119,10 +121,12 @@ export class PText extends PNode {
               : undefined;
 
         if (texture && texture.width === 0) {
-          (texture as any).once?.('update', () => {
+          const update = () => {
             this._layoutNode.markDirty();
             this.markDirty();
-          });
+          };
+          texture.once('update', update);
+          this.stopImageUpdates.push(() => texture.off('update', update));
         }
         return { ...content, type: 'image', source };
       }
@@ -151,6 +155,7 @@ export class PText extends PNode {
 
   applyLayout() {
     super.applyLayout();
+    if (this.isDestroyed) return;
     const surface: TextRenderSurface = {
       sprite: this._textSprite,
       texture: this._textTexture,
@@ -167,5 +172,26 @@ export class PText extends PNode {
     if (surface.texture) {
       this._textTexture = surface.texture;
     }
+  }
+
+  private clearImageUpdates() {
+    for (const stop of this.stopImageUpdates) stop();
+    this.stopImageUpdates = [];
+  }
+
+  protected getDestroyTasks() {
+    return [
+      () => this.clearImageUpdates(),
+      () => this._textTypesetter.destroy(),
+      // The surface may never have been attached (empty or not yet laid out).
+      () => {
+        if (!this._textSprite.destroyed) this._textSprite.destroy();
+      },
+      () => this._textTexture.destroy(true),
+      () => {
+        this._textCanvas.width = 0;
+        this._textCanvas.height = 0;
+      },
+    ];
   }
 }

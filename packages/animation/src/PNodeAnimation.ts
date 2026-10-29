@@ -83,7 +83,7 @@ export class PNodeAnimation {
     this._opts = resolveOptions(options);
     this._playbackRate = this._opts.playbackRate;
     this._keyframes = normalizeKeyframes(effect, this._opts.easing);
-    this._initialProps = captureInitialProps(node, this._keyframes);
+    this._initialProps = node.isDestroyed ? {} : captureInitialProps(node, this._keyframes);
 
     this.finished = new Promise<PNodeAnimation>((resolve, reject) => {
       this._finishResolve = resolve;
@@ -277,6 +277,7 @@ export class PNodeAnimation {
   }
 
   private _applyAtProgress(progress: number): void {
+    if (this._node.isDestroyed) return;
     const values = interpolateKeyframes(this._keyframes, progress);
     applyProps(this._node, values);
   }
@@ -329,6 +330,7 @@ export class PNodeAnimation {
   }
 
   private _restoreInitialProps(): void {
+    if (this._node.isDestroyed) return;
     applyProps(this._node, this._initialProps);
     // An initially absent alpha override must be cleared, but only if animated here.
     if (Object.hasOwn(this._initialProps, 'alpha')) {

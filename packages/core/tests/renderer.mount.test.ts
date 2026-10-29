@@ -103,6 +103,26 @@ afterEach(() => {
 });
 
 describe('mount', () => {
+  it('frees dynamically removed nodes immediately without double-freeing on app destruction', async () => {
+    const [visible, setVisible] = createState(true);
+    const instance = await mount(
+      () => () => (visible() ? View({}) : null),
+      host(),
+    );
+    cleanup.push(instance.destroy);
+    const child = instance.root.firstChild!;
+    const free = vi.spyOn(child._layoutNode, 'free');
+    setVisible(false);
+    expect(free).toHaveBeenCalledOnce();
+    expect(child._view.destroyed).toBe(true);
+    setVisible(true);
+    const replacement = instance.root.firstChild!;
+    const replacementFree = vi.spyOn(replacement._layoutNode, 'free');
+    instance.destroy();
+    expect(free).toHaveBeenCalledOnce();
+    expect(replacementFree).toHaveBeenCalledOnce();
+  });
+
   it('creates a host-sized canvas, tracks container changes and frees its tree exactly once', async () => {
     const target = host();
     const disposed = vi.fn();

@@ -333,7 +333,7 @@ describe('PRoot observation', () => {
       expect(unsubscribed).not.toHaveBeenCalled();
       expect(applyLayout).not.toHaveBeenCalled();
       expect(stage.listenerCount('destroyed')).toBe(0);
-      expect(root._view.destroyed).toBe(children);
+      expect(root._view.destroyed).toBe(true);
     },
   );
 

@@ -115,6 +115,7 @@ export class PScrollView extends PNode {
 
   applyLayout() {
     super.applyLayout();
+    if (this.isDestroyed) return;
 
     const width = this.scrollContentHolder._layoutNode.getComputedWidth();
     const height = this.scrollContentHolder._layoutNode.getComputedHeight();

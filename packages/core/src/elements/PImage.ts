@@ -108,6 +108,7 @@ export class PImage extends PNode {
 
   applyLayout() {
     super.applyLayout();
+    if (this.isDestroyed) return;
     this.applyImage();
     this.applyObjectFit();
   }
@@ -117,14 +118,21 @@ export class PImage extends PNode {
     this.markDirty();
   }
 
-  destroy() {
-    if (!this._imageContent.destroyed) {
-      this._imageContent.mask = null;
-      this._imageContent.removeChildren();
-      this._imageContent.destroy();
-      this._imageMask.destroy();
-      this._image = null;
-    }
-    super.destroy();
+  protected getDestroyTasks() {
+    return [
+      () => {
+        if (!this._imageContent.destroyed) {
+          this._imageContent.mask = null;
+          this._imageContent.removeChildren();
+          this._imageContent.destroy();
+        }
+      },
+      () => {
+        if (!this._imageMask.destroyed) this._imageMask.destroy();
+      },
+      () => {
+        this._image = null;
+      },
+    ];
   }
 }

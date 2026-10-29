@@ -242,7 +242,8 @@ describe('PNode child lifecycle', () => {
       root.appendChild(target);
       source.appendChild(input);
       root.doLayout();
-      const destroy = vi.spyOn(input, 'destroy').mockImplementation(() => {
+      const destroy = vi.spyOn(input, 'destroy');
+      input.onDestroy(() => {
         expect(input._view.parent).toBeNull();
         expect(source._viewContent.children).toEqual([]);
       });

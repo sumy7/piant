@@ -83,7 +83,9 @@ try {
 
 `destroy()` 停止此实例的响应式 effect，执行 `onCleanup`，清理当前挂载树的节点与 Yoga 节点、布局 ticker、尺寸观察器和 Pixi Application。重复调用不会重复清理。由 `mount` 创建的 Canvas 会被移除；用户提供的 Canvas 会留在原位置，并恢复挂载前的 `width`、`height` 和 `style` 属性。该恢复也意味着宿主应在销毁后再更新这些属性。PixiJS 销毁 WebGL 渲染器时会丢失其上下文；Piant 会恢复用户 Canvas 的上下文，随后在同一 Canvas 上再次 `mount` 时等待恢复完成。浏览器无法恢复时会拒绝 Promise。
 
-共享纹理及其资源源不会随实例销毁，使用 `Assets` 等方式加载的共享资源由应用管理。`mount` 不接管组件在 owner 之外创建的资源；组件的外部订阅、定时器等应通过 `onCleanup` 释放。
+动态分支和列表中真正移除或替换的节点会立即递归释放其 Yoga 节点、Piant 自建的 Pixi 容器与 GraphicsContext、DOM 输入容器，以及 Text 独占的 Canvas 纹理和纹理源。Text 同时移除该 Canvas 的 Pixi 缓存关联、注销待完成的图片更新监听并清理保留的内联 Sprite。退出过渡仍保留的节点会等待退出完成后才释放；保留节点的重排、暂时 `detach()` 和跨根移动不会销毁资源。
+
+共享纹理及其资源源不会随节点或实例销毁，使用 `Assets` 等方式加载的共享资源由应用管理。Image 接收的 Sprite / Graphics 也由调用方持有，销毁 Image 时只将其分离。`mount` 不接管组件在 owner 之外创建的资源；组件的外部订阅、定时器等应通过 `onCleanup` 释放。
 
 ---
 
@@ -100,7 +102,7 @@ function render(component: () => JSX.Element, element: PNode): () => void;
 
 调用 disposer 会清理所属响应式 owner、停止 effect，并执行登记的 `onCleanup`。尚未执行的 `onMount` 回调会被取消。重复调用不会重复执行已清理的回调。
 
-**disposer 不等同于应用销毁**：它不移除整个节点树，不销毁 `PRoot` 或 Pixi Application。低层宿主需自行完成树、Yoga、布局 ticker、渲染器和尺寸监听的资源管理。需要完整实例生命周期时，使用 `mount`。
+**disposer 不等同于应用销毁**：它不移除整个节点树，不销毁 `PRoot` 或 Pixi Application。低层宿主在 disposer 之后调用 `root.destroy()`（或等效的 `root.destroyRecursive()`）释放当前树、Yoga 和布局 ticker；渲染器和尺寸监听仍由宿主管理。不要再对这些节点手动调用 Yoga `free()` / `freeRecursive()`。需要完整实例生命周期时，使用 `mount`。
 
 ```ts
 import { PRoot, render } from '@piant/core';
@@ -110,8 +112,9 @@ import { App } from './App';
 const root = new PRoot(app.stage, { width: 800, height: 600 });
 const dispose = render(App, root);
 
-// 停止本次渲染的响应式副作用；其余资源由宿主管理。
+// 先停止响应式副作用，再释放节点树；Application 仍由宿主管理。
 dispose();
+root.destroy();
 ```
 
 ---
@@ -140,7 +143,13 @@ app.renderer.resize(width, height);
 root.setStyle({ width, height });
 ```
 
-`markDirty()` 标记根节点需要重新布局，样式更改时会自动触发。`doLayout()` 执行布局计算，通常由每帧的布局 ticker 调用。`destroy()` 移除此根的布局 ticker；它不销毁宿主 Application。
+`markDirty()` 标记根节点需要重新布局，样式更改时会自动触发。`doLayout()` 执行布局计算，通常由每帧的布局 ticker 调用。`destroy()` 幂等地终结销毁此根及其当前子树，并移除布局 ticker 和宿主监听；它不销毁宿主 Application，也不调用 `render` 的 disposer。宿主容器销毁时同样会终结对应根的树。
+
+### 底层节点所有权
+
+`PNode.remove()` / `removeChild()` / `replaceChild()` 对被移除的已挂载子树执行终结销毁。`destroy()` 与 `destroyRecursive()` 对节点及其子树执行相同的幂等销毁，即使节点已暂时分离，也可以显式销毁。销毁会执行 `onDestroy`；一个清理回调抛错时仍继续清理其他回调、后代与资源，最后重新抛出首个错误。已销毁节点不可再次插入或使用。
+
+`detach()` 是协调器用于暂存保留节点的内部操作，只断开逻辑父子关系并保留资源；Pixi 父子关系可能直到下一次布局才同步。低层宿主主动保留的分离节点由宿主负责重新插入或显式销毁，根节点不会回收已经转移给其他根或已分离的节点。
 
 ## 布局机制
 

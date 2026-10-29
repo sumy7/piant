@@ -20,8 +20,8 @@ export type DragOptions = InteractionOptions & {
 };
 
 function binding(node: PNode, target: AnimatableProps, options: InteractionOptions) {
-  const initial = captureInitialProps(node, [{ ...target, offset: 0, easing: 'linear' }]);
-  const baseline = readAnimatedProps(node, target);
+  const initial = node.isDestroyed ? {} : captureInitialProps(node, [{ ...target, offset: 0, easing: 'linear' }]);
+  const baseline = node.isDestroyed ? {} : readAnimatedProps(node, target);
   const listeners: Array<() => void> = [];
   let disposed = node.isDestroyed;
   let animation: PNodeAnimation | undefined;

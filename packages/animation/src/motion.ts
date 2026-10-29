@@ -37,6 +37,7 @@ export function bindAnimation(
     get animation() { return animation; },
     cancel,
     reset() {
+      if (disposed) return;
       cancel();
       applyProps(node, original);
       if (Object.hasOwn(original, 'alpha')) node._animAlpha = original.alpha ?? null;
