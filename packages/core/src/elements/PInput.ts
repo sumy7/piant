@@ -42,11 +42,15 @@ export class PInput extends PNode {
 
   applyLayout() {
     super.applyLayout();
+    if (this.isDestroyed) return;
     this.applyInputElement();
   }
 
-  destroy() {
-    this._domContainer.destroy();
-    super.destroy();
+  protected getDestroyTasks() {
+    return [
+      () => {
+        if (!this._domContainer.destroyed) this._domContainer.destroy();
+      },
+    ];
   }
 }

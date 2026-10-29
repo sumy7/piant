@@ -29,7 +29,7 @@ export function ScrollView(props: ScrollViewProps) {
 
   props.ref?.(element);
 
-  onTick(element.update.bind(element));
+  element.onDestroy(onTick(element.update.bind(element)));
 
   bindEventEffects(element, props);
 

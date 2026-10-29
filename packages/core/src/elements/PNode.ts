@@ -275,18 +275,21 @@ export class PNode {
 
   // diff and update pixi container children
   applyViewChildren() {
+    if (this.disposed) return;
     const currentChildren = [...this._viewContent.children];
     const targetChildren = this._children.map((child) => child._view);
     // Remove children that are not in targetChildren
     for (const child of currentChildren) {
       if (!targetChildren.includes(child)) {
         this._viewContent.removeChild(child);
+        if (this.disposed) return;
       }
     }
     // Add children to match targetChildren
     for (const child of targetChildren) {
       if (!this._viewContent.children.includes(child)) {
         this._viewContent.addChild(child);
+        if (this.disposed) return;
       }
     }
     // Update the idx property for ordering, calc new ZIndex by child index and _id
@@ -302,7 +305,9 @@ export class PNode {
   }
 
   applyLayout() {
+    if (this.disposed) return;
     this.applyViewChildren();
+    if (this.disposed) return;
 
     if (this._layoutStyle.display === 'none') {
       this._view.visible = false;
@@ -317,6 +322,7 @@ export class PNode {
     for (const child of this._children) {
       child.applyLayout();
     }
+    if (this.disposed) return;
     this._view.x = this._layoutNode.getComputedLeft() + this._animTranslate.x;
     this._view.y = this._layoutNode.getComputedTop() + this._animTranslate.y;
 
@@ -325,6 +331,7 @@ export class PNode {
       height: this._layoutNode.getComputedHeight(),
     });
 
+    if (this.disposed) return;
     this.drawBackground();
   }
 
@@ -463,33 +470,57 @@ export class PNode {
   }
 
   destroyRecursive() {
-    // Finish logical detachment before Pixi removal events can trigger cleanup.
-    this.detach();
-    this._view.removeFromParent();
-    for (const child of [...this._children]) {
-      if (child._parent === this) child.destroyRecursive();
-    }
     this.destroy();
   }
 
+  /** Permanently dispose this subtree. Detach/reordering must not call this. */
   destroy() {
     if (this.disposed) return;
     this.disposed = true;
     const callbacks = [...this.destroyCallbacks];
     this.destroyCallbacks.clear();
+    const tasks = [
+      // Finish logical detachment before Pixi removal events can trigger cleanup.
+      () => this.detach(),
+      () => this._view.removeFromParent(),
+      ...this._children.map((child) => () => {
+        // Removal listeners may already have removed or reparented a sibling.
+        if (child._parent === this) child.destroyRecursive();
+      }),
+      ...callbacks,
+      ...this.getDestroyTasks(),
+      // A moved-out PNode can still have its view here until the next layout.
+      // Its new parent owns it; never recursively destroy that stale Pixi child.
+      () => {
+        if (!this._viewContent.destroyed) this._viewContent.removeChildren();
+      },
+      // Graphics.destroy({ children: true }) does not free its owned context.
+      () => {
+        if (!this._viewBg.destroyed) this._viewBg.destroy();
+      },
+      () => {
+        if (!this._viewMask.destroyed) this._viewMask.destroy();
+      },
+      () => {
+        if (!this._view.destroyed) this._view.destroy({ children: true });
+      },
+      () => this._layoutNode.free(),
+    ];
     let failure: unknown;
     let failed = false;
-    for (const callback of callbacks) {
+    for (const task of tasks) {
       try {
-        callback();
+        task();
       } catch (error) {
         if (!failed) failure = error;
         failed = true;
       }
     }
     if (failed) throw failure;
-    // todo 区分销毁和移除
-    // this._layoutNode.free();
-    // this._layoutNode = null as any;
+  }
+
+  /** Release subclass-owned resources independently, before base containers. */
+  protected getDestroyTasks(): (() => void)[] {
+    return [];
   }
 }

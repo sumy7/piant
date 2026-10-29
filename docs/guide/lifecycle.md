@@ -26,6 +26,7 @@ function MyComponent() {
 ## onCleanup
 
 `onCleanup` 注册一个清理函数，在以下情况下调用：
+
 - 当前 `effect` 重新执行之前（清理上一次的副作用）
 - 组件卸载时
 
@@ -53,6 +54,12 @@ function TimerComponent() {
 `render(App, root)` 返回 `() => void`。宿主结束本次渲染时调用它，可停止所属 owner 的响应式副作用、执行 `onCleanup` 并取消尚未执行的 `onMount`。
 
 该清理函数不保证销毁整个节点树、`PRoot` 或 Pixi Application；根节点布局 ticker 与宿主资源需另行释放。签名、使用示例和当前清理限制见 [render API](/reference/renderer#render)。
+
+## 节点移除与资源释放
+
+响应式分支切换和列表协调真正移除节点时，Piant 会释放该子树的 Yoga、Pixi 和节点独占资源。重排、暂时分离和跨根移动保留节点；`Transition` / `TransitionGroup` 中仍在退出的节点保留到退出完成。
+
+响应式 owner 的清理与节点资源销毁是两个阶段。例如列表项离开 `For` 时可先执行 `onCleanup`，而 `TransitionGroup` 仍需绘制该项直到退出结束。不要把仍供退出动画使用的节点资源放进通用 `onCleanup` 提前销毁；底层节点资源可通过 `node.onDestroy()` 登记最终清理。由 `mount` 管理的应用在实例 `destroy()` 时统一结束 owner 和当前节点树；底层宿主先调用 render disposer，再调用 `root.destroy()`。资源边界见 [渲染 API](/reference/renderer#底层节点所有权)。
 
 ## onError
 
@@ -89,7 +96,7 @@ function AnimatedView() {
 }
 ```
 
-组件卸载时，`onTick` 会通过 `onCleanup` 自动从 Ticker 中移除，无需手动清理。
+组件卸载时，`onTick` 会通过 `onCleanup` 自动从 Ticker 中移除，无需手动清理。它也返回幂等的停止函数，可用于提前结束回调。ScrollView 的内部更新同时随节点终结销毁而停止。
 
 ### 参数
 

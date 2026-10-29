@@ -69,12 +69,7 @@ export class PRoot extends PView {
   _isDirty = true;
   _debugOptions: PRootDebugOptions = { ...DEFAULT_DEBUG_OPTIONS };
   private observers?: Set<(event: PRootObservation) => void>;
-  private destroyed = false;
   private readonly stopRenderLayout: () => void;
-
-  get isDestroyed(): boolean {
-    return this.destroyed;
-  }
 
   constructor(
     private readonly renderContainer: Container,
@@ -122,7 +117,7 @@ export class PRoot extends PView {
 
   /** Observe completed layouts until unsubscribed or the root is destroyed. */
   observe(listener: (event: PRootObservation) => void): () => void {
-    if (this.destroyed) return () => {};
+    if (this.isDestroyed) return () => {};
     this.observers ??= new Set();
     this.observers.add(listener);
     return () => {
@@ -144,7 +139,7 @@ export class PRoot extends PView {
   }
 
   doLayout() {
-    if (this.destroyed || !this._isDirty) {
+    if (this.isDestroyed || !this._isDirty) {
       return;
     }
     const started = this.observers?.size ? performance.now() : undefined;
@@ -163,14 +158,13 @@ export class PRoot extends PView {
     }
   }
 
-  destroy() {
-    if (this.destroyed) return;
-    this.destroyed = true;
-    this.renderContainer.off('destroyed', this.destroy, this);
-    layoutTicker.remove(this.doLayout, this);
-    this.stopRenderLayout();
-    this.notifyObservers({ type: 'destroy' });
-    this.observers?.clear();
-    super.destroy();
+  protected getDestroyTasks() {
+    return [
+      () => this.renderContainer.off('destroyed', this.destroy, this),
+      () => layoutTicker.remove(this.doLayout, this),
+      () => this.stopRenderLayout(),
+      () => this.notifyObservers({ type: 'destroy' }),
+      () => this.observers?.clear(),
+    ];
   }
 }

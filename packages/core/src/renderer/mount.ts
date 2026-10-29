@@ -1,5 +1,4 @@
 import { Application, EventsTicker } from 'pixi.js';
-import type { PNode } from '../elements/PNode';
 import { PRoot } from '../elements/PRoot';
 import { render } from './runtime';
 
@@ -218,12 +217,6 @@ export async function mount(
   function destroy() {
     if (destroyed) return;
     destroyed = true;
-    const nodes: PNode[] = [];
-    function collect(node: PNode) {
-      nodes.push(node);
-      for (const child of node._children) collect(child);
-    }
-    if (root) collect(root);
     const paused = EventsTicker.pauseUpdate;
     const frequency = EventsTicker.interactionFrequency;
     const tasks = [
@@ -239,11 +232,6 @@ export async function mount(
       },
       () => dispose?.(),
       () => root?.destroyRecursive(),
-      // Recursive logical removal detaches children, so release the captured tree individually.
-      ...nodes.map((node) => () => {
-        if (!node._view.destroyed) node._view.destroy({ children: true });
-      }),
-      ...nodes.map((node) => () => node._layoutNode.free()),
       () => {
         applications.delete(app);
         if (existingCanvas && app.renderer && 'gl' in app.renderer) {

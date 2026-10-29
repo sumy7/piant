@@ -93,6 +93,31 @@ export class Typesetter {
     this._debugTextRendering = !!enabled;
   }
 
+  /** Release retained inline sprites, preserving caller-owned image textures. */
+  destroy() {
+    let failure: unknown;
+    let failed = false;
+    for (const { sprite } of this._imageSpriteSlots) {
+      try {
+        if (!sprite.destroyed) sprite.destroy();
+      } catch (error) {
+        if (!failed) failure = error;
+        failed = true;
+      }
+    }
+    this._imageSpriteSlots = [];
+    this._contents = [];
+    this.invalidate();
+    this._textMeasureCache.clear();
+    const canvas = this._measureCtx?.canvas;
+    if (canvas) {
+      canvas.width = 0;
+      canvas.height = 0;
+    }
+    this._measureCtx = null;
+    if (failed) throw failure;
+  }
+
   flow(width: number) {
     const layoutWidth = this.normalizeLayoutWidth(width);
     this.ensureLayout(layoutWidth);

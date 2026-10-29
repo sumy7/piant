@@ -171,6 +171,29 @@ it('rejects immediately on destroyed nodes without applying backwards fill or sc
   expect(node._animAlpha).toBeNull();
   expect(markDirty).not.toHaveBeenCalled();
   expect(listeners.size).toBe(0);
+  expect(() => {
+    animation.currentTime = 100;
+    animation.finish();
+    animation.cancel();
+  }).not.toThrow();
+  expect(markDirty).not.toHaveBeenCalled();
+});
+
+it('keeps reactive binding controls inert after node destruction', () => {
+  const node = new PNode();
+  const [target, setTarget] = createState({ scale: 2 });
+  const binding = bindAnimation(node, target, { initial: { scale: 0.5 } });
+  node.destroy();
+  const markDirty = vi.spyOn(node, 'markDirty');
+  expect(() => {
+    binding.reset();
+    binding.cancel();
+    binding.dispose();
+    setTarget({ scale: 3 });
+  }).not.toThrow();
+  expect(node._view.destroyed).toBe(true);
+  expect(markDirty).not.toHaveBeenCalled();
+  expect(listeners.size).toBe(0);
 });
 
 it('reattaches destruction cleanup when a cancelled animation is played again', () => {
