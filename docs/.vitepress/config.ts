@@ -56,7 +56,10 @@ export default defineConfig({
       '/ui/': [
         {
           text: 'UI',
-          items: [{ text: '简介与接入', link: '/ui/introduction' }],
+          items: [
+            { text: '简介与接入', link: '/ui/introduction' },
+            { text: '主题与 UIProvider', link: '/ui/theme' },
+          ],
         },
       ],
       '/guide/': [

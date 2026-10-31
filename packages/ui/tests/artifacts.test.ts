@@ -8,7 +8,13 @@ it('ships executable ESM with external core imports and no JSX or bundled runtim
   const files = readdirSync(directory, { recursive: true })
     .map(String)
     .filter((file) => file.endsWith('.js'));
-  expect(files.sort()).toEqual(['components/Spacer.js', 'index.js']);
+  expect(files.sort()).toEqual([
+    'components/Spacer.js',
+    'index.js',
+    'theme/UIProvider.js',
+    'theme/createTheme.js',
+    'theme/tokens.js',
+  ]);
   for (const file of files) {
     const source = readFileSync(`${directory}/${file}`, 'utf8');
     const ast = ts.createSourceFile(

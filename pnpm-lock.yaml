@@ -63,6 +63,9 @@ importers:
       '@piant/store':
         specifier: workspace:*
         version: link:../packages/store
+      '@piant/ui':
+        specifier: workspace:*
+        version: link:../packages/ui
       '@types/babel__core':
         specifier: ^7.20.5
         version: 7.20.5

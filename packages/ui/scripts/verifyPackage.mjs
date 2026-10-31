@@ -83,12 +83,19 @@ globalThis.piantTreeView = View;
 `,
 );
 writeFileSync(
+  join(consumer, 'src/tree-used.js'),
+  `import { Spacer } from '@piant/ui';
+globalThis.piantTreeGap = Spacer;
+`,
+);
+writeFileSync(
   join(consumer, 'tree.config.ts'),
   `import { defineConfig } from '@rsbuild/core';
 const control = process.env.PIANT_TREE_SHAKE_CONTROL === '1';
+const used = process.env.PIANT_TREE_USE_SPACER === '1';
 export default defineConfig({
-  source: { exclude: [/tree\\.js$/], entry: { index: './src/tree.js' } },
-  output: { distPath: { root: control ? 'dist-control' : 'dist-tree' }, minify: false },
+  source: { exclude: [/tree\\.js$/], entry: { index: used ? './src/tree-used.js' : './src/tree.js' } },
+  output: { distPath: { root: control ? 'dist-control' : used ? 'dist-used' : 'dist-tree' }, minify: false },
   tools: { rspack: { optimization: control ? { sideEffects: false, usedExports: false } : {} } },
 });
 `,
@@ -101,6 +108,15 @@ execFileSync(
     cwd: consumer,
     stdio: 'inherit',
     env: { ...process.env, PIANT_TREE_SHAKE_CONTROL: '1' },
+  },
+);
+execFileSync(
+  'pnpm',
+  ['exec', 'rsbuild', 'build', '--config', 'tree.config.ts'],
+  {
+    cwd: consumer,
+    stdio: 'inherit',
+    env: { ...process.env, PIANT_TREE_USE_SPACER: '1' },
   },
 );
 const { readdirSync } = await import('node:fs');
@@ -122,6 +138,12 @@ assert.ok(
   'Unused UI implementation remains',
 );
 assert.ok(optimized.includes('piantTreeView'), 'Core consumer must remain');
+const used = outputCode('dist-used');
+assert.ok(/function Spacer\(/.test(used), 'Used Spacer must remain');
+assert.ok(
+  !/function UIProvider\(/.test(used),
+  'Unused theme provider remains with Spacer',
+);
 console.log(
   `PASS: strict isolated install, declarations, production build, unused UI removal.\nBrowser fixture: ${consumer}/dist\nTarballs: ${directory}\nThis uses real local core/UI tarballs, not registry release verification.`,
 );
