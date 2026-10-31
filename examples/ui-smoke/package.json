@@ -1,0 +1,21 @@
+{
+  "name": "@piant/examples-ui-smoke",
+  "description": "UI 产物消费：响应式间距、渲染与卸载验证。",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "rsbuild dev",
+    "build": "rsbuild build",
+    "preview": "rsbuild preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@piant/core": "workspace:*",
+    "@piant/ui": "workspace:*",
+    "pixi.js": "^8.22.0"
+  },
+  "devDependencies": {
+    "@rsbuild/core": "2.2.14",
+    "typescript": "^5.9.3"
+  }
+}

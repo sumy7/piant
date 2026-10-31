@@ -43,6 +43,7 @@ export default defineConfig({
 
     nav: [
       { text: '指南', link: '/guide/introduction' },
+      { text: 'UI', link: '/ui/introduction' },
       { text: 'Animation', link: '/animation/introduction' },
       { text: 'Router', link: '/router/introduction' },
       { text: 'Store', link: '/store/introduction' },
@@ -52,6 +53,12 @@ export default defineConfig({
     ],
 
     sidebar: {
+      '/ui/': [
+        {
+          text: 'UI',
+          items: [{ text: '简介与接入', link: '/ui/introduction' }],
+        },
+      ],
       '/guide/': [
         {
           text: '开始使用',
