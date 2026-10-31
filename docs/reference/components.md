@@ -66,19 +66,21 @@ function Input(props: InputProps): JSX.Element;
 
 `InputProps` 的属性均可选：
 
-| 属性 | 类型 | 说明 |
-|------|------|------|
-| `style` | `StyleValue<ViewStyles>` | 节点布局与视觉样式 |
-| `value` | `string` | 响应式同步的值 |
-| `defaultValue` | `string` | 仅用于初始化；同时传 `value` 时被其覆盖 |
-| `placeholder` | `string` | 默认 `''` |
-| `type` | `string` | 默认 `'text'` |
-| `disabled` | `boolean` | 默认 `false` |
-| `onInput` / `onChange` | `(value: string, event: Event) => void` | 当前字符串值与原生 DOM 事件 |
-| `onFocus` / `onBlur` | `(event: FocusEvent) => void` | 原生焦点事件 |
-| `ref` | `InputProps['ref']` | 接收 `PInput` 节点，参数类型可自动推导 |
+| 属性                   | 类型                                    | 说明                                    |
+| ---------------------- | --------------------------------------- | --------------------------------------- |
+| `style`                | `StyleValue<ViewStyles>`                | 节点布局与视觉样式                      |
+| `value`                | `string`                                | 响应式同步的值                          |
+| `defaultValue`         | `string`                                | 仅用于初始化；同时传 `value` 时被其覆盖 |
+| `placeholder`          | `string`                                | 默认 `''`                               |
+| `type`                 | `string`                                | 默认 `'text'`                           |
+| `disabled`             | `boolean`                               | 默认 `false`                            |
+| `onInput` / `onChange` | `(value: string, event: Event) => void` | 当前字符串值与原生 DOM 事件             |
+| `onFocus` / `onBlur`   | `(event: FocusEvent) => void`           | 原生焦点事件                            |
+| `ref`                  | `InputProps['ref']`                     | 接收 `PInput` 节点，参数类型可自动推导  |
 
-`Input` 基于原生 HTML input，需要 DOM 环境；受控用法应在 `onInput` 中写回状态。`ref` 的 `node._inputElement` 是原生 `HTMLInputElement`；`PInput` 没有从包入口直接导出。Props 不包含 `children`、`PixiEventProps` 或任意 HTML 属性透传，`style` 不会将文本样式转换成原生 input 的 CSS。
+`Input` 基于原生 HTML input，需要 DOM 环境；受控用法应在 `onInput` 中写回状态。`ref` 的 `node.element` 是公开的原生 `HTMLInputElement`，可调用 `.focus()`、读取值和选区；`node.domElement` 是对应的 `DOMElementBinding<HTMLInputElement>`，可复用于 UI 焦点与语义注册。二者使用同一个原生输入框，保留浏览器的编辑行为；value 和 disabled 仍由 Input 的相应 props 管理。`PInput` 没有从包入口直接导出，使用 ref 参数推导类型。
+
+Props 不包含 `children`、`PixiEventProps` 或任意 HTML 属性透传，`style` 不会将文本样式转换成原生 input 的 CSS。DOM 绑定的所有权及清理见 [attachDOMElement](/reference/renderer#attachdomelement)。
 
 详见：[Input 指南与在线示例](/guide/components/input)
 

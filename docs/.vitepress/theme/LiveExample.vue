@@ -99,8 +99,8 @@ onBeforeUnmount(stop);
       <div
         ref="host"
         class="example-canvas"
-        role="img"
-        :aria-label="`${title}，在画布中点击交互`"
+        role="group"
+        :aria-label="`${title}，交互预览`"
       />
       <p
         v-if="status !== 'running' && !error"

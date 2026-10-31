@@ -16,9 +16,85 @@ export class PNode {
 
   private destroyCallbacks = new Set<() => void>();
   private disposed = false;
+  private rootChangeListeners?: Set<() => void>;
 
   get isDestroyed(): boolean {
     return this.disposed;
+  }
+
+  /** Whether this retained node and its logical ancestors can currently be drawn. */
+  get isVisible(): boolean {
+    if (!this._root || this._root.isDestroyed) return false;
+    let current: PNode | null = this;
+    while (current) {
+      if (
+        current.isDestroyed ||
+        current._layoutStyle.display === 'none' ||
+        (current._animAlpha ?? current._layoutStyle.opacity ?? 1) <= 0 ||
+        !current._view.visible ||
+        !current._view.renderable ||
+        current._view.alpha <= 0
+      )
+        return false;
+      current = current._parent;
+    }
+    return true;
+  }
+
+  /** Observe settled geometry/visibility, including ancestor and root changes. */
+  observeLayout(listener: () => void): () => void {
+    if (this.disposed) return () => {};
+    let active = true;
+    let pending = false;
+    let stopRoot = () => {};
+    let stopDestroy = () => {};
+    let observedRoot: PRoot | null = null;
+    const notify = () => {
+      pending = false;
+      if (!active || this.disposed) return;
+      try {
+        listener();
+      } catch (error) {
+        console.error('[piant] Node layout observer failed.', error);
+      }
+    };
+    const schedule = () => {
+      if (!active || pending) return;
+      pending = true;
+      queueMicrotask(() => {
+        if (pending) notify();
+      });
+    };
+    const followRoot = () => {
+      if (observedRoot !== this._root) {
+        stopRoot();
+        observedRoot = this._root;
+        stopRoot = observedRoot?.observe(() => notify()) ?? (() => {});
+      }
+      // Reconciliation clears and restores a root in the same stack. Wait until
+      // it settles rather than briefly hiding a retained, focused DOM element.
+      schedule();
+    };
+    const dispose = () => {
+      if (!active) return;
+      active = false;
+      pending = false;
+      this._view.off('sizeChange', schedule);
+      this.rootChangeListeners?.delete(followRoot);
+      stopRoot();
+      stopDestroy();
+    };
+    this.rootChangeListeners ??= new Set();
+    this.rootChangeListeners.add(followRoot);
+    this._view.on('sizeChange', schedule);
+    stopDestroy = this.onDestroy(dispose);
+    followRoot();
+    return dispose;
+  }
+
+  private notifyRootChange() {
+    if (!this.rootChangeListeners?.size) return;
+    for (const listener of [...this.rootChangeListeners]) listener();
   }
 
   /** Release a node-owned resource on destruction, including recursive removal. */
@@ -91,7 +167,10 @@ export class PNode {
   }
 
   bindToRoot(root: PRoot) {
-    this._root = root;
+    if (this._root !== root) {
+      this._root = root;
+      this.notifyRootChange();
+    }
     for (const child of this._children) {
       child.bindToRoot(root);
     }
@@ -463,7 +542,10 @@ export class PNode {
   }
 
   private clearRoot() {
-    this._root = null;
+    if (this._root) {
+      this._root = null;
+      this.notifyRootChange();
+    }
     for (const child of this._children) {
       child.clearRoot();
     }

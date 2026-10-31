@@ -60,6 +60,7 @@ export default defineConfig({
             { text: '简介与接入', link: '/ui/introduction' },
             { text: '主题与 UIProvider', link: '/ui/theme' },
             { text: '受控状态与按压行为', link: '/ui/interactions' },
+            { text: '焦点与语义桥接', link: '/ui/focus' },
           ],
         },
       ],

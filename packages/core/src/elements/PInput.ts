@@ -1,9 +1,16 @@
-import { DOMContainer } from 'pixi.js';
+import type { DOMContainer } from 'pixi.js';
+import { attachDOMElement, type DOMElementBinding } from './attachDOMElement';
 import { PNode } from './PNode';
 
 export class PInput extends PNode {
   _domContainer: DOMContainer;
   _inputElement: HTMLInputElement;
+  readonly domElement: DOMElementBinding<HTMLInputElement>;
+
+  /** The same native input used for rendering, values and DOM events. */
+  get element(): HTMLInputElement {
+    return this._inputElement;
+  }
 
   constructor() {
     super();
@@ -20,24 +27,14 @@ export class PInput extends PNode {
     this._inputElement.style.fontSize = 'inherit';
     this._inputElement.style.fontFamily = 'inherit';
     this._inputElement.style.color = 'inherit';
+    this._inputElement.style.pointerEvents = 'auto';
 
-    this._domContainer = new DOMContainer({
-      element: this._inputElement,
-    });
+    this.domElement = attachDOMElement(this, this._inputElement);
+    this._domContainer = this.domElement.container;
   }
 
   applyInputElement() {
-    if (this._view.children.indexOf(this._domContainer) < 0) {
-      // add dom container before _viewContent
-      const viewContentIndex = this._view.getChildIndex(this._viewContent);
-      this._view.addChildAt(this._domContainer, viewContentIndex);
-    }
-
-    const width = this._layoutNode.getComputedWidth();
-    const height = this._layoutNode.getComputedHeight();
-
-    this._inputElement.style.width = `${width}px`;
-    this._inputElement.style.height = `${height}px`;
+    this.domElement.sync();
   }
 
   applyLayout() {
@@ -47,10 +44,6 @@ export class PInput extends PNode {
   }
 
   protected getDestroyTasks() {
-    return [
-      () => {
-        if (!this._domContainer.destroyed) this._domContainer.destroy();
-      },
-    ];
+    return [() => this.domElement.dispose()];
   }
 }

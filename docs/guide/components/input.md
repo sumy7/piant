@@ -22,24 +22,25 @@
 
 所有属性均可选；`InputProps` 可从 `@piant/core` 导入。
 
-| 属性 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| `style` | `StyleValue<ViewStyles>` | — | 节点的布局与视觉样式；支持样式对象、数组和 StyleSheet 样式 |
-| `value` | `string` | — | 同步到原生输入框的值，可响应式更新 |
-| `defaultValue` | `string` | — | 仅初始化时使用的值 |
-| `placeholder` | `string` | `''` | 原生占位文字 |
-| `type` | `string` | `'text'` | 原生 input 类型，如 `'password'`；仍以字符串读写值 |
-| `disabled` | `boolean` | `false` | 禁用原生输入框 |
-| `onInput` | `(value: string, event: Event) => void` | — | 原生 `input` 事件；第一个参数是当前值 |
-| `onChange` | `(value: string, event: Event) => void` | — | 原生 `change` 事件，触发时机由浏览器和 input 类型决定 |
-| `onFocus` | `(event: FocusEvent) => void` | — | 原生 `focus` 事件 |
-| `onBlur` | `(event: FocusEvent) => void` | — | 原生 `blur` 事件 |
-| `ref` | `InputProps['ref']` | — | 创建时接收底层 `PInput` 节点；可通过 `node._inputElement` 访问 `HTMLInputElement` |
+| 属性           | 类型                                    | 默认值   | 说明                                                                                            |
+| -------------- | --------------------------------------- | -------- | ----------------------------------------------------------------------------------------------- |
+| `style`        | `StyleValue<ViewStyles>`                | —        | 节点的布局与视觉样式；支持样式对象、数组和 StyleSheet 样式                                      |
+| `value`        | `string`                                | —        | 同步到原生输入框的值，可响应式更新                                                              |
+| `defaultValue` | `string`                                | —        | 仅初始化时使用的值                                                                              |
+| `placeholder`  | `string`                                | `''`     | 原生占位文字                                                                                    |
+| `type`         | `string`                                | `'text'` | 原生 input 类型，如 `'password'`；仍以字符串读写值                                              |
+| `disabled`     | `boolean`                               | `false`  | 禁用原生输入框                                                                                  |
+| `onInput`      | `(value: string, event: Event) => void` | —        | 原生 `input` 事件；第一个参数是当前值                                                           |
+| `onChange`     | `(value: string, event: Event) => void` | —        | 原生 `change` 事件，触发时机由浏览器和 input 类型决定                                           |
+| `onFocus`      | `(event: FocusEvent) => void`           | —        | 原生 `focus` 事件                                                                               |
+| `onBlur`       | `(event: FocusEvent) => void`           | —        | 原生 `blur` 事件                                                                                |
+| `ref`          | `InputProps['ref']`                     | —        | 创建时接收底层节点；`node.element` 为原生 `HTMLInputElement`，`node.domElement` 为对应 DOM 绑定 |
 
 ## ref 与限制
 
 - `ref` 在节点创建时同步调用，此时尚未插入渲染容器，也未完成布局。聚焦等操作可在 `onMount` 或用户事件中执行；`onMount` 时也不保证布局已完成。
-- `PInput` 没有从包入口直接导出；使用 `ref` 参数的自动推导，或通过 `InputProps['ref']` 引用回调类型。`_inputElement` 是当前底层字段，没有独立的公开 `focus()` 封装。
+- `PInput` 没有从包入口直接导出；使用 `ref` 参数的自动推导，或通过 `InputProps['ref']` 引用回调类型。公开的 `node.element` 是实际编辑、接收事件的 `HTMLInputElement`，可以调用 `node.element.focus()`、读取选区或设置原生属性。
+- `node.domElement` 为 `DOMElementBinding<HTMLInputElement>`，与 `node.element` 指向同一输入框，可交给 UI 的[焦点注册](/ui/focus#复用原生-input)。不要为同一个 Input 另建一份 DOM 代理。绑定的几何、可见性和清理规则见 [DOM 元素绑定](/reference/renderer#attachdomelement)。
 - `style` 接受 `ViewStyles`，不会把文本样式转换为 input 的 CSS。上面的示例通过 `ref` 设置原生输入框的字号、颜色和 `aria-label`。
 - 当前 Props 不包含 `children`、`readOnly`、`maxLength`、`onKeyDown` 或任意 HTML 属性透传，也不包含 `PixiEventProps`。这里的回调接收原生 DOM 事件；`onInput` / `onChange` 的参数顺序与 Pixi 事件不同。
 - 组件在响应式 owner 清理时移除自己注册的四个 DOM 监听器；`ref` 中额外添加的监听器应由调用方通过 `onCleanup` 清理。节点树与宿主资源的释放边界见 [render](/reference/renderer#render)。

@@ -7,6 +7,7 @@ export default defineConfig({
       index: './src/index.ts',
       theme: './src/theme.ts',
       pressable: './src/pressable.ts',
+      focus: './src/focus.ts',
     },
   },
   html: { tags: [{ tag: 'link', attrs: { rel: 'icon', href: 'data:,' } }] },

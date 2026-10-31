@@ -20,7 +20,11 @@ UI 以 `@piant/core` 为 peer dependency，范围以已安装 UI 包的 `peerDep
 
 `createControllableState` 统一受控与非受控值，可适配 `value`、`checked`、`open` 三组控件属性。`createPressable` 绑定已有 Piant 节点，提供 hover、按压和禁用状态，处理控件内释放、移出返回、取消及销毁。
 
-这些原语不包含视觉 Button、键盘、焦点或辅助技术语义。参数与回调的响应式转发、手势规则及在线示例见[受控状态与按压行为](/ui/interactions)。
+这两个原语不包含视觉 Button、键盘、焦点或辅助技术语义。参数与回调的响应式转发、手势规则及在线示例见[受控状态与按压行为](/ui/interactions)。
+
+## 焦点与语义
+
+`UIProvider` 为注册项提供焦点作用域；`createFocusable` 协调 Canvas 语义代理与原生 Input，提供 Tab 导航、focus-visible 和键盘激活。`createRovingFocusGroup` 让组内控件共用一个 Tab 停靠项，并用箭头/Home/End 移动焦点。Canvas 焦点环仍由组件显式绘制。接入方式、作用域隔离与验证边界见[焦点与语义桥接](/ui/focus)。
 
 ## 使用 Spacer
 

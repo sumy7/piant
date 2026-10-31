@@ -15,6 +15,10 @@ export {
 } from './components/Transition';
 export { TransitionGroup, type TransitionGroupProps } from './components/TransitionGroup';
 export { View } from './components/View';
+export {
+  attachDOMElement,
+  type DOMElementBinding,
+} from './elements/attachDOMElement';
 export type { ImageStyles, LayoutStyles, ViewStyles, VisualStyles } from './elements/layout/viewStyles';
 export { PNode } from './elements/PNode';
 export { PRoot, type PRootObservation } from './elements/PRoot';

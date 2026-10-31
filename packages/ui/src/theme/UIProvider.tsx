@@ -7,6 +7,7 @@ import {
   onCleanup,
   useContext,
 } from '@piant/core';
+import { FocusContext, FocusScope } from '../primitives/focusScope';
 import { createTheme, defaultTheme, mergeThemeOverrides } from './createTheme';
 import type { ThemeOptions, UITheme } from './tokens';
 
@@ -15,6 +16,8 @@ export interface UIProviderProps extends Omit<ThemeOptions, 'reducedMotion'> {
   reducedMotion?: boolean | 'system';
   /** Explicit DOM scope for native input text. Never styles document/body globally. */
   domRoot?: HTMLElement;
+  /** Nested providers share focus by default; isolate only for a separate surface. */
+  focusScope?: 'inherit' | 'isolate';
   /** Defer child creation until the context has been installed. */
   children?: () => ReturnType<typeof View>;
 }
@@ -34,6 +37,12 @@ export function UIProvider(
   props: UIProviderProps,
 ): ReturnType<typeof ThemeContext.Provider> {
   const parent = useContext(ThemeContext);
+  const parentFocus = useContext(FocusContext);
+  const focus =
+    parentFocus && props.focusScope !== 'isolate'
+      ? parentFocus
+      : new FocusScope();
+  if (focus !== parentFocus) onCleanup(() => focus.dispose());
   const [systemReduced, setSystemReduced] = createState(false);
   createEffect(() => {
     const preference = props.reducedMotion ?? (parent ? undefined : 'system');
@@ -91,8 +100,12 @@ export function UIProvider(
   });
   const scope: ThemeScope = { options, theme };
   return (
-    <ThemeContext.Provider value={scope}>
-      {props.children}
-    </ThemeContext.Provider>
+    <FocusContext.Provider value={focus}>
+      {() => (
+        <ThemeContext.Provider value={scope}>
+          {props.children}
+        </ThemeContext.Provider>
+      )}
+    </FocusContext.Provider>
   );
 }

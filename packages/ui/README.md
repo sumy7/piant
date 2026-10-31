@@ -12,6 +12,7 @@ pnpm add @piant/ui @piant/core "pixi.js@^8.22.0"
 
 - 主题：`createTheme`、`defaultTheme`、`UIProvider`、`useUITheme`。
 - 交互：`createControllableState`、`createPressable`。
+- 焦点：`createFocusable`、`createRovingFocusGroup`、`useUIFocus`。
 - 布局：`Spacer`。
 - 类型：`ColorMode`、`ControlDensity`、`ThemeTokens`、`ThemeOverrides`、`ThemeOptions`、`UITheme`、`UIProviderProps`、`ControllableStateOptions`、`PressableOptions`、`PressableState`、`SpacerProps`。
 
@@ -48,7 +49,16 @@ import { UIProvider, useUITheme } from '@piant/ui';
 
 function Content() {
   const theme = useUITheme();
-  return <Text style={{ color: theme().colors.text, fontSize: theme().typography.fontSize }}>Piant UI</Text>;
+  return (
+    <Text
+      style={{
+        color: theme().colors.text,
+        fontSize: theme().typography.fontSize,
+      }}
+    >
+      Piant UI
+    </Text>
+  );
 }
 
 export function ThemedApp() {
@@ -69,6 +79,10 @@ export function ThemedApp() {
 `createPressable(node, { disabled?, onPress? })` 为已有 `PNode` 返回 `hovered()`、`pressed()`、`disabled()` 和 `dispose()`。主指针按下后，移出暂停按压视觉、移回恢复，控件内释放只触发一次；取消、禁用和销毁不会激活动作。绑定随 owner 或节点销毁清理自己的资源，不移除其他监听。它只处理指针行为，不包含视觉 Button、键盘或焦点。
 
 响应式选项和回调用 getter 传递，避免对象展开产生快照。完整契约、Pixi 取消事件边界及在线示例见[交互文档](../../docs/ui/interactions.md)。
+
+## 焦点与语义
+
+`UIProvider` 根实例创建焦点作用域，嵌套默认继承，`focusScope="isolate"` 可独立管理。`createFocusable` 为 Canvas 节点提供透明语义代理，或通过 `domElement: node.domElement` 注册 core Input 的原生元素。它提供焦点、focus-visible、键盘按压状态和激活回调；`createRovingFocusGroup` 提供单 Tab 停靠与箭头/Home/End 导航。指针仍由 `createPressable` 处理，两条路径共享业务动作。Canvas 焦点环需显式消费 `focusVisible()`。接入和读屏验证边界见[焦点文档](../../docs/ui/focus.md)。
 
 ## 工程边界
 

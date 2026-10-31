@@ -44,7 +44,7 @@ export default function App() {
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
         ref={(node) => {
-          inputElement = node._inputElement;
+          inputElement = node.element;
           inputElement.setAttribute('aria-label', '名称');
           inputElement.style.color = '#0f172a';
           inputElement.style.fontSize = '16px';
