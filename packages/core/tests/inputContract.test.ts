@@ -199,19 +199,60 @@ describe('native Input contract', () => {
     expect(plain.native.defaultValue).toBe('uncontrolled');
   });
 
-  it('does not use selection-only APIs for input types that do not support them', () => {
-    const [value, setValue] = createState('a@example.com');
-    const { native } = setup({
-      type: 'email',
-      get value() {
-        return value();
-      },
-    });
-    const select = vi.spyOn(native, 'setSelectionRange');
-    setValue('b@example.com');
-    expect(native.value).toBe('b@example.com');
-    expect(select).not.toHaveBeenCalled();
-  });
+  it.each([
+    ['number', '1', '42'],
+    ['email', 'a@example.com', 'b@example.com'],
+    ['date', '2026-10-31', '2026-11-01'],
+  ])(
+    'updates controlled %s values without accessing selection APIs',
+    (type, initial, next) => {
+      const [value, setValue] = createState(initial);
+      const { native } = setup({
+        type,
+        get value() {
+          return value();
+        },
+      });
+      // Model a host that rejects non-text selection access. This is a defensive
+      // regression, not an assertion that standard getters throw (they return null).
+      const reads = (
+        ['selectionStart', 'selectionEnd', 'selectionDirection'] as const
+      ).map((property) =>
+        vi.spyOn(native, property, 'get').mockImplementation(() => {
+          throw new DOMException(
+            'Selection is unavailable',
+            'InvalidStateError',
+          );
+        }),
+      );
+      const select = vi.spyOn(native, 'setSelectionRange');
+      setValue(next);
+      expect(native.value).toBe(next);
+      for (const read of reads) expect(read).not.toHaveBeenCalled();
+      expect(select).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each(['text', 'search', 'tel', 'url', 'password', 'invalid-input-type'])(
+    'preserves selection for the actual text-capable type %s',
+    (type) => {
+      const [value, setValue] = createState('abcdef');
+      const { native } = setup({
+        type,
+        get value() {
+          return value();
+        },
+      });
+      native.setSelectionRange(2, 5, 'backward');
+      setValue('xyz');
+      expect(native.value).toBe('xyz');
+      expect([
+        native.selectionStart,
+        native.selectionEnd,
+        native.selectionDirection,
+      ]).toEqual([2, 3, 'backward']);
+    },
+  );
 
   it('routes beforeinput, select and clipboard events without replacing or canceling native editing', () => {
     const before = vi.fn();

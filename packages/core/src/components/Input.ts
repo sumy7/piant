@@ -82,9 +82,12 @@ export function Input(props: InputProps): JSX.Element {
         native.value === next
       )
         return;
-      const start = native.selectionStart;
-      const end = native.selectionEnd;
-      const direction = native.selectionDirection;
+      const supportsSelection = /^(text|search|tel|url|password)$/.test(
+        native.type,
+      );
+      const start = supportsSelection ? native.selectionStart : null;
+      const end = supportsSelection ? native.selectionEnd : null;
+      const direction = supportsSelection ? native.selectionDirection : null;
       native.value = next;
       if (start !== null && end !== null) {
         native.setSelectionRange(
