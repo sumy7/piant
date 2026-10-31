@@ -377,6 +377,28 @@ describe('provider focus and semantic registration', () => {
 });
 
 describe('focused keyboard activation', () => {
+  it('does not invoke native focus-adapter business keys during a core Input composition session', async () => {
+    const onKeyDown = vi.fn();
+    let state!: FocusableState;
+    setup((add) => {
+      state = add({ name: 'native', onKeyDown }, true);
+    });
+    state.focus();
+    state.element.dispatchEvent(
+      new CompositionEvent('compositionstart', { bubbles: true }),
+    );
+    key(state.element, 'keydown', 'Enter');
+    key(state.element, 'keydown', 'Escape');
+    expect(onKeyDown).not.toHaveBeenCalled();
+    state.element.dispatchEvent(
+      new CompositionEvent('compositionend', { bubbles: true }),
+    );
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    key(state.element, 'keyup', 'Enter');
+    key(state.element, 'keyup', 'Escape');
+    key(state.element, 'keydown', 'Enter');
+    expect(onKeyDown).toHaveBeenCalledTimes(1);
+  });
   it('activates Enter down and Space up once, ignores repeats, and accepts AT clicks independently', () => {
     const activate = vi.fn();
     let state!: FocusableState;

@@ -114,6 +114,8 @@ export function NameInput() {
 
 原生输入的禁用状态由 `Input.disabled` 管理；传入 `domElement` 时不接受注册选项 `disabled`，注册表会读取真实原生禁用状态。Canvas 代理使用 `createFocusable` 的 `disabled`，组合指针原语时把同一 getter 传给 `createPressable`。
 
+使用 Input 的 `onKeyDown` / `onKeyUp` 时，组合输入中的 Enter/Escape 留给原生 IME，不触发业务动作。祖先 capture 阶段的表单、快捷键或浮层必须先调用 core 的 `isComposingInput(event)`；Input 的目标监听不能撤销已经执行的 capture 处理。详见 [Input 的 IME 契约](/guide/components/input#ime-与键盘业务动作)。
+
 ## Roving 组
 
 `createRovingFocusGroup({ role?, name?, orientation?, loop?, dir? })` 创建组句柄，用作注册选项的 `group`，并提供 `dispose()`。

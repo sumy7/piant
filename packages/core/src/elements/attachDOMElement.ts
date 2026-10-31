@@ -1,5 +1,6 @@
-import { DOMContainer } from 'pixi.js';
+import { DOMContainer, type Renderer } from 'pixi.js';
 import { onCleanup } from '../reactivity/hooks';
+import { getDOMElementClip } from './domElementClip';
 import type { PNode } from './PNode';
 
 export interface DOMElementBinding<T extends HTMLElement = HTMLElement> {
@@ -35,6 +36,44 @@ export function attachDOMElement<T extends HTMLElement>(
   hostElement.append(element);
   const container = new DOMContainer({ element: hostElement });
   let disposed = false;
+  let renderer: Renderer | undefined;
+  let clippedOut = false;
+  const clipObserver = {
+    postrender() {
+      if (disposed || !renderer || node.isDestroyed) return;
+      const polygon = getDOMElementClip(
+        node,
+        container.worldTransform,
+        renderer.screen,
+      );
+      clippedOut = polygon.length === 0;
+      hostElement.style.clipPath = clippedOut
+        ? 'polygon(0px 0px, 0px 0px, 0px 0px)'
+        : `polygon(${polygon.map(({ x, y }) => `${x}px ${y}px`).join(', ')})`;
+      hostElement.hidden = !node.isVisible || clippedOut;
+    },
+  };
+  const rendererDestroyObserver = {
+    destroy() {
+      // AbstractRenderer emits destroy before destroying its runners. Do not
+      // splice the destroy runner during its fixed-length iteration; that
+      // runner immediately releases its listeners after this notification.
+      renderer?.runners.postrender.remove(clipObserver);
+      renderer = undefined;
+    },
+  };
+  function detachRenderer() {
+    renderer?.runners.postrender.remove(clipObserver);
+    renderer?.runners.destroy.remove(rendererDestroyObserver);
+    renderer = undefined;
+  }
+  container.onRender = (nextRenderer) => {
+    if (disposed || renderer === nextRenderer) return;
+    detachRenderer();
+    renderer = nextRenderer;
+    renderer.runners.postrender.add(clipObserver);
+    renderer.runners.destroy.add(rendererDestroyObserver);
+  };
   let stopLayout = () => {};
   let stopDestroy = () => {};
   const binding: DOMElementBinding<T> = {
@@ -46,13 +85,15 @@ export function attachDOMElement<T extends HTMLElement>(
     },
     sync() {
       if (disposed || container.destroyed || node.isDestroyed) return;
-      hostElement.hidden = !node.isVisible;
+      hostElement.hidden = !node.isVisible || clippedOut;
       element.style.width = `${node._layoutNode.getComputedWidth()}px`;
       element.style.height = `${node._layoutNode.getComputedHeight()}px`;
     },
     dispose() {
       if (disposed) return;
       disposed = true;
+      detachRenderer();
+      container.onRender = null;
       stopLayout();
       stopDestroy();
       container.off('destroyed', binding.dispose);

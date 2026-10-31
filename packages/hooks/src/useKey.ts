@@ -1,17 +1,23 @@
-import { onCleanup } from '@piant/core';
+import { isComposingInput, onCleanup } from '@piant/core';
 
-export type KeyFilter = null | undefined | string | ((event: KeyboardEvent) => boolean);
+export type KeyFilter =
+  null | undefined | string | ((event: KeyboardEvent) => boolean);
 export type Handler = (event: KeyboardEvent) => void;
 export type KeyEventType = 'keydown' | 'keypress' | 'keyup';
 
 export interface UseKeyOptions {
   event?: KeyEventType;
   target?: EventTarget;
+  /** Business shortcuts ignore IME by default; opt out only for raw observation. */
+  ignoreComposition?: boolean;
 }
 
-function createKeyPredicate(keyFilter: KeyFilter): (event: KeyboardEvent) => boolean {
+function createKeyPredicate(
+  keyFilter: KeyFilter,
+): (event: KeyboardEvent) => boolean {
   if (typeof keyFilter === 'function') return keyFilter;
-  if (typeof keyFilter === 'string') return (event: KeyboardEvent) => event.key === keyFilter;
+  if (typeof keyFilter === 'string')
+    return (event: KeyboardEvent) => event.key === keyFilter;
   return () => false;
 }
 
@@ -23,17 +29,23 @@ function createKeyPredicate(keyFilter: KeyFilter): (event: KeyboardEvent) => boo
  * @param handler - Callback invoked on matching keyboard events.
  * @param opts - Optional event type ('keydown' | 'keypress' | 'keyup') and target element.
  */
-export function useKey(key: KeyFilter, handler: Handler, opts: UseKeyOptions = {}): void {
+export function useKey(
+  key: KeyFilter,
+  handler: Handler,
+  opts: UseKeyOptions = {},
+): void {
   if (key === null || key === undefined) return;
 
   const { event = 'keydown', target } = opts;
   const t: EventTarget =
-    target ?? (typeof window !== 'undefined' ? window : (null as unknown as EventTarget));
+    target ??
+    (typeof window !== 'undefined' ? window : (null as unknown as EventTarget));
   if (!t) return;
 
   const predicate = createKeyPredicate(key);
   const wrappedHandler = (e: Event) => {
     const ke = e as KeyboardEvent;
+    if (opts.ignoreComposition !== false && isComposingInput(ke)) return;
     if (predicate(ke)) handler(ke);
   };
 

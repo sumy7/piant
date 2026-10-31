@@ -8,6 +8,7 @@ export default defineConfig({
       theme: './src/theme.ts',
       pressable: './src/pressable.ts',
       focus: './src/focus.ts',
+      input: './src/input.ts',
     },
   },
   html: { tags: [{ tag: 'link', attrs: { rel: 'icon', href: 'data:,' } }] },

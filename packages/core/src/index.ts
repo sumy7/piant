@@ -19,7 +19,10 @@ export {
   attachDOMElement,
   type DOMElementBinding,
 } from './elements/attachDOMElement';
+export { isComposingInput } from './elements/inputComposition';
+export type { InputStyles } from './elements/inputStyles';
 export type { ImageStyles, LayoutStyles, ViewStyles, VisualStyles } from './elements/layout/viewStyles';
+export { PInput } from './elements/PInput';
 export { PNode } from './elements/PNode';
 export { PRoot, type PRootObservation } from './elements/PRoot';
 export {

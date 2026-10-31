@@ -1,3 +1,4 @@
+import type { InputStyles } from '../elements/inputStyles';
 import type { ImageStyles } from '../elements/layout/viewStyles';
 import type { TextStyles } from '../elements/text/textStyles';
 import composeStyles from './composeStyles';
@@ -65,7 +66,7 @@ function resolveEntry<T extends object>(
   return { ...merged, ...entry.style };
 }
 
-type BuiltinStyles = ImageStyles & TextStyles;
+type BuiltinStyles = Omit<ImageStyles & TextStyles, 'textAlign'> & InputStyles;
 
 // Prevent the compatibility overload from inferring a permissive custom schema
 // when a default call contains an invalid built-in property.

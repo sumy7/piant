@@ -41,16 +41,16 @@
 
 滚动类型：`ScrollAlignment`、`ScrollIntoViewOptions`。
 
-`PInput`、`PView`、`PText` 等节点类没有从主入口直接导出。组件的 `ref` 参数可自动推导对应节点类型，无需深层导入。
+`PInput` 从主入口导出，提供 `element`、`domElement`、`focus()`、`blur()` 和 `isComposing`，详见 [Input](/guide/components/input)。`isComposingInput(event)` 供快捷键在消费事件前检查组合状态。`PView`、`PText` 等节点类未从主入口直接导出，组件 ref 可自动推导类型。
 
 ## 样式与事件类型
 
-| 导出                                                                                                      | 文档                                                          |
-| --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| `StyleSheet`                                                                                              | [样式 API](/reference/stylesheet)                             |
-| `LayoutStyles`、`VisualStyles`、`ViewStyles`、`ImageStyles`、`TextStyles`、`TextViewStyles`               | [样式指南](/guide/styling/stylesheet)                         |
-| `StyleValue`、`StyleObject`、`StyleEntry`、`StyleReference`、`StyleSheetDefinition`、`ResolvedStyleSheet` | [样式类型](/reference/stylesheet)                             |
-| `PixiEventHandler`、`PixiEventProp`、`PixiEventProps`                                                     | [事件 Props](/reference/components#事件-props-pixieventprops) |
+| 导出                                                                                                       | 文档                                                          |
+| ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| `StyleSheet`                                                                                               | [样式 API](/reference/stylesheet)                             |
+| `LayoutStyles`、`VisualStyles`、`ViewStyles`、`ImageStyles`、`InputStyles`、`TextStyles`、`TextViewStyles` | [样式指南](/guide/styling/stylesheet)                         |
+| `StyleValue`、`StyleObject`、`StyleEntry`、`StyleReference`、`StyleSheetDefinition`、`ResolvedStyleSheet`  | [样式类型](/reference/stylesheet)                             |
+| `PixiEventHandler`、`PixiEventProp`、`PixiEventProps`                                                      | [事件 Props](/reference/components#事件-props-pixieventprops) |
 
 类型使用 `import type { ... } from '@piant/core'` 导入。`@piant/core/jsx-runtime` 提供 JSX 类型入口，JSX 转换仍需配置 [Babel 预设](/guide/installation)。
 

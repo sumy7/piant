@@ -192,6 +192,8 @@ function attachDOMElement<T extends HTMLElement>(
 
 绑定使用独立 wrapper，不覆盖传入元素自己的 `pointer-events`；原生 Input 使用 `auto` 接收指针，透明语义代理可使用 `none` 让 Canvas 继续接收指针。绑定仅暂管元素的定位与宽高，不改写原生 `value`、`disabled` 或编辑事件。
 
+每帧渲染后，wrapper 的 CSS 裁剪区同步到渲染视口及 Piant `overflow: 'hidden'` 节点的交集，包括只改变 Pixi 变换的滚动。完全裁出时隐藏 wrapper，滚回后恢复同一原生元素；`binding.visible` 仍表示场景可见性，不包含这个裁剪结果。圆角使用内接凸多边形，误差上限为 0.25 节点局部像素，再随场景变换缩放。任意自定义 Pixi mask 或滤镜不在 DOM 裁剪合同内。
+
 节点销毁、创建绑定时的响应式 owner 清理或显式 `dispose()` 都会释放绑定，停止几何观察，销毁 DOMContainer 并移除元素。清理恢复元素绑定前的内联定位及尺寸声明，不恢复原 DOM 父节点。自行添加的事件监听仍由调用方清理。
 
 可运行的 Canvas 与原生 Input 组合接入见 [UI 焦点示例](/ui/focus)。

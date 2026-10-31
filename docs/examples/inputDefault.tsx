@@ -8,12 +8,15 @@ export default function App() {
     <View style={{ width: '100%', height: '100%', padding: 20, gap: 16 }}>
       <Input
         defaultValue="初始内容"
+        aria-label="非受控输入"
         onInput={(nextValue) => setValue(nextValue)}
-        style={{ width: '100%', height: 40, backgroundColor: '#ffffff' }}
-        ref={(node) => {
-          node._inputElement.setAttribute('aria-label', '非受控输入');
-          node._inputElement.style.color = '#0f172a';
-          node._inputElement.style.fontSize = '16px';
+        style={{
+          width: '100%',
+          height: 40,
+          padding: 8,
+          backgroundColor: '#ffffff',
+          color: '#0f172a',
+          fontSize: 16,
         }}
       />
       <Text style={{ color: '#0f172a', fontSize: 16 }}>{label()}</Text>

@@ -5,6 +5,7 @@ import {
   createState,
   type DOMElementBinding,
   type Getter,
+  isComposingInput,
   onCleanup,
   type PNode,
   root,
@@ -211,6 +212,12 @@ function registerFocusable(
   }
   function keydown(event: KeyboardEvent) {
     if (!available() || element.ownerDocument.activeElement !== element) return;
+    if (isComposingInput(event)) {
+      cancel();
+      if (!native && (event.key === 'Enter' || event.key === ' '))
+        event.preventDefault();
+      return;
+    }
     if (!native && scope.navigate(entry, event)) return;
     options.onKeyDown?.(event, node);
     if (native || event.defaultPrevented) return;
@@ -239,6 +246,11 @@ function registerFocusable(
   }
   function keyup(event: KeyboardEvent) {
     if (native) return;
+    if (isComposingInput(event)) {
+      cancel();
+      if (event.key === 'Enter' || event.key === ' ') event.preventDefault();
+      return;
+    }
     const key = activationKey(event);
     if (!key) {
       if (event.key === 'Enter' || event.key === ' ') event.preventDefault();

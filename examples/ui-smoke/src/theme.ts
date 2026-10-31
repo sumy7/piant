@@ -156,7 +156,7 @@ async function panel(name: string) {
   }, host);
   setDOMRoot(mounted.app.domContainerRoot);
   const original = input;
-  const element = input._inputElement;
+  const element = input.element;
   element.setAttribute('aria-label', `${name} input`);
   function update(next: UIProviderProps) {
     const focused = document.activeElement === element;

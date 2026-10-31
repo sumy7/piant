@@ -41,7 +41,7 @@ StyleSheet.compose(styles.base, styles.active);
 
 ### StyleSheet.create
 
-创建带类型检查的样式表，**保留输入的所有 key**。默认检查 View、Image 和 Text 的已知样式属性及属性值，例如 `widht` 或 `width: 'banana'` 会产生编译错误。支持普通样式对象和通过 `StyleSheet.extend` 创建的继承样式引用（`StyleReference`），后者在 `create` 调用时会被立即解析为普通对象。
+创建带类型检查的样式表，**保留输入的所有 key**。默认检查 View、Image、Input 和 Text 的已知样式属性及属性值，例如 `widht` 或 `width: 'banana'` 会产生编译错误。支持普通样式对象和通过 `StyleSheet.extend` 创建的继承样式引用（`StyleReference`），后者在 `create` 调用时会被立即解析为普通对象。
 
 循环继承链会在 `create` 时被检测：循环边被跳过，并输出 `console.warn` 告警以便开发期排查。
 
@@ -187,6 +187,7 @@ LayoutStyles  (= YogaStyles，Yoga flexbox 布局属性的公开名称)
 VisualStyles  (视觉外观：背景色、圆角、透明度等)
 ViewStyles    = LayoutStyles & Partial<VisualStyles>   ← View 组件使用
 ImageStyles   = ViewStyles & { objectFit? }            ← Image 组件使用
+InputStyles   = ViewStyles & 原生输入文字样式           ← Input 组件使用
 TextStyles    = ViewStyles & Partial<TextLayoutStyle>  ← 完整文本样式能力集
 TextViewStyles = TextStyles                            ← Text 组件对外主类型（语义别名）
 ```
@@ -247,6 +248,26 @@ interface ImageStyles extends ViewStyles {
   objectFit?: 'contain' | 'cover' | 'fill' | 'none';
 }
 ```
+
+### InputStyles
+
+`Input` 使用 `StyleValue<InputStyles>`，在 View/Yoga 能力之上把支持的文字属性同步为原生 HTML input 的 CSS：
+
+```ts
+interface InputStyles extends ViewStyles {
+  fontFamily?: string;
+  fontSize?: number;
+  fontWeight?: string | number;
+  fontStyle?: string;
+  lineHeight?: number | `${number}x` | 'normal';
+  letterSpacing?: number;
+  color?: string;
+  caretColor?: string;
+  textAlign?: 'left' | 'center' | 'right' | 'start' | 'end';
+}
+```
+
+字号、数字行高和字间距使用逻辑像素；如 `'1.5x'` 的行高转为 CSS 倍数。移除属性时恢复默认或继承值。Yoga 计算后的 padding 和 border 成为原生文字内边距，背景及边框仍由 Canvas 绘制。它不是任意 CSS 属性透传，也不将 Text 的换行、富文本或排版能力应用到原生输入框。
 
 ### TextStyles / TextViewStyles
 

@@ -1,8 +1,62 @@
-import { root } from '@piant/core';
+import { Input, type PInput, root } from '@piant/core';
 import { describe, expect, it, vi } from 'vitest';
 import { useKey } from '../src/useKey';
 
 describe('useKey', () => {
+  it.each([{ isComposing: true }, { keyCode: 229 }])(
+    'ignores composing boundary flags %s by default',
+    (flags) => {
+      const handler = vi.fn();
+      root((dispose) => {
+        useKey('Enter', handler);
+        window.dispatchEvent(
+          new KeyboardEvent('keydown', { key: 'Enter', ...flags }),
+        );
+        expect(handler).not.toHaveBeenCalled();
+        window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+        expect(handler).toHaveBeenCalledTimes(1);
+        dispose();
+      });
+    },
+  );
+
+  it('can explicitly observe raw composing keys', () => {
+    const handler = vi.fn();
+    root((dispose) => {
+      useKey('Enter', handler, { ignoreComposition: false });
+      window.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Enter', isComposing: true }),
+      );
+      expect(handler).toHaveBeenCalledTimes(1);
+      dispose();
+    });
+  });
+
+  it('ignores a core Input composition and its final keyup on the same target', async () => {
+    const handler = vi.fn();
+    const stop = root((dispose) => {
+      const input = Input({}) as PInput;
+      useKey('Enter', handler, { target: input.element });
+      useKey('Enter', handler, { event: 'keyup', target: input.element });
+      input.element.dispatchEvent(new CompositionEvent('compositionstart'));
+      input.element.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Enter' }),
+      );
+      input.element.dispatchEvent(new CompositionEvent('compositionend'));
+      return { dispose, input };
+    });
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    stop.input.element.dispatchEvent(
+      new KeyboardEvent('keyup', { key: 'Enter' }),
+    );
+    expect(handler).not.toHaveBeenCalled();
+    stop.input.element.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Enter' }),
+    );
+    expect(handler).toHaveBeenCalledTimes(1);
+    stop.dispose();
+    stop.input.destroy();
+  });
   it('calls handler when the matching key is pressed', () => {
     const handler = vi.fn();
     root((dispose) => {
@@ -51,7 +105,9 @@ describe('useKey', () => {
     const target = document.createElement('div');
     root((dispose) => {
       useKey('a', handler, { target });
-      target.dispatchEvent(new KeyboardEvent('keydown', { key: 'a', bubbles: true }));
+      target.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'a', bubbles: true }),
+      );
       dispose();
     });
     expect(handler).toHaveBeenCalledTimes(1);

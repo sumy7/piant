@@ -15,6 +15,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     borderWidth: 1,
     borderColor: '#94a3b8',
+    padding: 8,
+    color: '#0f172a',
+    fontSize: 16,
   },
   track: {
     width: '100%',
@@ -45,15 +48,13 @@ export default function App() {
     <View style={styles.container}>
       <Input
         style={styles.input}
+        readOnly
+        aria-label="键盘示例操作区"
         placeholder="点击这里，按 ← / →"
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
         ref={(node) => {
-          const target = node._inputElement;
-          target.readOnly = true;
-          target.setAttribute('aria-label', '键盘示例操作区');
-          target.style.color = '#0f172a';
-          target.style.fontSize = '16px';
+          const target = node.element;
 
           // Input 同步调用 ref，此时仍在组件的响应式 Owner 内。
           // 指定输入框为目标，Owner 销毁时 useKey 自动移除监听器。
