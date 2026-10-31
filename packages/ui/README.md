@@ -1,20 +1,21 @@
 # @piant/ui
 
-Piant 的 Canvas UI 组件包，提供可与 `@piant/core` 组合的主题上下文、语义 tokens 和 `Spacer` 布局组件。
+Piant 的 Canvas UI 组件包，提供可与 `@piant/core` 组合的主题上下文、语义 tokens、共享交互原语和 `Spacer` 布局组件。
 
 ## 安装与入口
 
 ```bash
-pnpm add @piant/ui "@piant/core@^0.2.0" "pixi.js@^8.22.0"
+pnpm add @piant/ui @piant/core "pixi.js@^8.22.0"
 ```
 
-本包版本为 `0.1.0`，仅提供 ESM。公共入口为 `@piant/ui`，内部目录不提供子路径导出：
+本包仅提供 ESM。公共入口为 `@piant/ui`，内部目录不提供子路径导出：
 
 - 主题：`createTheme`、`defaultTheme`、`UIProvider`、`useUITheme`。
+- 交互：`createControllableState`、`createPressable`。
 - 布局：`Spacer`。
-- 类型：`ColorMode`、`ControlDensity`、`ThemeTokens`、`ThemeOverrides`、`ThemeOptions`、`UITheme`、`UIProviderProps`、`SpacerProps`。
+- 类型：`ColorMode`、`ControlDensity`、`ThemeTokens`、`ThemeOverrides`、`ThemeOptions`、`UITheme`、`UIProviderProps`、`ControllableStateOptions`、`PressableOptions`、`PressableState`、`SpacerProps`。
 
-`@piant/core ^0.2.0` 是 peer dependency，由应用提供。Core 的 peer dependency 为 `pixi.js ^8.22.0`。UI 构建保留对 core 的外部引用，不打包另一份 core 或响应式运行时。
+`@piant/core` 是 peer dependency，由应用提供，版本须满足已安装 UI 包的 `peerDependencies`。Core 的 peer dependency 为 `pixi.js ^8.22.0`。UI 构建保留对 core 的外部引用，不打包另一份 core 或响应式运行时。
 
 ## Spacer
 
@@ -61,6 +62,14 @@ export function ThemedApp() {
 
 可选 `domRoot` 只为指定 DOM 元素设置字体、文字颜色和配色方案，销毁时恢复原内联样式。原生 `Input` 的字号、字体和文字颜色从其真实 DOM 祖先继承；嵌套 DOM 主题须提供各自不同的根元素。Canvas 组件仍须显式消费 tokens。完整合并规则、默认值及视觉验证边界见[主题文档](../../docs/ui/theme.md)。
 
+## 共享交互
+
+`createControllableState({ value?, defaultValue, onChange? })` 返回 `[value, setValue]`。`defaultValue` 必填且只读取一次；`value` 为 `undefined` 时非受控，`null`、`false`、`0` 仍是受控值。Setter 接受值或 updater，使用 `Object.is` 跳过相同值并返回请求值。受控模式只通知最新回调，由父级提交；切回非受控时恢复最后内部值或初始化默认值。通过 getter 可适配 `value/defaultValue/onValueChange`、`checked/defaultChecked/onCheckedChange`、`open/defaultOpen/onOpenChange`。
+
+`createPressable(node, { disabled?, onPress? })` 为已有 `PNode` 返回 `hovered()`、`pressed()`、`disabled()` 和 `dispose()`。主指针按下后，移出暂停按压视觉、移回恢复，控件内释放只触发一次；取消、禁用和销毁不会激活动作。绑定随 owner 或节点销毁清理自己的资源，不移除其他监听。它只处理指针行为，不包含视觉 Button、键盘或焦点。
+
+响应式选项和回调用 getter 传递，避免对象展开产生快照。完整契约、Pixi 取消事件边界及在线示例见[交互文档](../../docs/ui/interactions.md)。
+
 ## 工程边界
 
 Core 提供渲染节点、响应式原语、生命周期、基础组件与样式能力；UI 通过 core 公共入口组合布局与控件策略，不深度导入 core 源码。
@@ -89,4 +98,4 @@ pnpm --filter @piant/examples-ui-smoke build
 pnpm --filter @piant/examples-ui-smoke dev
 ```
 
-`verify:package` 用于 pack 与仓库外隔离消费验证。使用真实本地 core tarball 的验证不能等同于 registry 发布验证。浏览器中打开 smoke 示例，检查初始间距、点击「Increase gap」后的间距变化，以及「Unmount」后的资源清理；`/theme.html` 提供主题消费场景。生产构建成功本身不代表浏览器运行通过。
+`verify:package` 在仓库外复制工作区版本元数据与构建文件，执行 Changesets 版本预演后 pack，并隔离验证发布消费。它会检查发布 peer 与核心版本匹配，同时断言源码版本与 Changesets 未被改写。使用真实本地 core tarball 的验证不能等同于 registry 发布验证。浏览器中打开 smoke 示例，检查初始间距、点击「Increase gap」后的间距变化，以及「Unmount」后的资源清理；`/theme.html` 提供主题消费场景，`/pressable.html` 提供交互原语消费场景。生产构建成功本身不代表浏览器运行通过。

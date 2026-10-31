@@ -41,6 +41,22 @@ createEffect(() => {
 
 ---
 
+## untrack
+
+同步执行回调，回调中的响应式读取不成为外层 effect 或 memo 的依赖。保留当前 owner，不创建新的生命周期作用域；返回回调结果并传播其异常。
+
+```ts
+function untrack<T>(callback: () => T): T;
+```
+
+```ts
+import { untrack } from '@piant/core';
+
+const snapshot = untrack(() => count());
+```
+
+---
+
 ## createMemo
 
 创建派生的计算值，结果被缓存，只在依赖变化时重新计算。

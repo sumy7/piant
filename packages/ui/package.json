@@ -38,7 +38,7 @@
     "verify:package": "node scripts/verifyPackage.mjs"
   },
   "peerDependencies": {
-    "@piant/core": "^0.2.0"
+    "@piant/core": "workspace:^"
   },
   "devDependencies": {
     "@piant/babel-preset-piant": "workspace:*",

@@ -5,16 +5,22 @@
 ## 安装
 
 ```bash
-pnpm add @piant/ui "@piant/core@^0.2.0" "pixi.js@^8.22.0"
+pnpm add @piant/ui @piant/core "pixi.js@^8.22.0"
 ```
 
-UI 以 `@piant/core ^0.2.0` 为 peer dependency，复用应用提供的 core；core 需要 `pixi.js ^8.22.0`。应用从 `@piant/ui` 根入口导入组件，不使用内部路径。
+UI 以 `@piant/core` 为 peer dependency，范围以已安装 UI 包的 `peerDependencies` 为准，复用应用提供的 core；core 需要 `pixi.js ^8.22.0`。应用从 `@piant/ui` 根入口导入组件，不使用内部路径。
 
 ## 主题与样式
 
 主题提供颜色、间距、控件最小高度、字体、圆角与动画六组 tokens，支持浅色/深色、舒适/紧凑密度、文字缩放、嵌套覆盖和系统减少动画偏好。Canvas 组件通过 `useUITheme()` 返回的 accessor 显式读取样式；provider 不会自动改写所有控件样式。
 
 `createTheme()` 返回深度冻结的独立主题，`defaultTheme` 为默认值。需要响应式上下文、原生输入 DOM 字体继承或查看在线示例时，参见[主题与 UIProvider](/ui/theme)。
+
+## 共享交互
+
+`createControllableState` 统一受控与非受控值，可适配 `value`、`checked`、`open` 三组控件属性。`createPressable` 绑定已有 Piant 节点，提供 hover、按压和禁用状态，处理控件内释放、移出返回、取消及销毁。
+
+这些原语不包含视觉 Button、键盘、焦点或辅助技术语义。参数与回调的响应式转发、手势规则及在线示例见[受控状态与按压行为](/ui/interactions)。
 
 ## 使用 Spacer
 
@@ -46,7 +52,7 @@ pnpm --filter @piant/ui build
 pnpm --filter @piant/examples-ui-smoke dev
 ```
 
-在浏览器点击「Increase gap」观察间距变化；点击「Unmount」检查画布移除、节点销毁和响应式订阅清理。访问 `/theme.html` 查看主题消费场景。示例源码位于 [GitHub](https://github.com/sumy7/piant/tree/main/examples/ui-smoke)。
+在浏览器点击「Increase gap」观察间距变化；点击「Unmount」检查画布移除、节点销毁和响应式订阅清理。访问 `/theme.html` 查看主题消费场景，访问 `/pressable.html` 查看交互原语消费场景。示例源码位于 [GitHub](https://github.com/sumy7/piant/tree/main/examples/ui-smoke)。
 
 ## 包与核心的职责
 

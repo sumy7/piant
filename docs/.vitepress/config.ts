@@ -59,6 +59,7 @@ export default defineConfig({
           items: [
             { text: '简介与接入', link: '/ui/introduction' },
             { text: '主题与 UIProvider', link: '/ui/theme' },
+            { text: '受控状态与按压行为', link: '/ui/interactions' },
           ],
         },
       ],

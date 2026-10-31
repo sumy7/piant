@@ -11,6 +11,8 @@ it('ships executable ESM with external core imports and no JSX or bundled runtim
   expect(files.sort()).toEqual([
     'components/Spacer.js',
     'index.js',
+    'primitives/createControllableState.js',
+    'primitives/createPressable.js',
     'theme/UIProvider.js',
     'theme/createTheme.js',
     'theme/tokens.js',

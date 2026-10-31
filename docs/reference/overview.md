@@ -17,7 +17,7 @@
 
 | 导出 | 用途 |
 |------|------|
-| `createState`、`createEffect`、`createMemo`、`createSelector` | [响应式原语](/reference/reactivity) |
+| `createState`、`createEffect`、`createMemo`、`createSelector`、`untrack` | [响应式原语](/reference/reactivity) |
 | `createContext`、`useContext` | [上下文](/reference/reactivity#createcontext) |
 | `onMount`、`onCleanup`、`onError` | [生命周期钩子](/guide/lifecycle) |
 | `onTick` | [逐帧回调](/guide/lifecycle#ontick) |
