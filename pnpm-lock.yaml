@@ -63,6 +63,9 @@ importers:
       '@piant/store':
         specifier: workspace:*
         version: link:../packages/store
+      '@piant/ui':
+        specifier: workspace:*
+        version: link:../packages/ui
       '@types/babel__core':
         specifier: ^7.20.5
         version: 7.20.5
@@ -334,6 +337,25 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
 
+  examples/ui-smoke:
+    dependencies:
+      '@piant/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@piant/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
+      pixi.js:
+        specifier: ^8.22.0
+        version: 8.22.0
+    devDependencies:
+      '@rsbuild/core':
+        specifier: 2.2.14
+        version: 2.2.14(core-js@3.47.0)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
   packages/animation:
     dependencies:
       popmotion:
@@ -519,6 +541,33 @@ importers:
       mobx:
         specifier: ^6.16.1
         version: 6.16.1
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: 5.0.5
+        version: 5.0.5(@types/node@26.6.5)(@vitest/coverage-v8@5.0.5)(@vitest/ui@5.0.5)(happy-dom@21.0.3)(vite@8.3.4(@types/node@26.6.5)(jiti@2.6.1)(yaml@2.9.1))
+
+  packages/ui:
+    devDependencies:
+      '@piant/babel-preset-piant':
+        specifier: workspace:*
+        version: link:../babel-preset-piant
+      '@piant/core':
+        specifier: workspace:*
+        version: link:../core
+      '@rsbuild/plugin-babel':
+        specifier: 2.1.0
+        version: 2.1.0(@rsbuild/core@2.2.14(core-js@3.47.0))(@rspack/core@2.2.9(@swc/helpers@0.5.23))
+      '@rslib/core':
+        specifier: 1.0.3
+        version: 1.0.3(@microsoft/api-extractor@7.59.4(@types/node@26.6.5))(core-js@3.47.0)(typescript@5.9.3)
+      happy-dom:
+        specifier: ^21.0.3
+        version: 21.0.3
+      pixi.js:
+        specifier: ^8.22.0
+        version: 8.22.0
       typescript:
         specifier: ^5.9.3
         version: 5.9.3

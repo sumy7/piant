@@ -191,4 +191,4 @@ type Setter<T> = {
 
 - **必须调用 getter**：`count()` 而不是 `count`，否则不会被追踪为依赖
 - **批量更新**：MobX 会自动批量更新，无需手动调用类似 `batch()` 的方法
-- **不追踪读取**：如果需要在 effect 中读取值但不追踪依赖，使用 MobX 的 `untracked(() => value())`（`import { untracked } from 'mobx'`）
+- **不追踪读取**：如果需要在 effect 中读取值但不追踪依赖，使用 core 的 `untrack(() => value())`（`import { untrack } from '@piant/core'`）；它保留当前 owner，并同步返回回调结果

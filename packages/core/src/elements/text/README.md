@@ -32,4 +32,4 @@ pretext 对 Canvas 无法识别的字体字符串和非有限字距抛出 `Range
 
 断行范围：段落级 `wordBreak` 仅将 `keep-all` 作为独立模式，其余字符串（包括 `break-all`）均回退到 pretext 的 `normal`；尚未提供独立 CSS `break-all` / `break-word` 语义。`whiteSpace` 支持 `normal` / `pre-wrap`。样式类型接受字符串不代表实现了对应 CSS 模式。
 
-依据：[Typesetter](./index.ts)、[断行回归测试](../../../tests/typesetter.test.ts)、[绘制回归测试](../../../tests/typesetter.renderTo.test.ts)。用法与限制见 [Text 指南](../../../../../docs/guide/components/text.md)；[Roadmap](../../../../../TODO.md) 中的视觉验收仍待执行。
+依据：[Typesetter](./index.ts)、[断行回归测试](../../../tests/typesetter.test.ts)、[绘制回归测试](../../../tests/typesetter.renderTo.test.ts)。用法与限制见 [Text 指南](../../../../../docs/guide/components/text.md)；整体视觉验收与文档一致性核对由 [COD-174](https://linear.app/codepuppies/issue/COD-174) 跟踪。

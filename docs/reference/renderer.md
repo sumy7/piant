@@ -26,11 +26,11 @@ function mount(
 
 第二个参数 `element` 是普通 `HTMLElement` 容器或已有 `HTMLCanvasElement`。可选的第三个参数配置尺寸与生命周期：
 
-| `MountOptions` 字段 | 说明 |
-| ------------------- | ---- |
-| `width`、`height` | 可选，正有限数的 CSS 像素尺寸；指定的轴固定，并覆盖该轴的 Canvas CSS 尺寸 |
-| `resolution` | 渲染分辨率，默认采用当前的 `window.devicePixelRatio`，调整尺寸时同步读取；只影响像素缓冲区 |
-| `signal` | 可选 `AbortSignal`，用于取消初始化或销毁已挂载实例 |
+| `MountOptions` 字段 | 说明                                                                                       |
+| ------------------- | ------------------------------------------------------------------------------------------ |
+| `width`、`height`   | 可选，正有限数的 CSS 像素尺寸；指定的轴固定，并覆盖该轴的 Canvas CSS 尺寸                  |
+| `resolution`        | 渲染分辨率，默认采用当前的 `window.devicePixelRatio`，调整尺寸时同步读取；只影响像素缓冲区 |
+| `signal`            | 可选 `AbortSignal`，用于取消初始化或销毁已挂载实例                                         |
 
 挂载到容器时，Piant 在其中创建 Canvas，并使用 `ResizeObserver` 观察容器内容区。请先用 CSS 给容器明确尺寸，避免容器由 Canvas 反向撑开。设置 `width` 或 `height` 只固定对应轴，另一轴仍跟随容器。
 
@@ -44,14 +44,14 @@ function mount(
 
 ### 返回实例
 
-| `MountedApp` 成员         | 说明                                                         |
-| ------------------------- | ------------------------------------------------------------ |
-| `app`                     | 此实例的 PixiJS `Application`，可交给调试工具                |
-| `root`                    | 此实例的 `PRoot`                                             |
-| `canvas`                  | 实际使用的 `HTMLCanvasElement`                               |
+| `MountedApp` 成员         | 说明                                                        |
+| ------------------------- | ----------------------------------------------------------- |
+| `app`                     | 此实例的 PixiJS `Application`，可交给调试工具               |
+| `root`                    | 此实例的 `PRoot`                                            |
+| `canvas`                  | 实际使用的 `HTMLCanvasElement`                              |
 | `resize(width?, height?)` | 固定传入轴的 CSS 像素尺寸并同步布局；未传入的轴沿用当前规则 |
-| `destroy()`               | 幂等销毁此实例                                               |
-| `isDestroyed`             | 只读销毁状态                                                 |
+| `destroy()`               | 幂等销毁此实例                                              |
+| `isDestroyed`             | 只读销毁状态                                                |
 
 每次 `mount` 都创建独立 Application、Canvas 挂载关系、响应式作用域和尺寸观察器。同一挂载元素在销毁前只能挂载一次，重复挂载会拒绝。同一页面可挂载多个实例，销毁一个实例不会停止其他实例。各实例需要独立状态时，在组件函数中创建状态，而非复用模块顶层的单例状态。
 
@@ -150,6 +150,53 @@ root.setStyle({ width, height });
 `PNode.remove()` / `removeChild()` / `replaceChild()` 对被移除的已挂载子树执行终结销毁。`destroy()` 与 `destroyRecursive()` 对节点及其子树执行相同的幂等销毁，即使节点已暂时分离，也可以显式销毁。销毁会执行 `onDestroy`；一个清理回调抛错时仍继续清理其他回调、后代与资源，最后重新抛出首个错误。已销毁节点不可再次插入或使用。
 
 `detach()` 是协调器用于暂存保留节点的内部操作，只断开逻辑父子关系并保留资源；Pixi 父子关系可能直到下一次布局才同步。低层宿主主动保留的分离节点由宿主负责重新插入或显式销毁，根节点不会回收已经转移给其他根或已分离的节点。
+
+## PNode 可见性与布局观察
+
+`PNode` 及组件 ref 返回的节点提供以下公共能力：
+
+```ts
+class PNode {
+  readonly isVisible: boolean;
+  observeLayout(listener: () => void): () => void;
+}
+```
+
+`isVisible` 为未挂入布局根的节点返回 `false`。挂载后检查节点及逻辑祖先的销毁状态、`display: 'none'`、透明度和 Pixi visible/renderable 状态；它不是 DOM 遮挡、viewport 相交或任意裁剪的检测器。
+
+`observeLayout` 在节点及所属根的布局、可见性或根关系变化稳定后通知，首次注册也会安排微任务通知。协调期间暂时分离后又插入的节点不会因为中间状态立即通知。回调读取当前状态，不接收几何参数；该方法不是逐帧回调，也不观察任意页面 CSS 变化。
+
+返回函数可幂等地取消观察，节点销毁会自动取消。需要随响应式 owner 清理时，将返回函数传给 `onCleanup`；节点所有权和 owner 所有权分别管理，不会因调用观察方法而合并。
+
+## attachDOMElement
+
+```ts
+import { attachDOMElement, type DOMElementBinding } from '@piant/core';
+
+function attachDOMElement<T extends HTMLElement>(
+  node: PNode,
+  element: T,
+): DOMElementBinding<T>;
+```
+
+将一个真实 DOM 元素绑定到保留节点，借助所属 Application 的 Pixi DOM 渲染管线同步变换，并按节点的 Yoga 尺寸同步元素宽高。绑定不定义角色、名称、键盘策略或激活动作；这些由使用方管理。Input 已持有绑定，通过 `node.domElement` 复用即可。
+
+| `DOMElementBinding` 成员 | 说明                                                |
+| ------------------------ | --------------------------------------------------- |
+| `element`                | 传入的原生元素，保留具体元素类型                    |
+| `hostElement`            | 独立的零尺寸定位 wrapper，供 DOM 渲染与语义组织使用 |
+| `container`              | 本绑定持有的 Pixi `DOMContainer`                    |
+| `visible`                | 绑定尚未释放且节点场景可见；未挂载时为 `false`      |
+| `sync()`                 | 立即同步宽高和 wrapper 显隐，布局变化时也会自动同步 |
+| `dispose()`              | 幂等释放本绑定                                      |
+
+绑定使用独立 wrapper，不覆盖传入元素自己的 `pointer-events`；原生 Input 使用 `auto` 接收指针，透明语义代理可使用 `none` 让 Canvas 继续接收指针。绑定仅暂管元素的定位与宽高，不改写原生 `value`、`disabled` 或编辑事件。
+
+每帧渲染后，wrapper 的 CSS 裁剪区同步到渲染视口及 Piant `overflow: 'hidden'` 节点的交集，包括只改变 Pixi 变换的滚动。完全裁出时隐藏 wrapper，滚回后恢复同一原生元素；`binding.visible` 仍表示场景可见性，不包含这个裁剪结果。圆角使用内接凸多边形，误差上限为 0.25 节点局部像素，再随场景变换缩放。任意自定义 Pixi mask 或滤镜不在 DOM 裁剪合同内。
+
+节点销毁、创建绑定时的响应式 owner 清理或显式 `dispose()` 都会释放绑定，停止几何观察，销毁 DOMContainer 并移除元素。清理恢复元素绑定前的内联定位及尺寸声明，不恢复原 DOM 父节点。自行添加的事件监听仍由调用方清理。
+
+可运行的 Canvas 与原生 Input 组合接入见 [UI 焦点示例](/ui/focus)。
 
 ## 布局机制
 

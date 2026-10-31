@@ -1,4 +1,11 @@
-import { createState, Input, StyleSheet, Text, View } from '@piant/core';
+import {
+  createState,
+  Input,
+  type PInput,
+  StyleSheet,
+  Text,
+  View,
+} from '@piant/core';
 
 const styles = StyleSheet.create({
   container: {
@@ -13,6 +20,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     borderWidth: 1,
     borderColor: '#94a3b8',
+    padding: 8,
+    color: '#0f172a',
+    caretColor: '#1d4ed8',
+    fontSize: 16,
   },
   text: { color: '#0f172a', fontSize: 16 },
   button: {
@@ -28,7 +39,7 @@ export default function App() {
   const [value, setValue] = createState('Piant');
   const [lastChange, setLastChange] = createState('尚未提交');
   const [focused, setFocused] = createState(false);
-  let inputElement: HTMLInputElement | undefined;
+  let input: PInput | undefined;
   const valueLabel = () => `当前值：${value()}`;
   const changeLabel = () => `上次 change：${lastChange()}`;
   const focusLabel = () => (focused() ? '输入框已聚焦' : '输入框未聚焦');
@@ -39,15 +50,14 @@ export default function App() {
         style={styles.input}
         value={value()}
         placeholder="输入名称"
+        aria-label="名称"
+        autoComplete="name"
         onInput={(nextValue) => setValue(nextValue)}
         onChange={(nextValue) => setLastChange(nextValue)}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
         ref={(node) => {
-          inputElement = node._inputElement;
-          inputElement.setAttribute('aria-label', '名称');
-          inputElement.style.color = '#0f172a';
-          inputElement.style.fontSize = '16px';
+          input = node;
         }}
       />
       <Text style={styles.text}>{valueLabel()}</Text>
@@ -57,7 +67,7 @@ export default function App() {
         style={styles.button}
         onClick={() => {
           setValue('');
-          inputElement?.focus();
+          input?.focus({ preventScroll: true });
         }}
       >
         <Text style={styles.text}>清空并聚焦</Text>

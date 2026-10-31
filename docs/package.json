@@ -18,6 +18,7 @@
     "@piant/hooks": "workspace:*",
     "@piant/router": "workspace:*",
     "@piant/store": "workspace:*",
+    "@piant/ui": "workspace:*",
     "@types/babel__core": "^7.20.5",
     "happy-dom": "^21.0.3",
     "pixi.js": "^8.22.0",

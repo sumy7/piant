@@ -64,23 +64,34 @@ import type { InputProps } from '@piant/core';
 function Input(props: InputProps): JSX.Element;
 ```
 
-`InputProps` 的属性均可选：
+`InputProps` 的属性均可选，`style` 使用 `StyleValue<InputStyles>`。`InputStyles` 包含 View/Yoga 布局、视觉样式以及原生文字 CSS：`fontFamily`、`fontSize`、`fontWeight`、`fontStyle`、`lineHeight`、`letterSpacing`、`color`、`caretColor` 和 `textAlign`。Yoga padding 与 border 宽度同步为原生文字内边距。
 
-| 属性 | 类型 | 说明 |
-|------|------|------|
-| `style` | `StyleValue<ViewStyles>` | 节点布局与视觉样式 |
-| `value` | `string` | 响应式同步的值 |
-| `defaultValue` | `string` | 仅用于初始化；同时传 `value` 时被其覆盖 |
-| `placeholder` | `string` | 默认 `''` |
-| `type` | `string` | 默认 `'text'` |
-| `disabled` | `boolean` | 默认 `false` |
-| `onInput` / `onChange` | `(value: string, event: Event) => void` | 当前字符串值与原生 DOM 事件 |
-| `onFocus` / `onBlur` | `(event: FocusEvent) => void` | 原生焦点事件 |
-| `ref` | `InputProps['ref']` | 接收 `PInput` 节点，参数类型可自动推导 |
+| 属性                                                                                                                 | 类型 / 行为                                     |
+| -------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| `value` / `defaultValue`                                                                                             | `string`；受控同步 / 仅用于初始化               |
+| `placeholder` / `type`                                                                                               | `string`；默认 `''` / `'text'`                  |
+| `disabled` / `readOnly` / `required`                                                                                 | 原生布尔属性                                    |
+| `id` / `name` / `autoComplete` / `inputMode` / `enterKeyHint`                                                        | 原生标识及输入提示                              |
+| `minLength` / `maxLength` / `min` / `max` / `step` / `pattern`                                                       | 原生输入限制                                    |
+| `tabIndex`                                                                                                           | 原生焦点导航索引                                |
+| `role` / `aria-label` / `aria-labelledby` / `aria-describedby` / `aria-errormessage`                                 | 角色、名称与描述关联                            |
+| `aria-invalid` / `aria-required` / `aria-expanded` / `aria-controls` / `aria-activedescendant` / `aria-autocomplete` | 语义状态和组合控件关联                          |
+| `onInput` / `onChange`                                                                                               | `(value: string, event: Event) => void`         |
+| `onBeforeInput`                                                                                                      | `(event: InputEvent) => void`                   |
+| `onFocus` / `onBlur`                                                                                                 | `(event: FocusEvent) => void`                   |
+| `onKeyDown` / `onKeyUp`                                                                                              | `(event: KeyboardEvent) => void`                |
+| `onCompositionStart` / `onCompositionUpdate` / `onCompositionEnd`                                                    | `(event: CompositionEvent) => void`             |
+| `onCopy` / `onCut` / `onPaste`                                                                                       | `(event: ClipboardEvent) => void`               |
+| `onSelect`                                                                                                           | `(event: Event) => void`                        |
+| `ref`                                                                                                                | `(node: PInput) => void`；`PInput` 从主入口导出 |
 
-`Input` 基于原生 HTML input，需要 DOM 环境；受控用法应在 `onInput` 中写回状态。`ref` 的 `node._inputElement` 是原生 `HTMLInputElement`；`PInput` 没有从包入口直接导出。Props 不包含 `children`、`PixiEventProps` 或任意 HTML 属性透传，`style` 不会将文本样式转换成原生 input 的 CSS。
+`node.element` 是稳定的原生 `HTMLInputElement`，`node.domElement` 为对应 `DOMElementBinding<HTMLInputElement>`；`node.focus(options?)`、`node.blur()` 转发焦点操作，`node.isComposing` 暴露组合状态。无需访问内部字段。
 
-详见：[Input 指南与在线示例](/guide/components/input)
+组合期间延迟外部 value 写入，compositionend 后在当前事件轮次收尾时同步最新受控值；相同值不重写，实际替换保留并按新长度截断支持类型的选区数字位置。`onInput` 不因 compositionend 额外伪造触发。IME Enter/Escape 不调用业务键盘回调，停止冒泡但不阻止原生候选确认/取消；祖先 capture 快捷键必须在消费前调用 `isComposingInput(event)` 检查，目标监听无法撤销此前的 capture 行为。
+
+Input 保留浏览器编辑、选区、剪贴板、readOnly 和 disabled 行为。Props 不包含 `children`、`PixiEventProps` 或任意 HTML 属性透传。组件副作用及监听具有 owner/节点清理；调用方自行添加的监听由调用方清理。
+
+详见：[Input 指南与在线示例](/guide/components/input)、[InputStyles](/reference/stylesheet#inputstyles)、[DOM 绑定](/reference/renderer#attachdomelement)。
 
 ---
 

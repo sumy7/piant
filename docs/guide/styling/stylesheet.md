@@ -202,6 +202,7 @@ LayoutStyles  ← Yoga flexbox 布局属性（YogaStyles 的公开名称）
 VisualStyles  ← 视觉外观（背景色、圆角、透明度等）
 ViewStyles    = LayoutStyles & Partial<VisualStyles>
 ImageStyles   = ViewStyles & { objectFit? }
+InputStyles   = ViewStyles & 原生输入文字样式            ← Input 组件使用
 TextStyles    = ViewStyles & Partial<TextLayoutStyle>  ← 文本样式完整能力集
 TextViewStyles = TextStyles                            ← Text 组件对外主类型
 ```

@@ -13,11 +13,7 @@
 ## 签名
 
 ```ts
-function useKey(
-  key: KeyFilter,
-  handler: Handler,
-  opts?: UseKeyOptions,
-): void
+function useKey(key: KeyFilter, handler: Handler, opts?: UseKeyOptions): void;
 ```
 
 ## 参数
@@ -26,16 +22,16 @@ function useKey(
 
 ```ts
 type KeyFilter =
-  | string                           // 匹配 event.key，如 'a'、'ArrowLeft'、'Enter'
+  | string // 匹配 event.key，如 'a'、'ArrowLeft'、'Enter'
   | ((event: KeyboardEvent) => boolean) // 自定义断言函数
   | null
-  | undefined                        // null/undefined：永不触发
+  | undefined; // null/undefined：永不触发
 ```
 
 ### `handler: Handler`
 
 ```ts
-type Handler = (event: KeyboardEvent) => void
+type Handler = (event: KeyboardEvent) => void;
 ```
 
 匹配时执行的回调，接收原始 `KeyboardEvent`。
@@ -44,10 +40,13 @@ type Handler = (event: KeyboardEvent) => void
 
 ```ts
 interface UseKeyOptions {
-  event?: 'keydown' | 'keypress' | 'keyup' // 默认 'keydown'
-  target?: EventTarget                       // 默认 window
+  event?: 'keydown' | 'keypress' | 'keyup'; // 默认 'keydown'
+  target?: EventTarget; // 默认 window
+  ignoreComposition?: boolean; // 默认 true，跳过 IME 按键
 }
 ```
+
+业务快捷键默认跳过组合输入及其结束按键，同时检查 `isComposing`、兼容边界值 `keyCode === 229` 和 core Input 的组合状态。需要观察原始按键时，可显式传入 `ignoreComposition: false`；这不会撤销 Input 对 IME Enter/Escape 的冒泡隔离。自建 capture 监听应先调用 core 的 `isComposingInput(event)`。
 
 ## 基本用法
 
@@ -105,7 +104,12 @@ root((dispose) => {
 ## 类型导出
 
 ```ts
-import type { Handler, KeyEventType, KeyFilter, UseKeyOptions } from '@piant/hooks';
+import type {
+  Handler,
+  KeyEventType,
+  KeyFilter,
+  UseKeyOptions,
+} from '@piant/hooks';
 ```
 
 ## 另见
