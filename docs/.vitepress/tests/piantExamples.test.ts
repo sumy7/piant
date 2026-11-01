@@ -44,6 +44,8 @@ describe('Piant examples compiler', () => {
     'uiBadge',
     'uiProgressBar',
     'uiSpinner',
+    'uiButton',
+    'uiIconButton',
   ])('compiles the %s live example through the Piant preset', async (name) => {
     const filename = fileURLToPath(
       new URL(`../../examples/${name}.tsx`, import.meta.url),

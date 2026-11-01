@@ -15,7 +15,8 @@ pnpm add @piant/ui @piant/core "pixi.js@^8.22.0"
 - 焦点：`createFocusable`、`createRovingFocusGroup`、`useUIFocus`。
 - 布局：`Stack`、`Surface`、`Separator`、`Spacer`。
 - 展示：`Icon`、`Badge`、`ProgressBar`、`Spinner`。
-- 类型：`ColorMode`、`ControlDensity`、`ThemeTokens`、`ThemeOverrides`、`ThemeOptions`、`UITheme`、`UIProviderProps`、`ControllableStateOptions`、`PressableOptions`、`PressableState`、`SpacerProps`、`StackProps`、`SurfaceProps`、`SeparatorProps`、`IconProps`、`IconDraw`、`BadgeProps`、`ProgressBarProps`、`SpinnerProps`。
+- 操作：`Button`、`IconButton`。
+- 类型：`ColorMode`、`ControlDensity`、`ThemeTokens`、`ThemeOverrides`、`ThemeOptions`、`UITheme`、`UIProviderProps`、`ControllableStateOptions`、`PressableOptions`、`PressableState`、`SpacerProps`、`StackProps`、`SurfaceProps`、`SeparatorProps`、`IconProps`、`IconDraw`、`BadgeProps`、`ProgressBarProps`、`SpinnerProps`、`ButtonProps`、`IconButtonProps`、`ButtonIconContext`、`ButtonPressEvent`、`ButtonSize`、`ButtonVariant`。
 
 `@piant/core` 是 peer dependency，由应用提供，版本须满足已安装 UI 包的 `peerDependencies`。Core 的 peer dependency 为 `pixi.js ^8.22.0`。UI 构建保留对 core 的外部引用，不打包另一份 core 或响应式运行时。
 
@@ -47,6 +48,12 @@ export function App() {
 `ProgressBar` 支持 min/max/value、边界归一化和不确定状态；`Spinner` 支持尺寸、颜色、线宽与暂停。动画响应减少动画偏好，并随 owner 或节点销毁清理。可选 `label` 为 Icon、ProgressBar、Spinner 附加无 Tab 停靠的 DOM 展示语义；实际读屏支持需在目标应用验证。
 
 组件的 `style` 在默认样式后应用。Props 与主题应保留响应式 getter；`Surface` 不会给子树的 core Text 自动继承文字样式。所有组件及其 `Props` 类型从包根入口导出。详细属性、资源所有权、动画契约与每组件独立在线示例见[布局与状态文档](../../docs/ui/foundations.md)。
+
+## Button 与 IconButton
+
+`Button` 提供文字或自定义内容操作，`IconButton` 提供带必填语义名称的图标操作。两者需在 `UIProvider` 的延迟子树中创建，复用主题、按压与焦点能力，支持尺寸、语义变体、禁用、加载、焦点环和统一 `onPress`。图标回调读取响应式尺寸与颜色；加载时使用遵循减少动画偏好的 Spinner。
+
+`style`/`ref` 对应外层 View，Button 的 `textStyle` 可覆盖默认标签样式。文字标签可推导按钮名称，自定义内容与 IconButton 必须提供非空 `name`。API、键盘行为、资源清理和独立在线示例见[按钮文档](../../docs/ui/buttons.md)。实际读屏支持仍需在目标辅助技术中验证。
 
 ## 主题
 
@@ -121,4 +128,4 @@ pnpm --filter @piant/examples-ui-smoke build
 pnpm --filter @piant/examples-ui-smoke dev
 ```
 
-`verify:package` 在仓库外复制工作区版本元数据与构建文件，执行 Changesets 版本预演后 pack，并隔离验证发布消费。它会检查发布 peer 与核心版本匹配，同时断言源码版本与 Changesets 未被改写。使用真实本地 core tarball 的验证不能等同于 registry 发布验证。浏览器中打开 smoke 示例，检查初始间距、点击「Increase gap」后的间距变化，以及「Unmount」后的资源清理；`/theme.html` 提供主题消费场景，`/pressable.html` 提供交互原语消费场景，`/foundations.html` 提供七个基础组件的组合预览，可操作主题、进度、窄容器、缩放和卸载。生产构建成功本身不代表浏览器运行通过。
+`verify:package` 在仓库外复制工作区版本元数据与构建文件，执行 Changesets 版本预演后 pack，并隔离验证发布消费。它会检查发布 peer 与核心版本匹配，同时断言源码版本与 Changesets 未被改写。使用真实本地 core tarball 的验证不能等同于 registry 发布验证。浏览器中打开 smoke 示例，检查初始间距、点击「Increase gap」后的间距变化，以及「Unmount」后的资源清理；`/theme.html` 提供主题消费场景，`/pressable.html` 提供交互原语消费场景，`/foundations.html` 提供七个基础组件的组合预览，可操作主题、进度、窄容器、缩放和卸载；`/buttons.html` 提供 Button/IconButton 的键盘、事件替换、禁用与反复加载验证。生产构建成功本身不代表浏览器运行通过。

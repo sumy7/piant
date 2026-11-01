@@ -10,6 +10,7 @@ export default defineConfig({
       focus: './src/focus.ts',
       input: './src/input.ts',
       foundations: './src/foundations.ts',
+      buttons: './src/buttons.ts',
     },
   },
   html: { tags: [{ tag: 'link', attrs: { rel: 'icon', href: 'data:,' } }] },

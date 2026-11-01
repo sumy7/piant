@@ -20,6 +20,10 @@ UI 以 `@piant/core` 为 peer dependency，范围以已安装 UI 包的 `peerDep
 
 [布局与状态组件](/ui/foundations)提供七个独立在线示例与属性说明，涵盖内容布局、面板、分隔线、调用方图标资产与绘图、文字徽标、确定/不确定进度和加载标识。组件消费语义 tokens，支持运行中的主题、密度与文字缩放；动画跟随减少动画偏好并随实例清理。
 
+## 按钮
+
+`Button` 与 `IconButton` 组合主题、按压和焦点能力，提供统一指针/键盘操作、语义名称、禁用和加载状态。[按钮指南](/ui/buttons)包含两个独立在线示例与属性说明；使用时需在 `UIProvider` 的延迟子树中创建。
+
 ## 共享交互
 
 `createControllableState` 统一受控与非受控值，可适配 `value`、`checked`、`open` 三组控件属性。`createPressable` 绑定已有 Piant 节点，提供 hover、按压和禁用状态，处理控件内释放、移出返回、取消及销毁。
@@ -60,7 +64,7 @@ pnpm --filter @piant/ui build
 pnpm --filter @piant/examples-ui-smoke dev
 ```
 
-在浏览器点击「Increase gap」观察间距变化；点击「Unmount」检查画布移除、节点销毁和响应式订阅清理。访问 `/theme.html` 查看主题消费场景，访问 `/pressable.html` 查看交互原语消费场景，访问 `/foundations.html` 查看七个基础组件的组合预览并操作主题、进度、窄容器、缩放和卸载。示例源码位于 [GitHub](https://github.com/sumy7/piant/tree/main/examples/ui-smoke)。
+在浏览器点击「Increase gap」观察间距变化；点击「Unmount」检查画布移除、节点销毁和响应式订阅清理。访问 `/theme.html` 查看主题消费场景，访问 `/pressable.html` 查看交互原语消费场景，访问 `/foundations.html` 查看七个基础组件的组合预览并操作主题、进度、窄容器、缩放和卸载；`/buttons.html` 提供 Button/IconButton 的键盘、事件替换、禁用与反复加载验证。示例源码位于 [GitHub](https://github.com/sumy7/piant/tree/main/examples/ui-smoke)。
 
 ## 包与核心的职责
 

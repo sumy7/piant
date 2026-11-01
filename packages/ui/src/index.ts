@@ -1,5 +1,14 @@
 export { Badge, type BadgeProps } from './components/Badge';
+export {
+  Button,
+  type ButtonIconContext,
+  type ButtonPressEvent,
+  type ButtonProps,
+  type ButtonSize,
+  type ButtonVariant,
+} from './components/Button';
 export { Icon, type IconDraw, type IconProps } from './components/Icon';
+export { IconButton, type IconButtonProps } from './components/IconButton';
 export { ProgressBar, type ProgressBarProps } from './components/ProgressBar';
 export { Separator, type SeparatorProps } from './components/Separator';
 export { Spacer, type SpacerProps } from './components/Spacer';
