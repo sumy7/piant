@@ -51,6 +51,8 @@ describe('Piant examples compiler', () => {
     'uiCheckbox',
     'uiToggleSwitch',
     'uiRadioGroup',
+    'uiGallery',
+    'uiSpacer',
   ])('compiles the %s live example through the Piant preset', async (name) => {
     const filename = fileURLToPath(
       new URL(`../../examples/${name}.tsx`, import.meta.url),
@@ -69,6 +71,21 @@ describe('Piant examples compiler', () => {
       await transform('<template />', exampleFile.replace('.tsx', '.vue')),
     ).toBeUndefined();
     expect(await transform('<Text />', '/outside/App.tsx')).toBeUndefined();
+  });
+
+  it('compiles the Gallery panel shared by the standalone app and docs', async () => {
+    const filename = fileURLToPath(
+      new URL(
+        '../../../examples/ui-gallery/src/SettingsPanel.tsx',
+        import.meta.url,
+      ),
+    );
+    const result = await transform(await readFile(filename, 'utf8'), filename);
+    const code = typeof result === 'object' && result ? result.code : '';
+    expect(code).toContain('createComponent');
+    expect(code).toContain('@piant/ui');
+    expect(code).not.toContain('<UIProvider');
+    expect(await transform('<View />', `${filename}?raw`)).toBeUndefined();
   });
 
   it('renders highlighted TSX with the same light and dark themes as the docs', async () => {

@@ -1,0 +1,23 @@
+{
+  "name": "@piant/examples-ui-gallery",
+  "description": "Piant UI Gallery：独立 Canvas 设置面板、主题、表单与生命周期验收。",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "rsbuild dev",
+    "build": "rsbuild build",
+    "preview": "rsbuild preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@piant/core": "workspace:*",
+    "@piant/ui": "workspace:*",
+    "pixi.js": "^8.22.0"
+  },
+  "devDependencies": {
+    "@piant/babel-preset-piant": "workspace:*",
+    "@rsbuild/core": "2.2.14",
+    "@rsbuild/plugin-babel": "2.1.0",
+    "typescript": "^5.9.3"
+  }
+}

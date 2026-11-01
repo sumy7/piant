@@ -2,6 +2,10 @@
 
 Piant 的 Canvas UI 组件包，提供可与 `@piant/core` 组合的主题上下文、语义 tokens、共享交互原语、布局和状态展示组件。
 
+## Gallery
+
+[设置面板与组件索引](../../docs/ui/gallery.md)提供可在线操作的组合示例，并链接每个公开组件的独立示例。仓库 [UI Gallery](../../examples/ui-gallery/README.md)使用同一设置面板，提供 A/B 两个独立 Canvas、主题/密度/字号、窄容器以及卸载/重挂载控制。保存仅演示本地状态；平台输入法与读屏仍需单独验收。
+
 ## 安装与入口
 
 ```bash

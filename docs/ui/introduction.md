@@ -2,6 +2,10 @@
 
 `@piant/ui` 提供与 Piant 核心运行时组合的 Canvas UI 主题与组件。使用 `createTheme` 创建语义 tokens，使用 `UIProvider` 和 `useUITheme` 在组件树中响应式消费主题；`Stack`、`Surface`、`Separator`、`Spacer` 提供布局基础，`Icon`、`Badge`、`ProgressBar`、`Spinner` 提供图标和状态展示。
 
+## Gallery 设置面板
+
+[UI Gallery](/ui/gallery)将布局、图标、状态展示、按钮、文本字段和选择控件组合成可操作设置面板，并提供全部公开组件的独立在线示例索引。仓库 `examples/ui-gallery` 还提供两个独立 Canvas、窄容器与卸载/重挂载控制，用于组合验证。
+
 ## 安装
 
 ```bash
@@ -43,6 +47,8 @@ UI 以 `@piant/core` 为 peer dependency，范围以已安装 UI 包的 `peerDep
 `UIProvider` 为注册项提供焦点作用域；`createFocusable` 协调 Canvas 语义代理与原生 Input，提供 Tab 导航、focus-visible 和键盘激活。`createRovingFocusGroup` 让组内控件共用一个 Tab 停靠项，并用箭头/Home/End 移动焦点。Canvas 焦点环仍由组件显式绘制。接入方式、作用域隔离与验证边界见[焦点与语义桥接](/ui/focus)。
 
 ## 使用 Spacer
+
+<LiveExample example="uiSpacer" title="Spacer：响应式固定间距与填充留白" :height="320" />
 
 `Spacer` 沿父容器的 Flex 主轴留白。`size` 指定逻辑像素间距，省略时填充剩余空间。它不接收子节点、样式或 ref。
 
