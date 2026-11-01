@@ -90,6 +90,7 @@ function registerFocusable(
     throw new Error('A node can have only one focus registration.');
   const group = resolveFocusGroup(options.group, scope);
   const native = options.domElement !== undefined;
+  const managesDescription = !native || 'description' in options;
   if (native && options.disabled !== undefined)
     throw new Error(
       'Set disabled on Input when registering its native DOM binding.',
@@ -317,13 +318,14 @@ function registerFocusable(
     element.hidden = Boolean(options.hidden) || previous.get('hidden') !== null;
     const text = options.description ?? '';
     if (description.textContent !== text) description.textContent = text;
-    setAttribute(
-      element,
-      'aria-describedby',
-      [previous.get('aria-describedby'), text ? description.id : undefined]
-        .filter(Boolean)
-        .join(' ') || undefined,
-    );
+    if (managesDescription)
+      setAttribute(
+        element,
+        'aria-describedby',
+        [previous.get('aria-describedby'), text ? description.id : undefined]
+          .filter(Boolean)
+          .join(' ') || undefined,
+      );
     if (!available()) cancel();
     void options.order;
     untrack(() => scope.refresh());
@@ -348,6 +350,7 @@ function registerFocusable(
     releaseInteractive();
     if (native) {
       for (const [name, value] of previous) {
+        if (name === 'aria-describedby' && !managesDescription) continue;
         if (value === null) element.removeAttribute(name);
         else element.setAttribute(name, value);
       }

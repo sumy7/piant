@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ESNext", "DOM"],
+    "module": "ESNext",
+    "strict": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "moduleResolution": "Bundler",
+    "jsx": "preserve",
+    "types": ["@piant/core/jsx-runtime"],
+    "noEmit": true
+  },
+  "include": ["src"]
+}

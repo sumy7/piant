@@ -1,6 +1,10 @@
 # UI 简介
 
-`@piant/ui` 提供与 Piant 核心运行时组合的 Canvas UI 主题与组件。使用 `createTheme` 创建语义 tokens，使用 `UIProvider` 和 `useUITheme` 在组件树中响应式消费主题；`Spacer` 提供 Flex 主轴留白。
+`@piant/ui` 提供与 Piant 核心运行时组合的 Canvas UI 主题与组件。使用 `createTheme` 创建语义 tokens，使用 `UIProvider` 和 `useUITheme` 在组件树中响应式消费主题；`Stack`、`Surface`、`Separator`、`Spacer` 提供布局基础，`Icon`、`Badge`、`ProgressBar`、`Spinner` 提供图标和状态展示。
+
+## Gallery 设置面板
+
+[UI Gallery](/ui/gallery)将布局、图标、状态展示、按钮、文本字段和选择控件组合成可操作设置面板，并提供全部公开组件的独立在线示例索引。仓库 `examples/ui-gallery` 还提供两个独立 Canvas、窄容器与卸载/重挂载控制，用于组合验证。
 
 ## 安装
 
@@ -16,6 +20,22 @@ UI 以 `@piant/core` 为 peer dependency，范围以已安装 UI 包的 `peerDep
 
 `createTheme()` 返回深度冻结的独立主题，`defaultTheme` 为默认值。需要响应式上下文、原生输入 DOM 字体继承或查看在线示例时，参见[主题与 UIProvider](/ui/theme)。
 
+## 布局与状态
+
+[布局与状态组件](/ui/foundations)提供七个独立在线示例与属性说明，涵盖内容布局、面板、分隔线、调用方图标资产与绘图、文字徽标、确定/不确定进度和加载标识。组件消费语义 tokens，支持运行中的主题、密度与文字缩放；动画跟随减少动画偏好并随实例清理。
+
+## 按钮
+
+`Button` 与 `IconButton` 组合主题、按压和焦点能力，提供统一指针/键盘操作、语义名称、禁用和加载状态。[按钮指南](/ui/buttons)包含两个独立在线示例与属性说明；使用时需在 `UIProvider` 的延迟子树中创建。
+
+## 文本字段
+
+`TextField` 在真实原生输入上提供主题、焦点和表单属性；`Field` 用延迟子树组合标签、说明与错误。独立字段需要 ARIA 名称，Field 内则使用字段标签。受控/非受控、合成输入、只读/禁用和独立在线示例见[文本字段指南](/ui/text-field)。
+
+## 选择控件
+
+`Checkbox` 支持二态和混合态，`ToggleSwitch` 表达布尔开关，`RadioGroup` 提供单选、组内焦点和动态选项。受控/非受控、Space/方向键、禁用与主题缩放示例见[选择控件指南](/ui/selection)。
+
 ## 共享交互
 
 `createControllableState` 统一受控与非受控值，可适配 `value`、`checked`、`open` 三组控件属性。`createPressable` 绑定已有 Piant 节点，提供 hover、按压和禁用状态，处理控件内释放、移出返回、取消及销毁。
@@ -27,6 +47,8 @@ UI 以 `@piant/core` 为 peer dependency，范围以已安装 UI 包的 `peerDep
 `UIProvider` 为注册项提供焦点作用域；`createFocusable` 协调 Canvas 语义代理与原生 Input，提供 Tab 导航、focus-visible 和键盘激活。`createRovingFocusGroup` 让组内控件共用一个 Tab 停靠项，并用箭头/Home/End 移动焦点。Canvas 焦点环仍由组件显式绘制。接入方式、作用域隔离与验证边界见[焦点与语义桥接](/ui/focus)。
 
 ## 使用 Spacer
+
+<LiveExample example="uiSpacer" title="Spacer：响应式固定间距与填充留白" :height="320" />
 
 `Spacer` 沿父容器的 Flex 主轴留白。`size` 指定逻辑像素间距，省略时填充剩余空间。它不接收子节点、样式或 ref。
 
@@ -56,7 +78,7 @@ pnpm --filter @piant/ui build
 pnpm --filter @piant/examples-ui-smoke dev
 ```
 
-在浏览器点击「Increase gap」观察间距变化；点击「Unmount」检查画布移除、节点销毁和响应式订阅清理。访问 `/theme.html` 查看主题消费场景，访问 `/pressable.html` 查看交互原语消费场景。示例源码位于 [GitHub](https://github.com/sumy7/piant/tree/main/examples/ui-smoke)。
+在浏览器点击「Increase gap」观察间距变化；点击「Unmount」检查画布移除、节点销毁和响应式订阅清理。访问 `/theme.html` 查看主题消费场景，访问 `/pressable.html` 查看交互原语消费场景，访问 `/foundations.html` 查看七个基础组件的组合预览并操作主题、进度、窄容器、缩放和卸载；`/buttons.html` 提供 Button/IconButton 的键盘、事件替换、禁用与反复加载验证；`/selection.html` 提供选择控件组合验证；`/textFields.html` 提供 TextField/Field 的编辑、标签、错误、主题、选区与卸载检查。示例源码位于 [GitHub](https://github.com/sumy7/piant/tree/main/examples/ui-smoke)。
 
 ## 包与核心的职责
 

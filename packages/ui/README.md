@@ -1,6 +1,10 @@
 # @piant/ui
 
-Piant 的 Canvas UI 组件包，提供可与 `@piant/core` 组合的主题上下文、语义 tokens、共享交互原语和 `Spacer` 布局组件。
+Piant 的 Canvas UI 组件包，提供可与 `@piant/core` 组合的主题上下文、语义 tokens、共享交互原语、布局和状态展示组件。
+
+## Gallery
+
+[设置面板与组件索引](../../docs/ui/gallery.md)提供可在线操作的组合示例，并链接每个公开组件的独立示例。仓库 [UI Gallery](../../examples/ui-gallery/README.md)使用同一设置面板，提供 A/B 两个独立 Canvas、主题/密度/字号、窄容器以及卸载/重挂载控制。保存仅演示本地状态；平台输入法与读屏仍需单独验收。
 
 ## 安装与入口
 
@@ -13,8 +17,12 @@ pnpm add @piant/ui @piant/core "pixi.js@^8.22.0"
 - 主题：`createTheme`、`defaultTheme`、`UIProvider`、`useUITheme`。
 - 交互：`createControllableState`、`createPressable`。
 - 焦点：`createFocusable`、`createRovingFocusGroup`、`useUIFocus`。
-- 布局：`Spacer`。
-- 类型：`ColorMode`、`ControlDensity`、`ThemeTokens`、`ThemeOverrides`、`ThemeOptions`、`UITheme`、`UIProviderProps`、`ControllableStateOptions`、`PressableOptions`、`PressableState`、`SpacerProps`。
+- 布局：`Stack`、`Surface`、`Separator`、`Spacer`。
+- 展示：`Icon`、`Badge`、`ProgressBar`、`Spinner`。
+- 操作：`Button`、`IconButton`。
+- 输入：`TextField`、`Field`。
+- 选择：`Checkbox`、`ToggleSwitch`、`RadioGroup`。
+- 类型：`ColorMode`、`ControlDensity`、`ThemeTokens`、`ThemeOverrides`、`ThemeOptions`、`UITheme`、`UIProviderProps`、`ControllableStateOptions`、`PressableOptions`、`PressableState`、`SpacerProps`、`StackProps`、`SurfaceProps`、`SeparatorProps`、`IconProps`、`IconDraw`、`BadgeProps`、`ProgressBarProps`、`SpinnerProps`、`ButtonProps`、`IconButtonProps`、`ButtonIconContext`、`ButtonPressEvent`、`ButtonSize`、`ButtonVariant`、`TextFieldProps`、`TextFieldSize`、`TextFieldType`、`FieldProps`、`CheckboxProps`、`ToggleSwitchProps`、`RadioGroupProps`、`RadioGroupOption`。
 
 `@piant/core` 是 peer dependency，由应用提供，版本须满足已安装 UI 包的 `peerDependencies`。Core 的 peer dependency 为 `pixi.js ^8.22.0`。UI 构建保留对 core 的外部引用，不打包另一份 core 或响应式运行时。
 
@@ -38,6 +46,32 @@ export function App() {
 ```
 
 应用自己的 JSX 需要配置 `@piant/babel-preset-piant`，参见 [安装与配置](https://piant.sumygg.com/guide/installation)。UI 包内部的 TSX 已在构建时通过该预设转换，发布文件为 JavaScript ESM 和 `.d.ts`，消费者无需转换依赖源码。直接调用 `Spacer(props)` 的普通 TypeScript 消费端无需 Babel；[ui-smoke 示例](../../examples/ui-smoke/src/index.ts) 演示了这种方式及响应式更新、卸载检查。
+
+## 布局与状态组件
+
+`Stack` 提供方向、对齐、换行与 token 间距；`Surface` 提供语义背景、内边距、圆角与可选边框；`Separator` 提供横纵分隔线。`Icon` 接受调用方的 Sprite/Graphics 资产或按实际尺寸绘图的回调，不捆绑图标集。资产由调用方持有，Icon 不销毁资产或 texture。`Badge` 使用 core Text 的真实文字测量，支持语义配色、内容驱动尺寸与受约束宽度下的省略号；`style`/`ref` 对应外层 View，`textStyle` 单独覆盖内部标签的文字样式。
+
+`ProgressBar` 支持 min/max/value、边界归一化和不确定状态；`Spinner` 支持尺寸、颜色、线宽与暂停。动画响应减少动画偏好，并随 owner 或节点销毁清理。可选 `label` 为 Icon、ProgressBar、Spinner 附加无 Tab 停靠的 DOM 展示语义；实际读屏支持需在目标应用验证。
+
+组件的 `style` 在默认样式后应用。Props 与主题应保留响应式 getter；`Surface` 不会给子树的 core Text 自动继承文字样式。所有组件及其 `Props` 类型从包根入口导出。详细属性、资源所有权、动画契约与每组件独立在线示例见[布局与状态文档](../../docs/ui/foundations.md)。
+
+## Button 与 IconButton
+
+`Button` 提供文字或自定义内容操作，`IconButton` 提供带必填语义名称的图标操作。两者需在 `UIProvider` 的延迟子树中创建，复用主题、按压与焦点能力，支持尺寸、语义变体、禁用、加载、焦点环和统一 `onPress`。图标回调读取响应式尺寸与颜色；加载时使用遵循减少动画偏好的 Spinner。
+
+`style`/`ref` 对应外层 View，Button 的 `textStyle` 可覆盖默认标签样式。文字标签可推导按钮名称，自定义内容与 IconButton 必须提供非空 `name`。API、键盘行为、资源清理和独立在线示例见[按钮文档](../../docs/ui/buttons.md)。实际读屏支持仍需在目标辅助技术中验证。
+
+## TextField 与 Field
+
+`TextField` 复用 core Input 的真实原生输入、受控/非受控值和 IME 行为，支持主题尺寸、焦点、禁用/只读、错误、原生表单属性及事件。`ref` 返回公开 PInput，其 `element`、`focus()`、`blur()` 可用于原生编辑接入。独立字段需提供 `aria-label` 或 `aria-labelledby`。
+
+`Field` 使用延迟 `children` 为唯一 TextField 提供标签、说明、错误与必填上下文，Canvas 文本与真实 DOM 标签/说明同步关联。两者均需 UIProvider；完整属性、语义与输入法验证边界见[文本字段文档](../../docs/ui/text-field.md)。
+
+## 选择控件
+
+`Checkbox` 支持布尔和 mixed 状态，`ToggleSwitch` 仅支持布尔开关，`RadioGroup` 支持一组命名选项中的单选。三者需在 UIProvider 的延迟子树中创建，支持受控/非受控值、可点击标签、禁用、描述、主题和键盘语义；RadioGroup 使用组内单 Tab 停靠并支持动态选项。
+
+控件不承诺原生表单提交；应用持有选择结果并接入自己的提交逻辑。属性、独立在线示例和辅助技术验证边界见[选择控件文档](../../docs/ui/selection.md)。
 
 ## 主题
 
@@ -112,4 +146,4 @@ pnpm --filter @piant/examples-ui-smoke build
 pnpm --filter @piant/examples-ui-smoke dev
 ```
 
-`verify:package` 在仓库外复制工作区版本元数据与构建文件，执行 Changesets 版本预演后 pack，并隔离验证发布消费。它会检查发布 peer 与核心版本匹配，同时断言源码版本与 Changesets 未被改写。使用真实本地 core tarball 的验证不能等同于 registry 发布验证。浏览器中打开 smoke 示例，检查初始间距、点击「Increase gap」后的间距变化，以及「Unmount」后的资源清理；`/theme.html` 提供主题消费场景，`/pressable.html` 提供交互原语消费场景。生产构建成功本身不代表浏览器运行通过。
+`verify:package` 在仓库外复制工作区版本元数据与构建文件，执行 Changesets 版本预演后 pack，并隔离验证发布消费。它会检查发布 peer 与核心版本匹配，同时断言源码版本与 Changesets 未被改写。使用真实本地 core tarball 的验证不能等同于 registry 发布验证。浏览器中打开 smoke 示例，检查初始间距、点击「Increase gap」后的间距变化，以及「Unmount」后的资源清理；`/theme.html` 提供主题消费场景，`/pressable.html` 提供交互原语消费场景，`/foundations.html` 提供七个基础组件的组合预览，可操作主题、进度、窄容器、缩放和卸载；`/buttons.html` 提供 Button/IconButton 的键盘、事件替换、禁用与反复加载验证；`/selection.html` 提供选择控件组合验证；`/textFields.html` 提供 TextField/Field 的编辑、标签、错误、主题、选区与卸载检查。生产构建成功本身不代表浏览器运行通过。

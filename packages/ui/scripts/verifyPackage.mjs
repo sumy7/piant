@@ -324,6 +324,33 @@ assert.ok(
   !/function createControllableState\(/.test(used),
   'Unused state utility remains with Spacer',
 );
+for (const name of [
+  'Stack',
+  'Surface',
+  'Separator',
+  'Icon',
+  'Badge',
+  'ProgressBar',
+  'Spinner',
+  'Button',
+  'IconButton',
+  'Field',
+  'TextField',
+  'Checkbox',
+  'ToggleSwitch',
+  'RadioGroup',
+]) {
+  const implementation = new RegExp(`function ${name}\\(`);
+  assert.ok(
+    implementation.test(outputCode('dist-control')),
+    `Control must include ${name}`,
+  );
+  assert.ok(
+    !implementation.test(optimized),
+    `Unused ${name} remains in core-only consumer`,
+  );
+  assert.ok(!implementation.test(used), `Unused ${name} remains with Spacer`);
+}
 console.log(
   `PASS: strict isolated install, declarations, production build, unused UI removal.\nBrowser fixture: ${consumer}/dist\nTarballs: ${directory}\nThis uses real local core/UI tarballs after isolated Changesets versioning. Workspace versions/changesets were not changed; this is a release preview, not registry publishing or registry release verification.`,
 );

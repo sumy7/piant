@@ -19,12 +19,17 @@ export interface UIFocusScope {
 export interface RovingFocusGroupOptions {
   role?: 'toolbar' | 'radiogroup' | 'tablist' | 'group';
   name?: string;
+  description?: string;
   orientation?: 'horizontal' | 'vertical' | 'both';
   loop?: boolean;
   dir?: 'ltr' | 'rtl';
+  /** Called after a navigation key successfully focuses a member, not on recovery. */
+  onNavigate?: (element: HTMLElement) => void;
 }
 
 export interface RovingFocusGroup {
+  /** Choose a member's Tab stop without moving focus. */
+  setTabStop(element: HTMLElement): boolean;
   dispose(): void;
 }
 
@@ -43,6 +48,7 @@ export interface FocusEntry {
 class FocusGroup implements RovingFocusGroup {
   readonly element = document.createElement('div');
   current?: FocusEntry;
+  preferred?: FocusEntry;
   disposed = false;
   stop = () => {};
   constructor(
@@ -50,6 +56,16 @@ class FocusGroup implements RovingFocusGroup {
     readonly options: RovingFocusGroupOptions,
   ) {
     this.element.style.display = 'contents';
+  }
+  setTabStop(element: HTMLElement) {
+    if (this.disposed) return false;
+    const entry = this.scope.entries.find(
+      (item) => item.group === this && item.binding.element === element,
+    );
+    if (!entry) return false;
+    this.preferred = entry;
+    this.scope.refresh();
+    return true;
   }
   dispose() {
     if (this.disposed) return;
@@ -64,6 +80,7 @@ class FocusGroup implements RovingFocusGroup {
 }
 
 export const FocusContext = createContext<FocusScope>();
+let groupDescriptionId = 0;
 
 export function useUIFocus(): UIFocusScope {
   const scope = useContext(FocusContext);
@@ -91,12 +108,17 @@ export function createRovingFocusGroup(
 ): RovingFocusGroup {
   const scope = getFocusScope();
   const group = new FocusGroup(scope, options);
+  const description = document.createElement('span');
+  description.id = `piant-group-description-${++groupDescriptionId}`;
+  description.hidden = true;
+  group.element.append(description);
   scope.groups.add(group);
   group.stop = root((dispose) => {
     createEffect(() => {
       const attributes = {
         role: options.role ?? 'group',
         'aria-label': options.name,
+        'aria-describedby': options.description ? description.id : undefined,
         'aria-orientation':
           options.role !== 'group' &&
           options.role !== undefined &&
@@ -104,6 +126,7 @@ export function createRovingFocusGroup(
             ? options.orientation
             : undefined,
       };
+      description.textContent = options.description ?? '';
       for (const [name, value] of Object.entries(attributes))
         setAttribute(group.element, name, value);
       // Read navigation options here so replacing a getter updates the scope.
@@ -227,7 +250,10 @@ export class FocusScope implements UIFocusScope {
     this.active = next;
     this.setFocused(next?.binding.element ?? null);
     if (!next) return;
-    if (next.group) next.group.current = next;
+    if (next.group) {
+      next.group.current = next;
+      next.group.preferred = next;
+    }
     next.updateFocus(true);
     this.refresh();
     this.schedule();
@@ -404,7 +430,8 @@ export class FocusScope implements UIFocusScope {
       else next = Math.max(0, Math.min(members.length - 1, next));
     } else return false;
     event.preventDefault();
-    if (members[next]) this.focus(members[next]);
+    if (members[next] && this.focus(members[next]))
+      group.options.onNavigate?.(members[next].binding.element);
     return true;
   }
 
@@ -460,6 +487,11 @@ export class FocusScope implements UIFocusScope {
         }
       }
       for (const group of this.groups) {
+        if (
+          group.preferred?.available() &&
+          this.entries.includes(group.preferred)
+        )
+          group.current = group.preferred;
         if (
           !group.current?.available() ||
           !this.entries.includes(group.current)

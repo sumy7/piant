@@ -58,7 +58,12 @@ export default defineConfig({
           text: 'UI',
           items: [
             { text: '简介与接入', link: '/ui/introduction' },
+            { text: 'Gallery 设置面板', link: '/ui/gallery' },
             { text: '主题与 UIProvider', link: '/ui/theme' },
+            { text: '布局与状态组件', link: '/ui/foundations' },
+            { text: 'Button 与 IconButton', link: '/ui/buttons' },
+            { text: 'TextField 与 Field', link: '/ui/text-field' },
+            { text: '选择控件', link: '/ui/selection' },
             { text: '受控状态与按压行为', link: '/ui/interactions' },
             { text: '焦点与语义桥接', link: '/ui/focus' },
           ],

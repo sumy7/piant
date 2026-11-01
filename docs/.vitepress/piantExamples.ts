@@ -9,8 +9,11 @@ const examplesRoot = fileURLToPath(
   new URL('../examples/', import.meta.url),
 ).replaceAll('\\', '/');
 const docsRoot = fileURLToPath(new URL('../', import.meta.url));
+const galleryRoot = fileURLToPath(
+  new URL('../../examples/ui-gallery/src/', import.meta.url),
+).replaceAll('\\', '/');
 
-// Compile only the Piant examples, leaving VitePress's Vue pipeline intact.
+// Compile Piant examples and the shared Gallery panel, leaving Vue intact.
 export function piantExamples() {
   let markdown: ReturnType<typeof createMarkdownRenderer> | undefined;
 
@@ -41,7 +44,11 @@ export function piantExamples() {
     },
     async transform(code: string, id: string) {
       const filename = id.replaceAll('\\', '/');
-      if (!filename.startsWith(examplesRoot) || !filename.endsWith('.tsx'))
+      if (
+        (!filename.startsWith(examplesRoot) &&
+          !filename.startsWith(galleryRoot)) ||
+        !filename.endsWith('.tsx')
+      )
         return;
 
       const result = await transformAsync(code, {
