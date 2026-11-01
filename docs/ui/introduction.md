@@ -40,6 +40,10 @@ UI 以 `@piant/core` 为 peer dependency，范围以已安装 UI 包的 `peerDep
 
 `Slider` 提供单值范围选择，支持小数步长、受控/非受控值、横向/纵向、横向 RTL、指针拖动和键盘调整。[Slider 指南](/ui/slider)包含可操作示例、数值刻度、事件与语义说明。
 
+## 标签与折叠容器
+
+`Tabs` 组织同一位置的不同页面，`Collapsible` 控制独立面板展开，`Accordion` 提供单开或多开分组。它们组合主题、键盘焦点及标题/面板语义，并显式选择隐藏内容的生命周期。[Tabs 与折叠容器](/ui/containers)分别提供在线示例。
+
 ## 共享交互
 
 `createControllableState` 统一受控与非受控值，可适配 `value`、`checked`、`open` 三组控件属性。`createPressable` 绑定已有 Piant 节点，提供 hover、按压和禁用状态，处理控件内释放、移出返回、取消及销毁。

@@ -303,6 +303,79 @@ destroy.onclick = () => { mounted.destroy(); status.textContent = 'Unmounted pac
 document.body.append(destroy);
 `,
 );
+// Container fixtures use plain TS factories and every public props/item type.
+// Browser assertions exercise the installed component code and native semantics.
+writeFileSync(
+  join(consumer, 'src/containers.ts'),
+  `import { createState, mount, onCleanup, View } from '@piant/core';
+import { Tabs, type TabsProps, type TabsItem, Collapsible, type CollapsibleProps, Accordion, type AccordionProps, type DisclosureItem, type PanelMountStrategy, TextField, UIProvider } from '@piant/ui';
+const target = document.createElement('div');
+target.style.cssText = 'width:520px;height:620px';
+const status = document.createElement('p');
+status.id = 'containers-status'; status.textContent = 'Mounting packed containers';
+document.body.append(target, status);
+let created = 0, disposed = 0;
+const content = (name: string) => () => {
+  created++;
+  onCleanup(() => { disposed++; });
+  return TextField({ 'aria-label': name, defaultValue: name });
+};
+const mounted = await mount(() => UIProvider({ children: () => {
+  const [selected, setSelected] = createState<string | null>('first');
+  const strategy: PanelMountStrategy = 'lazy';
+  const tabItems: readonly TabsItem[] = [
+    { value: 'first', label: 'Packed first tab', children: content('Packed first draft') },
+    { value: 'second', label: 'Packed second tab', children: content('Packed second draft') },
+  ];
+  const tabProps: TabsProps = { label: 'Packed tab group', items: tabItems, get value() { return selected(); }, onValueChange: setSelected, mountStrategy: strategy };
+  const disclosureProps: CollapsibleProps = { label: 'Packed disclosure', defaultOpen: true, mountStrategy: strategy, children: content('Packed disclosure draft') };
+  const accordionItems: readonly DisclosureItem[] = [
+    { value: 'a', label: 'Packed accordion A', children: content('Packed accordion A draft') },
+    { value: 'b', label: 'Packed accordion B', children: content('Packed accordion B draft') },
+  ];
+  const accordionProps: AccordionProps = { type: 'multiple', items: accordionItems, defaultValue: ['a'], mountStrategy: 'keepMounted' };
+  return View({ style: { padding: 16, gap: 12 }, children: [Tabs(tabProps), Collapsible(disclosureProps), Accordion(accordionProps)] });
+} }), target);
+async function settle() { mounted.root.doLayout(); mounted.app.render(); await Promise.resolve(); }
+await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+await settle();
+function named(name: string) {
+  const element = target.querySelector<HTMLElement>('[aria-label="' + name + '"]');
+  if (!element) throw new Error('Packed container missing ' + name);
+  return element;
+}
+function check(condition: unknown, message: string) { if (!condition) throw new Error(message); }
+const first = named('Packed first tab');
+const firstDraft = named('Packed first draft') as HTMLInputElement;
+const panel = document.getElementById(first.getAttribute('aria-controls')!);
+check(panel?.getAttribute('role') === 'tabpanel' && panel.getAttribute('aria-labelledby') === first.id, 'Packed Tabs panel relationship failed');
+firstDraft.value = 'retained packed draft';
+firstDraft.dispatchEvent(new InputEvent('input', { bubbles: true }));
+named('Packed second tab').click(); await settle();
+check(named('Packed second tab').getAttribute('aria-selected') === 'true' && firstDraft.tabIndex === -1, 'Packed Tabs switching/hidden focus failed');
+first.click(); await settle();
+check(named('Packed first draft') === firstDraft && firstDraft.value === 'retained packed draft', 'Packed Tabs lazy draft identity failed');
+const disclosure = named('Packed disclosure');
+const disclosureDraft = named('Packed disclosure draft');
+disclosure.click(); await settle();
+check(disclosure.getAttribute('aria-expanded') === 'false' && disclosureDraft.tabIndex === -1, 'Packed Collapsible hidden state failed');
+disclosure.click(); await settle();
+check(named('Packed disclosure draft') === disclosureDraft, 'Packed Collapsible lazy identity failed');
+const accordionADraft = named('Packed accordion A draft');
+named('Packed accordion B').click(); await settle();
+check(named('Packed accordion A').getAttribute('aria-expanded') === 'true' && named('Packed accordion B').getAttribute('aria-expanded') === 'true', 'Packed multiple Accordion failed');
+named('Packed accordion A').click(); await settle();
+check(!accordionADraft.isConnected || accordionADraft.tabIndex === -1, 'Packed Accordion hidden focus failed');
+status.textContent = 'PASS: packed Tabs, Collapsible, Accordion, hidden focus and retained inputs';
+const destroy = document.createElement('button'); destroy.textContent = 'Unmount container fixture';
+destroy.onclick = () => {
+  mounted.destroy();
+  check(created === disposed, 'Packed container content cleanup failed');
+  status.textContent = 'Unmounted packed containers; created=' + created + '; disposed=' + disposed;
+};
+document.body.append(destroy);
+`,
+);
 const consumerConfigPath = join(consumer, 'rsbuild.config.ts');
 const consumerConfig = readFileSync(consumerConfigPath, 'utf8');
 assert.ok(
@@ -313,7 +386,7 @@ writeFileSync(
   consumerConfigPath,
   consumerConfig.replace(
     "index: './src/index.ts',",
-    "index: './src/index.ts',\n      overlay: './src/overlay.ts',\n      slider: './src/slider.ts',",
+    "index: './src/index.ts',\n      overlay: './src/overlay.ts',\n      slider: './src/slider.ts',\n      containers: './src/containers.ts',",
   ),
 );
 run(['typecheck'], consumer);
@@ -329,7 +402,7 @@ execFileSync(
 import assert from 'node:assert/strict';
 import { getOwner, runWithOwner, root, useMountSurface } from '@piant/core';
 import * as ui from '@piant/ui';
-for (const name of ['OverlayHost', 'createOverlay', 'createOverlayAnchor', 'computeOverlayPosition', 'Slider']) assert.equal(typeof ui[name], 'function', name);
+for (const name of ['OverlayHost', 'createOverlay', 'createOverlayAnchor', 'computeOverlayPosition', 'Slider', 'Tabs', 'Collapsible', 'Accordion']) assert.equal(typeof ui[name], 'function', name);
 assert.equal(getOwner(), null);
 assert.equal(useMountSurface(), undefined);
 const stop = root((dispose) => {
@@ -474,6 +547,12 @@ for (const name of [
   'RadioGroup',
   'Slider',
   'getSliderRange',
+  'Tabs',
+  'Collapsible',
+  'Accordion',
+  'componentRoot',
+  'createCompositePanel',
+  'createCompositeTrigger',
   'OverlayHost',
   'createOverlay',
   'createOverlayAnchor',

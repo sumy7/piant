@@ -159,12 +159,17 @@ export class FocusScope implements UIFocusScope {
   readonly focused: Getter<HTMLElement | null>;
   private readonly setFocused: (value: HTMLElement | null) => void;
   private readonly hosts = new Map<HTMLElement, HTMLElement>();
+  private readonly regions = new Set<{
+    node: PNode;
+    binding: DOMElementBinding;
+  }>();
   private observer?: MutationObserver;
   private constraint?: (element: HTMLElement) => boolean;
   private readonly inertHosts = new Map<HTMLElement, boolean>();
   private active?: FocusEntry;
   private disposed = false;
   private refreshing = false;
+  private restoring = false;
   private queued = false;
   private keyboard = true;
   private windowActive = true;
@@ -351,6 +356,59 @@ export class FocusScope implements UIFocusScope {
     };
   }
 
+  get recoveringFocus(): boolean {
+    return this.restoring;
+  }
+
+  /** Internal focus repair must not be interpreted as a user selection. */
+  recoverFocus(run: () => void) {
+    const previous = this.restoring;
+    this.restoring = true;
+    try {
+      run();
+    } finally {
+      this.restoring = previous;
+    }
+  }
+
+  /** Internal semantic region, with DOM descendants following logical PNode ancestry. */
+  registerRegion(node: PNode, binding: DOMElementBinding): () => void {
+    if (this.disposed)
+      throw new Error('Cannot register a region in a disposed UIProvider.');
+    if (node.isDestroyed) {
+      binding.dispose();
+      return () => {};
+    }
+    this.connect(binding.element.ownerDocument);
+    const region = { node, binding };
+    this.regions.add(region);
+    const stop = node.observeLayout(() => this.refresh());
+    this.refresh();
+    this.schedule();
+    let active = true;
+    const release = () => {
+      if (!active) return;
+      active = false;
+      stop();
+      removeDestroy();
+      this.regions.delete(region);
+      // Keep retained child bindings in their DOMPipe until their own cleanup.
+      const host = [...this.hosts.values()].find((item) =>
+        item.contains(binding.element),
+      );
+      if (host)
+        for (const entry of this.entries) {
+          if (binding.element.contains(entry.binding.hostElement))
+            host.append(entry.binding.hostElement);
+        }
+      binding.dispose();
+      this.refresh();
+    };
+    const removeDestroy = node.onDestroy(release);
+    onCleanup(release);
+    return release;
+  }
+
   /** Internal instance modal boundary, shared by native and Canvas semantics. */
   allows(element: HTMLElement): boolean {
     return this.constraint?.(element) ?? true;
@@ -411,7 +469,10 @@ export class FocusScope implements UIFocusScope {
       candidates.find(
         (entry) => this.entries.includes(entry) && entry.available(),
       );
-    if (next) this.focus(next);
+    if (next)
+      this.recoverFocus(() => {
+        this.focus(next);
+      });
   }
 
   navigate(entry: FocusEntry, event: KeyboardEvent): boolean {
@@ -483,47 +544,97 @@ export class FocusScope implements UIFocusScope {
           entry.cancel();
         }
       }
-      // Adopt only after Pixi attached a positioned wrapper. display:contents
-      // keeps the original DOMPipe containing block and world matrix intact.
-      for (const entry of sorted) {
-        const wrapper = entry.binding.hostElement;
+      // Semantic containers live in the original DOMPipe containing block.
+      // A static zero-size region preserves Canvas world matrices on its children.
+      const hostFor = (wrapper: HTMLElement) => {
         const parent = wrapper.parentElement;
-        if (!parent) continue;
-        let scopeHost = [...this.hosts.values()].find(
-          (host) => host === parent || host.contains(wrapper),
+        if (!parent) return;
+        let host = [...this.hosts.values()].find(
+          (item) => item === parent || item.contains(wrapper),
         );
-        if (!scopeHost) {
-          scopeHost = this.hosts.get(parent);
-          if (!scopeHost) {
-            scopeHost = parent.ownerDocument.createElement('div');
-            scopeHost.style.display = 'contents';
-            parent.append(scopeHost);
-            this.hosts.set(parent, scopeHost);
+        if (!host) {
+          host = this.hosts.get(parent);
+          if (!host) {
+            host = parent.ownerDocument.createElement('div');
+            host.style.display = 'contents';
+            parent.append(host);
+            this.hosts.set(parent, host);
           }
         }
-        const target = entry.group?.element ?? scopeHost;
-        if (entry.group && target.parentElement !== scopeHost)
-          scopeHost.append(target);
+        return host;
+      };
+      const enclosing = (node: PNode, includeSelf = true) => {
+        for (
+          let current: PNode | null = includeSelf ? node : node.parentNode;
+          current;
+          current = current.parentNode
+        ) {
+          const region = [...this.regions].find(
+            (item) => item.node === current,
+          );
+          if (region) return region;
+        }
+      };
+      const placeRegion = (
+        region: { node: PNode; binding: DOMElementBinding },
+        host: HTMLElement,
+      ): HTMLElement => {
+        const parent = enclosing(region.node, false);
+        const target = parent ? placeRegion(parent, host) : host;
+        if (region.binding.element.parentElement !== target)
+          target.append(region.binding.element);
+        return region.binding.element;
+      };
+      for (const region of this.regions) {
+        // A never-opened panel's marker has not been drawn yet. Use a semantic
+        // peer in its retained root so aria-controls still points to a DOM node.
+        const peer = this.entries.find(
+          (entry) =>
+            entry.node._root === region.node._root &&
+            entry.binding.hostElement.parentElement,
+        );
+        const host =
+          hostFor(region.binding.hostElement) ??
+          (peer && hostFor(peer.binding.hostElement));
+        if (host) placeRegion(region, host);
+      }
+      for (const entry of sorted) {
+        // A region can itself be the focusable tabpanel. Its element has already
+        // been placed; its empty DOMPipe marker stays outside semantic content.
+        if (
+          [...this.regions].some((region) => region.binding === entry.binding)
+        )
+          continue;
+        const wrapper = entry.binding.hostElement;
+        const host = hostFor(wrapper);
+        if (!host) continue;
+        const region = enclosing(entry.node);
+        const container = region ? placeRegion(region, host) : host;
+        const target = entry.group?.element ?? container;
+        if (entry.group && target.parentElement !== container)
+          container.append(target);
         if (wrapper.parentElement !== target) target.append(wrapper);
       }
-      for (const scopeHost of this.hosts.values()) {
+      const containers = new Set([
+        ...this.hosts.values(),
+        ...[...this.regions].map((region) => region.binding.element),
+        ...[...this.groups].map((group) => group.element),
+      ]);
+      for (const container of containers) {
         const ordered: HTMLElement[] = [];
         for (const entry of sorted) {
-          const wrapper = entry.binding.hostElement;
-          if (!scopeHost.contains(wrapper)) continue;
-          const item = entry.group?.element ?? wrapper;
-          if (!ordered.includes(item)) ordered.push(item);
+          let child = [...this.regions].some(
+            (region) => region.binding === entry.binding,
+          )
+            ? entry.binding.element
+            : entry.binding.hostElement;
+          if (!container.contains(child) || child === container) continue;
+          while (child.parentElement && child.parentElement !== container)
+            child = child.parentElement;
+          if (child.parentElement === container && !ordered.includes(child))
+            ordered.push(child);
         }
-        this.orderChildren(scopeHost, ordered);
-        for (const group of this.groups) {
-          if (group.element.parentElement === scopeHost)
-            this.orderChildren(
-              group.element,
-              sorted
-                .filter((entry) => entry.group === group)
-                .map((entry) => entry.binding.hostElement),
-            );
-        }
+        this.orderChildren(container, ordered);
       }
       for (const group of this.groups) {
         if (
@@ -590,7 +701,7 @@ export class FocusScope implements UIFocusScope {
       this.doc?.activeElement !== active &&
       children.some((child) => child.contains(active))
     )
-      active.focus({ preventScroll: true });
+      this.recoverFocus(() => active.focus({ preventScroll: true }));
   }
 
   dispose() {
@@ -608,6 +719,7 @@ export class FocusScope implements UIFocusScope {
     for (const group of [...this.groups]) group.dispose();
     for (const host of this.hosts.values()) host.remove();
     this.hosts.clear();
+    this.regions.clear();
     for (const [host, inert] of this.inertHosts) host.inert = inert;
     this.inertHosts.clear();
     this.constraint = undefined;

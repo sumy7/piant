@@ -1,3 +1,4 @@
+export { Accordion, type AccordionProps } from './components/Accordion';
 export { Badge, type BadgeProps } from './components/Badge';
 export {
   Button,
@@ -8,9 +9,14 @@ export {
   type ButtonVariant,
 } from './components/Button';
 export { Checkbox, type CheckboxProps } from './components/Checkbox';
+export { Collapsible, type CollapsibleProps } from './components/Collapsible';
 export { Field, type FieldProps } from './components/Field';
 export { Icon, type IconDraw, type IconProps } from './components/Icon';
 export { IconButton, type IconButtonProps } from './components/IconButton';
+export type {
+  DisclosureItem,
+  PanelMountStrategy,
+} from './components/internal/compositeParts';
 export { ProgressBar, type ProgressBarProps } from './components/ProgressBar';
 export {
   RadioGroup,
@@ -23,6 +29,7 @@ export { Spacer, type SpacerProps } from './components/Spacer';
 export { Spinner, type SpinnerProps } from './components/Spinner';
 export { Stack, type StackProps } from './components/Stack';
 export { Surface, type SurfaceProps } from './components/Surface';
+export { Tabs, type TabsItem, type TabsProps } from './components/Tabs';
 export {
   TextField,
   type TextFieldProps,

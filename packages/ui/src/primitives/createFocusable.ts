@@ -27,6 +27,7 @@ interface FocusableSemantics {
     | 'radio'
     | 'switch'
     | 'tab'
+    | 'tabpanel'
     | 'link'
     | 'slider'
     | 'spinbutton';
@@ -146,6 +147,7 @@ function registerFocusable(
       disposed ||
       node.isDestroyed ||
       !binding.visible ||
+      binding.hostElement.hidden ||
       !scope.allows(element) ||
       !element.isConnected ||
       options.disabled ||

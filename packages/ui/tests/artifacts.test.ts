@@ -9,9 +9,11 @@ it('ships executable ESM with external core imports and no JSX or bundled runtim
     .map(String)
     .filter((file) => file.endsWith('.js'));
   expect(files.sort()).toEqual([
+    'components/Accordion.js',
     'components/Badge.js',
     'components/Button.js',
     'components/Checkbox.js',
+    'components/Collapsible.js',
     'components/Field.js',
     'components/Icon.js',
     'components/IconButton.js',
@@ -23,8 +25,11 @@ it('ships executable ESM with external core imports and no JSX or bundled runtim
     'components/Spinner.js',
     'components/Stack.js',
     'components/Surface.js',
+    'components/Tabs.js',
     'components/TextField.js',
     'components/ToggleSwitch.js',
+    'components/internal/componentRoot.js',
+    'components/internal/compositeParts.js',
     'components/internal/createButton.js',
     'components/internal/createCheckable.js',
     'components/internal/displaySemantics.js',
@@ -139,4 +144,30 @@ it('ships the Slider root export and complete public props declaration', () => {
   );
   expect(implementation).toContain('from "@piant/core"');
   expect(implementation).not.toMatch(/from ["']@piant\/core\//);
+});
+
+it('ships the container exports, props and shared panel declarations', () => {
+  const directory = resolve(import.meta.dirname, '../dist');
+  const entry = readFileSync(`${directory}/index.js`, 'utf8');
+  const declarations = readFileSync(`${directory}/index.d.ts`, 'utf8');
+  for (const name of ['Tabs', 'Collapsible', 'Accordion']) {
+    expect(entry).toContain(name);
+    expect(declarations).toContain(`${name}Props`);
+    const source = readFileSync(`${directory}/components/${name}.js`, 'utf8');
+    expect(source).toContain('from "@piant/core"');
+    expect(source).not.toMatch(/from ["']@piant\/core\//);
+  }
+  for (const name of ['PanelMountStrategy', 'DisclosureItem', 'TabsItem'])
+    expect(declarations).toContain(name);
+  const parts = readFileSync(
+    `${directory}/components/internal/compositeParts.d.ts`,
+    'utf8',
+  );
+  expect(parts).toContain("'unmount' | 'lazy' | 'keepMounted'");
+  const accordion = readFileSync(
+    `${directory}/components/Accordion.d.ts`,
+    'utf8',
+  );
+  expect(accordion).toContain("type: 'single'");
+  expect(accordion).toContain("type: 'multiple'");
 });

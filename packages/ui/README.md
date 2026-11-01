@@ -110,6 +110,10 @@ export function ThemedApp() {
 
 `Slider` 组合 Canvas 轨道与拇指、UI 焦点语义及受控/非受控状态，支持小数步长、横向/纵向、横向 RTL、拖动与方向键/Home/End。接入示例、刻度对齐、取消行为和辅助技术验证边界见[Slider 文档](../../docs/ui/slider.md)。
 
+## 标签与折叠容器
+
+`Tabs`、`Collapsible`、`Accordion` 提供数据驱动的页面切换和展开容器，支持受控/非受控状态、键盘导航与标题/面板关联。面板可在隐藏时释放、首次打开后保留或预先创建并保留；各组件示例和生命周期说明见[容器文档](../../docs/ui/containers.md)。
+
 ## 共享交互
 
 `createControllableState({ value?, defaultValue, onChange? })` 返回 `[value, setValue]`。`defaultValue` 必填且只读取一次；`value` 为 `undefined` 时非受控，`null`、`false`、`0` 仍是受控值。Setter 接受值或 updater，使用 `Object.is` 跳过相同值并返回请求值。受控模式只通知最新回调，由父级提交；切回非受控时恢复最后内部值或初始化默认值。通过 getter 可适配 `value/defaultValue/onValueChange`、`checked/defaultChecked/onCheckedChange`、`open/defaultOpen/onOpenChange`。
