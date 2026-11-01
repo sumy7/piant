@@ -46,6 +46,10 @@ UI 以 `@piant/core` 为 peer dependency，范围以已安装 UI 包的 `peerDep
 
 `UIProvider` 为注册项提供焦点作用域；`createFocusable` 协调 Canvas 语义代理与原生 Input，提供 Tab 导航、focus-visible 和键盘激活。`createRovingFocusGroup` 让组内控件共用一个 Tab 停靠项，并用箭头/Home/End 移动焦点。Canvas 焦点环仍由组件显式绘制。接入方式、作用域隔离与验证边界见[焦点与语义桥接](/ui/focus)。
 
+## 浮层底座
+
+`OverlayHost` 为每个挂载实例建立独立浮层栈；`createOverlay` 管理打开状态、视觉面、关闭策略和模态焦点，`createOverlayAnchor` 将 Canvas 节点接入 viewport 定位。锚定、嵌套、带输入的模态宿主与双 Canvas 示例见[浮层底座与实例隔离](/ui/overlays)。这是组合浮层组件的底座，调用方仍负责内容和业务语义。
+
 ## 使用 Spacer
 
 <LiveExample example="uiSpacer" title="Spacer：响应式固定间距与填充留白" :height="320" />

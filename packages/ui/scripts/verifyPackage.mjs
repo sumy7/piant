@@ -213,8 +213,89 @@ run(
   ],
   consumer,
 );
+// A plain TypeScript consumer exercises the new declarations without a JSX
+// transform or source-path imports. It is also a runnable browser fixture.
+writeFileSync(
+  join(consumer, 'src/overlay.ts'),
+  `import { getOwner, type ContextOwner, runWithOwner, useMountSurface, type MountSurface, mount, View } from '@piant/core';
+import { UIProvider, OverlayHost, createOverlay, createOverlayAnchor, computeOverlayPosition, Button, Surface, type OverlayAnchor, type OverlayOptions, type OverlayState, type OverlayHostProps, type OverlayRect, type OverlayPlacement, type OverlayPositionOptions, type OverlayPosition, type OverlayDismissReason } from '@piant/ui';
+const target = document.createElement('div');
+target.style.cssText = 'width:420px;height:260px';
+document.body.append(target);
+const bounds: OverlayRect = { x: 0, y: 0, width: 420, height: 260 };
+const placement: OverlayPlacement = 'bottom-start';
+const positioning: OverlayPositionOptions = { placement, flip: true, shift: true };
+const result: OverlayPosition = computeOverlayPosition({ x: 24, y: 20, width: 100, height: 36 }, { width: 180, height: 100 }, bounds, positioning);
+if (result.x !== 24 || result.y !== 60) throw new Error('Packed positioning failed');
+let overlay: OverlayState;
+const mounted = await mount(() => UIProvider({ children: () => {
+  const surface: MountSurface | undefined = useMountSurface();
+  if (surface?.target !== target) throw new Error('Packed mount context failed');
+  const owner: ContextOwner | null = getOwner();
+  if (!owner || !runWithOwner(owner, () => getOwner() === owner)) throw new Error('Packed owner binding failed');
+  const hostProps: OverlayHostProps = { children: () => {
+    let anchor: OverlayAnchor | undefined;
+    const options: OverlayOptions = {
+      get anchor() { return anchor; }, width: 220, height: 100, placement,
+      onDismiss(reason: OverlayDismissReason) { target.dataset.dismiss = reason; },
+      children: (state) => Surface({ style: { width: '100%', height: '100%' }, children: Button({ children: 'Close overlay', onPress: () => state.setOpen(false) }) }),
+    };
+    overlay = createOverlay(options);
+    return View({ ref: (node) => { anchor = createOverlayAnchor(node); }, style: { width: 180, height: 40 }, children: Button({ children: 'Open overlay', onPress: () => overlay.setOpen(true) }) });
+  } };
+  return OverlayHost(hostProps);
+} }), target);
+const destroy = document.createElement('button');
+destroy.textContent = 'Unmount overlay fixture';
+destroy.onclick = () => mounted.destroy();
+document.body.append(destroy);
+`,
+);
+const consumerConfigPath = join(consumer, 'rsbuild.config.ts');
+const consumerConfig = readFileSync(consumerConfigPath, 'utf8');
+assert.ok(
+  consumerConfig.includes("index: './src/index.ts',"),
+  'Missing consumer entry anchor',
+);
+writeFileSync(
+  consumerConfigPath,
+  consumerConfig.replace(
+    "index: './src/index.ts',",
+    "index: './src/index.ts',\n      overlay: './src/overlay.ts',",
+  ),
+);
 run(['typecheck'], consumer);
 run(['build'], consumer);
+// Execute pure APIs from installed tarballs, in addition to building the GPU
+// browser fixture. This proves executable exports rather than declarations only.
+execFileSync(
+  process.execPath,
+  [
+    '--input-type=module',
+    '-e',
+    `
+import assert from 'node:assert/strict';
+import { getOwner, runWithOwner, root, useMountSurface } from '@piant/core';
+import * as ui from '@piant/ui';
+for (const name of ['OverlayHost', 'createOverlay', 'createOverlayAnchor', 'computeOverlayPosition']) assert.equal(typeof ui[name], 'function', name);
+assert.equal(getOwner(), null);
+assert.equal(useMountSurface(), undefined);
+const stop = root((dispose) => {
+  const owner = getOwner();
+  assert.ok(owner);
+  assert.equal(runWithOwner(owner, () => getOwner()), owner);
+  return dispose;
+});
+stop();
+const position = ui.computeOverlayPosition({ x: 20, y: 20, width: 60, height: 30 }, { width: 100, height: 80 }, { x: 0, y: 0, width: 400, height: 300 });
+assert.equal(position.x, 20);
+assert.equal(position.y, 54);
+assert.equal(position.placement, 'bottom-start');
+console.log('PASS: packed overlay positioning, owner APIs and public runtime exports');
+`,
+  ],
+  { cwd: consumer, stdio: 'inherit', env: process.env },
+);
 const dependencyTree = JSON.parse(
   execFileSync(
     'pnpm',
@@ -339,6 +420,10 @@ for (const name of [
   'Checkbox',
   'ToggleSwitch',
   'RadioGroup',
+  'OverlayHost',
+  'createOverlay',
+  'createOverlayAnchor',
+  'computeOverlayPosition',
 ]) {
   const implementation = new RegExp(`function ${name}\\(`);
   assert.ok(

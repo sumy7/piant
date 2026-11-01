@@ -118,6 +118,10 @@ export function ThemedApp() {
 
 `UIProvider` 根实例创建焦点作用域，嵌套默认继承，`focusScope="isolate"` 可独立管理。`createFocusable` 为 Canvas 节点提供透明语义代理，或通过 `domElement: node.domElement` 注册 core Input 的原生元素。它提供焦点、focus-visible、键盘按压状态和激活回调；`createRovingFocusGroup` 提供单 Tab 停靠与箭头/Home/End 导航。指针仍由 `createPressable` 处理，两条路径共享业务动作。Canvas 焦点环需显式消费 `focusVisible()`。接入和读屏验证边界见[焦点文档](../../docs/ui/focus.md)。
 
+## 浮层底座
+
+在每个独立挂载实例的 `UIProvider` 内安装一个 `OverlayHost`，使用 `createOverlay` 创建锚定或模态视觉面，通过 `createOverlayAnchor` 绑定 Canvas 锚点。浮层内容保留创建处的主题、状态和焦点上下文，视觉面使用浏览器 manual popover 与独立 Canvas 越过祖先裁剪和背景原生输入。尺寸、关闭策略、实例内模态范围与浏览器要求见[浮层文档](../../docs/ui/overlays.md)。
+
 ## 工程边界
 
 Core 提供渲染节点、响应式原语、生命周期、基础组件与样式能力；UI 通过 core 公共入口组合布局与控件策略，不深度导入 core 源码。

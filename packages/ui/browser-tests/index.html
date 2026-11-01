@@ -1,0 +1,32 @@
+<!doctype html><meta charset="utf-8" /><title>
+  Overlay foundation regression
+</title>
+<style>
+  body {
+    margin: 0;
+    font: 16px system-ui;
+    background: #e2e8f0;
+    min-height: 1400px;
+  }
+  .clip {
+    position: relative;
+    margin: 40px;
+    width: 460px;
+    height: 320px;
+    overflow: hidden;
+    transform-origin: 0 0;
+  }
+  .host {
+    width: 460px;
+    height: 320px;
+  }
+  #second {
+    position: absolute;
+    left: 560px;
+    top: 40px;
+    margin: 0;
+  }
+</style>
+<div class="clip" id="first"><div class="host" id="host-a"></div></div>
+<div class="clip" id="second"><div class="host" id="host-b"></div></div>
+<script type="module" src="/overlay.ts"></script>

@@ -30,10 +30,13 @@ it('ships executable ESM with external core imports and no JSX or bundled runtim
     'components/internal/fieldContext.js',
     'components/internal/motion.js',
     'index.js',
+    'primitives/OverlayHost.js',
     'primitives/createControllableState.js',
     'primitives/createFocusable.js',
     'primitives/createPressable.js',
     'primitives/focusScope.js',
+    'primitives/overlayAnchor.js',
+    'primitives/overlayPosition.js',
     'theme/UIProvider.js',
     'theme/createTheme.js',
     'theme/tokens.js',
@@ -66,4 +69,35 @@ it('ships executable ESM with external core imports and no JSX or bundled runtim
   const spacer = readFileSync(`${directory}/components/Spacer.js`, 'utf8');
   expect(spacer).toContain('createComponent');
   expect(spacer).toContain('from "@piant/core"');
+});
+
+it('ships the overlay root exports and matching public declarations', () => {
+  const directory = resolve(import.meta.dirname, '../dist');
+  const entry = readFileSync(`${directory}/index.js`, 'utf8');
+  const declarations = readFileSync(`${directory}/index.d.ts`, 'utf8');
+  for (const name of [
+    'OverlayHost',
+    'createOverlay',
+    'createOverlayAnchor',
+    'computeOverlayPosition',
+  ]) {
+    expect(entry).toContain(name);
+    expect(declarations).toContain(name);
+  }
+  for (const name of [
+    'OverlayOptions',
+    'OverlayState',
+    'OverlayHostProps',
+    'OverlayAnchor',
+    'OverlayRect',
+    'OverlayPlacement',
+    'OverlayPositionOptions',
+    'OverlayPosition',
+    'OverlayDismissReason',
+  ]) {
+    expect(declarations).toContain(name);
+  }
+  const host = readFileSync(`${directory}/primitives/OverlayHost.js`, 'utf8');
+  expect(host).toContain('from "@piant/core"');
+  expect(host).not.toMatch(/from ["']@piant\/core\//);
 });

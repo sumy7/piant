@@ -53,6 +53,25 @@ export {
   type UIFocusScope,
   useUIFocus,
 } from './primitives/focusScope';
+export {
+  createOverlay,
+  type OverlayDismissReason,
+  OverlayHost,
+  type OverlayHostProps,
+  type OverlayOptions,
+  type OverlayState,
+} from './primitives/OverlayHost';
+export {
+  createOverlayAnchor,
+  type OverlayAnchor,
+} from './primitives/overlayAnchor';
+export {
+  computeOverlayPosition,
+  type OverlayPlacement,
+  type OverlayPosition,
+  type OverlayPositionOptions,
+  type OverlayRect,
+} from './primitives/overlayPosition';
 export { createTheme, defaultTheme } from './theme/createTheme';
 export type {
   ColorMode,

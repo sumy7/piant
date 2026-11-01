@@ -146,6 +146,7 @@ function registerFocusable(
       disposed ||
       node.isDestroyed ||
       !binding.visible ||
+      !scope.allows(element) ||
       !element.isConnected ||
       options.disabled ||
       options.hidden ||

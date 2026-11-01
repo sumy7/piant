@@ -160,6 +160,8 @@ export class FocusScope implements UIFocusScope {
   private readonly setFocused: (value: HTMLElement | null) => void;
   private readonly hosts = new Map<HTMLElement, HTMLElement>();
   private observer?: MutationObserver;
+  private constraint?: (element: HTMLElement) => boolean;
+  private readonly inertHosts = new Map<HTMLElement, boolean>();
   private active?: FocusEntry;
   private disposed = false;
   private refreshing = false;
@@ -349,6 +351,16 @@ export class FocusScope implements UIFocusScope {
     };
   }
 
+  /** Internal instance modal boundary, shared by native and Canvas semantics. */
+  allows(element: HTMLElement): boolean {
+    return this.constraint?.(element) ?? true;
+  }
+
+  setConstraint(constraint?: (element: HTMLElement) => boolean) {
+    this.constraint = constraint;
+    this.refresh();
+  }
+
   focusVisible(element: HTMLElement): boolean {
     try {
       return element.matches(':focus-visible');
@@ -361,6 +373,13 @@ export class FocusScope implements UIFocusScope {
     if (this.disposed || !entry.available()) return false;
     entry.binding.element.focus({ preventScroll: true });
     return this.doc?.activeElement === entry.binding.element;
+  }
+
+  /** Internal logical scene order, including explicit order and roving Tab stops. */
+  tabEntries(): FocusEntry[] {
+    return this.sorted().filter(
+      (entry) => entry.available() && entry.binding.element.tabIndex >= 0,
+    );
   }
 
   focusFirst(): boolean {
@@ -444,6 +463,26 @@ export class FocusScope implements UIFocusScope {
     this.refreshing = true;
     try {
       const sorted = this.sorted();
+      for (const [host, inert] of this.inertHosts) {
+        if (
+          !sorted.some(
+            (entry) =>
+              entry.binding.hostElement === host &&
+              !this.allows(entry.binding.element),
+          )
+        ) {
+          host.inert = inert;
+          this.inertHosts.delete(host);
+        }
+      }
+      for (const entry of sorted) {
+        if (!this.allows(entry.binding.element)) {
+          const host = entry.binding.hostElement;
+          if (!this.inertHosts.has(host)) this.inertHosts.set(host, host.inert);
+          if (!host.inert) host.inert = true;
+          entry.cancel();
+        }
+      }
       // Adopt only after Pixi attached a positioned wrapper. display:contents
       // keeps the original DOMPipe containing block and world matrix intact.
       for (const entry of sorted) {
@@ -569,6 +608,9 @@ export class FocusScope implements UIFocusScope {
     for (const group of [...this.groups]) group.dispose();
     for (const host of this.hosts.values()) host.remove();
     this.hosts.clear();
+    for (const [host, inert] of this.inertHosts) host.inert = inert;
+    this.inertHosts.clear();
+    this.constraint = undefined;
     this.setFocused(null);
   }
 }
