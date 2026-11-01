@@ -9,7 +9,16 @@ it('ships executable ESM with external core imports and no JSX or bundled runtim
     .map(String)
     .filter((file) => file.endsWith('.js'));
   expect(files.sort()).toEqual([
+    'components/Badge.js',
+    'components/Icon.js',
+    'components/ProgressBar.js',
+    'components/Separator.js',
     'components/Spacer.js',
+    'components/Spinner.js',
+    'components/Stack.js',
+    'components/Surface.js',
+    'components/internal/displaySemantics.js',
+    'components/internal/motion.js',
     'index.js',
     'primitives/createControllableState.js',
     'primitives/createFocusable.js',

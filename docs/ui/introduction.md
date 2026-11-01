@@ -1,6 +1,6 @@
 # UI 简介
 
-`@piant/ui` 提供与 Piant 核心运行时组合的 Canvas UI 主题与组件。使用 `createTheme` 创建语义 tokens，使用 `UIProvider` 和 `useUITheme` 在组件树中响应式消费主题；`Spacer` 提供 Flex 主轴留白。
+`@piant/ui` 提供与 Piant 核心运行时组合的 Canvas UI 主题与组件。使用 `createTheme` 创建语义 tokens，使用 `UIProvider` 和 `useUITheme` 在组件树中响应式消费主题；`Stack`、`Surface`、`Separator`、`Spacer` 提供布局基础，`Icon`、`Badge`、`ProgressBar`、`Spinner` 提供图标和状态展示。
 
 ## 安装
 
@@ -15,6 +15,10 @@ UI 以 `@piant/core` 为 peer dependency，范围以已安装 UI 包的 `peerDep
 主题提供颜色、间距、控件最小高度、字体、圆角与动画六组 tokens，支持浅色/深色、舒适/紧凑密度、文字缩放、嵌套覆盖和系统减少动画偏好。Canvas 组件通过 `useUITheme()` 返回的 accessor 显式读取样式；provider 不会自动改写所有控件样式。
 
 `createTheme()` 返回深度冻结的独立主题，`defaultTheme` 为默认值。需要响应式上下文、原生输入 DOM 字体继承或查看在线示例时，参见[主题与 UIProvider](/ui/theme)。
+
+## 布局与状态
+
+[布局与状态组件](/ui/foundations)提供七个独立在线示例与属性说明，涵盖内容布局、面板、分隔线、调用方图标资产与绘图、文字徽标、确定/不确定进度和加载标识。组件消费语义 tokens，支持运行中的主题、密度与文字缩放；动画跟随减少动画偏好并随实例清理。
 
 ## 共享交互
 
@@ -56,7 +60,7 @@ pnpm --filter @piant/ui build
 pnpm --filter @piant/examples-ui-smoke dev
 ```
 
-在浏览器点击「Increase gap」观察间距变化；点击「Unmount」检查画布移除、节点销毁和响应式订阅清理。访问 `/theme.html` 查看主题消费场景，访问 `/pressable.html` 查看交互原语消费场景。示例源码位于 [GitHub](https://github.com/sumy7/piant/tree/main/examples/ui-smoke)。
+在浏览器点击「Increase gap」观察间距变化；点击「Unmount」检查画布移除、节点销毁和响应式订阅清理。访问 `/theme.html` 查看主题消费场景，访问 `/pressable.html` 查看交互原语消费场景，访问 `/foundations.html` 查看七个基础组件的组合预览并操作主题、进度、窄容器、缩放和卸载。示例源码位于 [GitHub](https://github.com/sumy7/piant/tree/main/examples/ui-smoke)。
 
 ## 包与核心的职责
 

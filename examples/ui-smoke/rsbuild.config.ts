@@ -9,6 +9,7 @@ export default defineConfig({
       pressable: './src/pressable.ts',
       focus: './src/focus.ts',
       input: './src/input.ts',
+      foundations: './src/foundations.ts',
     },
   },
   html: { tags: [{ tag: 'link', attrs: { rel: 'icon', href: 'data:,' } }] },

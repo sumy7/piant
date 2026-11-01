@@ -1,4 +1,11 @@
+export { Badge, type BadgeProps } from './components/Badge';
+export { Icon, type IconDraw, type IconProps } from './components/Icon';
+export { ProgressBar, type ProgressBarProps } from './components/ProgressBar';
+export { Separator, type SeparatorProps } from './components/Separator';
 export { Spacer, type SpacerProps } from './components/Spacer';
+export { Spinner, type SpinnerProps } from './components/Spinner';
+export { Stack, type StackProps } from './components/Stack';
+export { Surface, type SurfaceProps } from './components/Surface';
 export {
   type ControllableStateOptions,
   createControllableState,

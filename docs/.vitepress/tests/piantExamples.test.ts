@@ -1,5 +1,6 @@
 // @vitest-environment node
 
+import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { piantExamples } from '../piantExamples';
@@ -32,6 +33,26 @@ describe('Piant examples compiler', () => {
     expect(code).toContain('createComponent');
     expect(code).toContain(': string');
     expect(code).not.toContain('<Text>');
+    expect(code).not.toContain('React');
+  });
+
+  it.each([
+    'uiStack',
+    'uiSurface',
+    'uiSeparator',
+    'uiIcon',
+    'uiBadge',
+    'uiProgressBar',
+    'uiSpinner',
+  ])('compiles the %s live example through the Piant preset', async (name) => {
+    const filename = fileURLToPath(
+      new URL(`../../examples/${name}.tsx`, import.meta.url),
+    );
+    const result = await transform(await readFile(filename, 'utf8'), filename);
+    const code = typeof result === 'object' && result ? result.code : '';
+    expect(code).toContain('createComponent');
+    expect(code).toContain('@piant/ui');
+    expect(code).not.toContain('<UIProvider');
     expect(code).not.toContain('React');
   });
 
