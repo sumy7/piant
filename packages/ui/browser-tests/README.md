@@ -17,3 +17,13 @@ PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs node packages/ui/browse
 `PLAYWRIGHT_MODULE` defaults to `playwright`; `OVERLAY_TEST_URL` defaults to `http://127.0.0.1:4177`. Screenshots and the JSON check log are written to `OVERLAY_EVIDENCE_DIR` (default `/tmp/piant-cod165`). The fixture also supports manual inspection in a browser.
 
 The checks use real Pixi renderers and native Inputs for ancestor clipping, Canvas/Input occlusion and hit testing, viewport edge positioning, CSS/Pixi scaling, Canvas and document scrolling, available height, focus traversal/restoration, nested dismissal, instance isolation, rapid cancellation, reactive context and teardown. The IME check uses Chrome's `Input.imeSetComposition` protocol; it does not validate an operating system candidate window or VoiceOver.
+
+## Slider
+
+The same fixture server provides `/slider.html`. Run its checks with:
+
+```sh
+PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs node packages/ui/browser-tests/sliderVerify.mjs
+```
+
+`SLIDER_TEST_URL` defaults to `http://127.0.0.1:4177/slider.html`; `SLIDER_EVIDENCE_DIR` defaults to `/tmp/piant-cod163`. Screenshots and a JSON log cover actual mouse track/drag interactions, decimal steps and boundaries, thumb grab offset, outside-Canvas release, combined CSS scaling and nested Pixi scale/rotation/skew, controlled rejection, keyboard/RTL/vertical semantics, disabled/blur/modal cancellation, independent instances and unmount during drag. The native `pointercancel` signal and window blur are dispatched in the browser to verify cleanup; they do not simulate every hardware interruption. OS input method and assistive technology tests are separate.

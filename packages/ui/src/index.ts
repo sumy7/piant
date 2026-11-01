@@ -18,6 +18,7 @@ export {
   type RadioGroupProps,
 } from './components/RadioGroup';
 export { Separator, type SeparatorProps } from './components/Separator';
+export { Slider, type SliderProps } from './components/Slider';
 export { Spacer, type SpacerProps } from './components/Spacer';
 export { Spinner, type SpinnerProps } from './components/Spinner';
 export { Stack, type StackProps } from './components/Stack';

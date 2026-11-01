@@ -1,0 +1,28 @@
+<!doctype html><meta charset="utf-8" /><title>Slider browser regression</title>
+<style>
+  body {
+    margin: 0;
+    min-height: 1200px;
+    background: #e2e8f0;
+    font: 16px system-ui;
+  }
+  .clip {
+    margin: 32px;
+    width: 600px;
+    transform-origin: 0 0;
+  }
+  .host {
+    width: 600px;
+    height: 360px;
+    background: #fff;
+  }
+  #clip-b {
+    position: absolute;
+    left: 680px;
+    top: 0;
+    margin-left: 0;
+  }
+</style>
+<div class="clip" id="clip-a"><div class="host" id="slider-a"></div></div>
+<div class="clip" id="clip-b"><div class="host" id="slider-b"></div></div>
+<script type="module" src="/slider.ts"></script>

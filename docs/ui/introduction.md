@@ -36,6 +36,10 @@ UI 以 `@piant/core` 为 peer dependency，范围以已安装 UI 包的 `peerDep
 
 `Checkbox` 支持二态和混合态，`ToggleSwitch` 表达布尔开关，`RadioGroup` 提供单选、组内焦点和动态选项。受控/非受控、Space/方向键、禁用与主题缩放示例见[选择控件指南](/ui/selection)。
 
+## 滑块
+
+`Slider` 提供单值范围选择，支持小数步长、受控/非受控值、横向/纵向、横向 RTL、指针拖动和键盘调整。[Slider 指南](/ui/slider)包含可操作示例、数值刻度、事件与语义说明。
+
 ## 共享交互
 
 `createControllableState` 统一受控与非受控值，可适配 `value`、`checked`、`open` 三组控件属性。`createPressable` 绑定已有 Piant 节点，提供 hover、按压和禁用状态，处理控件内释放、移出返回、取消及销毁。

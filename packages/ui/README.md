@@ -106,6 +106,10 @@ export function ThemedApp() {
 
 可选 `domRoot` 只为指定 DOM 元素设置字体、文字颜色和配色方案，销毁时恢复原内联样式。原生 `Input` 的字号、字体和文字颜色从其真实 DOM 祖先继承；嵌套 DOM 主题须提供各自不同的根元素。Canvas 组件仍须显式消费 tokens。完整合并规则、默认值及视觉验证边界见[主题文档](../../docs/ui/theme.md)。
 
+## 滑块
+
+`Slider` 组合 Canvas 轨道与拇指、UI 焦点语义及受控/非受控状态，支持小数步长、横向/纵向、横向 RTL、拖动与方向键/Home/End。接入示例、刻度对齐、取消行为和辅助技术验证边界见[Slider 文档](../../docs/ui/slider.md)。
+
 ## 共享交互
 
 `createControllableState({ value?, defaultValue, onChange? })` 返回 `[value, setValue]`。`defaultValue` 必填且只读取一次；`value` 为 `undefined` 时非受控，`null`、`false`、`0` 仍是受控值。Setter 接受值或 updater，使用 `Object.is` 跳过相同值并返回请求值。受控模式只通知最新回调，由父级提交；切回非受控时恢复最后内部值或初始化默认值。通过 getter 可适配 `value/defaultValue/onValueChange`、`checked/defaultChecked/onCheckedChange`、`open/defaultOpen/onOpenChange`。

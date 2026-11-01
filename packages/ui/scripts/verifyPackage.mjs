@@ -251,6 +251,58 @@ destroy.onclick = () => mounted.destroy();
 document.body.append(destroy);
 `,
 );
+// Exercise SliderProps through the installed declarations and create a browser
+// fixture which checks real semantic keyboard editing after the first frame.
+writeFileSync(
+  join(consumer, 'src/slider.ts'),
+  `import { createState, mount, View } from '@piant/core';
+import { Slider, type SliderProps, UIProvider } from '@piant/ui';
+const target = document.createElement('div');
+target.style.cssText = 'width:420px;height:180px';
+const status = document.createElement('p');
+status.id = 'slider-status';
+status.textContent = 'Mounting packed Slider';
+document.body.append(target, status);
+let value = () => 0;
+let changes = 0;
+let setDisabled = (_next: boolean) => {};
+const mounted = await mount(() => UIProvider({ children: () => {
+  const [current, setCurrent] = createState(0.2);
+  const [disabled, updateDisabled] = createState(false);
+  value = current;
+  setDisabled = updateDisabled;
+  const props: SliderProps = {
+    name: 'Packed playback speed', description: 'Controlled decimal range',
+    min: -1, max: 1, step: 0.1,
+    get value() { return current(); },
+    get disabled() { return disabled(); },
+    valueText: (next) => next.toFixed(1) + 'x',
+    onValueChange(next) { changes++; setCurrent(next); },
+    style: { width: 360, height: 40 },
+  };
+  return View({ style: { padding: 20 }, children: Slider(props) });
+} }), target);
+mounted.app.render();
+await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+mounted.app.render();
+await Promise.resolve();
+const semantic = target.querySelector<HTMLElement>('[role="slider"]');
+if (!semantic) throw new Error('Packed Slider semantic proxy missing');
+if (semantic.getAttribute('aria-valuemin') !== '-1' || semantic.getAttribute('aria-valuemax') !== '1') throw new Error('Packed Slider range semantics failed');
+semantic.focus();
+semantic.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true }));
+if (value() !== 0.3 || changes !== 1 || semantic.getAttribute('aria-valuenow') !== '0.3') throw new Error('Packed Slider controlled keyboard update failed');
+setDisabled(true);
+semantic.dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true, cancelable: true }));
+if (value() !== 0.3 || changes !== 1 || semantic.tabIndex !== -1) throw new Error('Packed Slider disabled boundary failed');
+setDisabled(false);
+status.textContent = 'PASS: packed Slider controlled decimals, range semantics, keyboard and disabled state';
+const destroy = document.createElement('button');
+destroy.textContent = 'Unmount Slider fixture';
+destroy.onclick = () => { mounted.destroy(); status.textContent = 'Unmounted packed Slider'; };
+document.body.append(destroy);
+`,
+);
 const consumerConfigPath = join(consumer, 'rsbuild.config.ts');
 const consumerConfig = readFileSync(consumerConfigPath, 'utf8');
 assert.ok(
@@ -261,7 +313,7 @@ writeFileSync(
   consumerConfigPath,
   consumerConfig.replace(
     "index: './src/index.ts',",
-    "index: './src/index.ts',\n      overlay: './src/overlay.ts',",
+    "index: './src/index.ts',\n      overlay: './src/overlay.ts',\n      slider: './src/slider.ts',",
   ),
 );
 run(['typecheck'], consumer);
@@ -277,7 +329,7 @@ execFileSync(
 import assert from 'node:assert/strict';
 import { getOwner, runWithOwner, root, useMountSurface } from '@piant/core';
 import * as ui from '@piant/ui';
-for (const name of ['OverlayHost', 'createOverlay', 'createOverlayAnchor', 'computeOverlayPosition']) assert.equal(typeof ui[name], 'function', name);
+for (const name of ['OverlayHost', 'createOverlay', 'createOverlayAnchor', 'computeOverlayPosition', 'Slider']) assert.equal(typeof ui[name], 'function', name);
 assert.equal(getOwner(), null);
 assert.equal(useMountSurface(), undefined);
 const stop = root((dispose) => {
@@ -420,6 +472,8 @@ for (const name of [
   'Checkbox',
   'ToggleSwitch',
   'RadioGroup',
+  'Slider',
+  'getSliderRange',
   'OverlayHost',
   'createOverlay',
   'createOverlayAnchor',

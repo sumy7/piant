@@ -18,6 +18,7 @@ it('ships executable ESM with external core imports and no JSX or bundled runtim
     'components/ProgressBar.js',
     'components/RadioGroup.js',
     'components/Separator.js',
+    'components/Slider.js',
     'components/Spacer.js',
     'components/Spinner.js',
     'components/Stack.js',
@@ -29,6 +30,7 @@ it('ships executable ESM with external core imports and no JSX or bundled runtim
     'components/internal/displaySemantics.js',
     'components/internal/fieldContext.js',
     'components/internal/motion.js',
+    'components/internal/sliderValue.js',
     'index.js',
     'primitives/OverlayHost.js',
     'primitives/createControllableState.js',
@@ -100,4 +102,41 @@ it('ships the overlay root exports and matching public declarations', () => {
   const host = readFileSync(`${directory}/primitives/OverlayHost.js`, 'utf8');
   expect(host).toContain('from "@piant/core"');
   expect(host).not.toMatch(/from ["']@piant\/core\//);
+});
+
+it('ships the Slider root export and complete public props declaration', () => {
+  const directory = resolve(import.meta.dirname, '../dist');
+  expect(readFileSync(`${directory}/index.js`, 'utf8')).toContain('Slider');
+  expect(readFileSync(`${directory}/index.d.ts`, 'utf8')).toContain(
+    'SliderProps',
+  );
+  const declaration = readFileSync(
+    `${directory}/components/Slider.d.ts`,
+    'utf8',
+  );
+  for (const name of [
+    'name',
+    'value',
+    'defaultValue',
+    'onValueChange',
+    'min',
+    'max',
+    'step',
+    'orientation',
+    'dir',
+    'disabled',
+    'description',
+    'valueText',
+    'style',
+    'ref',
+  ]) {
+    expect(declaration).toMatch(new RegExp(`\\b${name}\\??:`));
+  }
+  expect(declaration).toContain('Getter<ReturnType<typeof CustomView>>');
+  const implementation = readFileSync(
+    `${directory}/components/Slider.js`,
+    'utf8',
+  );
+  expect(implementation).toContain('from "@piant/core"');
+  expect(implementation).not.toMatch(/from ["']@piant\/core\//);
 });

@@ -64,6 +64,7 @@ export default defineConfig({
             { text: 'Button 与 IconButton', link: '/ui/buttons' },
             { text: 'TextField 与 Field', link: '/ui/text-field' },
             { text: '选择控件', link: '/ui/selection' },
+            { text: 'Slider', link: '/ui/slider' },
             { text: '受控状态与按压行为', link: '/ui/interactions' },
             { text: '焦点与语义桥接', link: '/ui/focus' },
             { text: '浮层底座与实例隔离', link: '/ui/overlays' },
