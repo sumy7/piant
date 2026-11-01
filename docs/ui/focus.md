@@ -120,14 +120,16 @@ export function NameInput() {
 
 ## Roving 组
 
-`createRovingFocusGroup({ role?, name?, orientation?, loop?, dir? })` 创建组句柄，用作注册选项的 `group`，并提供 `dispose()`。
+`createRovingFocusGroup({ role?, name?, description?, orientation?, loop?, dir?, onNavigate? })` 创建组句柄，用作注册选项的 `group`。
 
 - `role`：`toolbar`、`radiogroup`、`tablist` 或 `group`。
 - `orientation`：`horizontal`、`vertical` 或 `both`。
 - `dir`：`ltr` 或 `rtl`，用于水平方向导航。
 - `loop`：是否从末项循环至首项，或反向循环。
+- `description`：组的补充说明，通过真实 DOM 文本与 `aria-describedby` 关联。
+- `onNavigate(element)`：导航键成功聚焦成员后调用，可用于提交 RadioGroup 的选择；普通聚焦及移除后的焦点恢复不触发它。
 
-每组只有一个 Tab 停靠项；箭头按方向移动焦点，Home/End 到首末可用项。禁用和隐藏项被跳过。移动焦点不等同于提交选择值，应用仍通过激活动作管理选中状态。
+每组只有一个 Tab 停靠项；箭头按方向移动焦点，Home/End 到首末可用项。禁用和隐藏项被跳过。移动焦点不等同于提交选择值，应用可通过激活动作或 `onNavigate` 管理选中状态。句柄的 `setTabStop(element)` 为本组已注册成员设置停靠点而不移动焦点，返回是否找到该成员；`dispose()` 清理整组。空组不保留可聚焦语义容器。
 
 ## 验证边界
 

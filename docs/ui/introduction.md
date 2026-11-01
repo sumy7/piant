@@ -28,6 +28,10 @@ UI 以 `@piant/core` 为 peer dependency，范围以已安装 UI 包的 `peerDep
 
 `TextField` 在真实原生输入上提供主题、焦点和表单属性；`Field` 用延迟子树组合标签、说明与错误。独立字段需要 ARIA 名称，Field 内则使用字段标签。受控/非受控、合成输入、只读/禁用和独立在线示例见[文本字段指南](/ui/text-field)。
 
+## 选择控件
+
+`Checkbox` 支持二态和混合态，`ToggleSwitch` 表达布尔开关，`RadioGroup` 提供单选、组内焦点和动态选项。受控/非受控、Space/方向键、禁用与主题缩放示例见[选择控件指南](/ui/selection)。
+
 ## 共享交互
 
 `createControllableState` 统一受控与非受控值，可适配 `value`、`checked`、`open` 三组控件属性。`createPressable` 绑定已有 Piant 节点，提供 hover、按压和禁用状态，处理控件内释放、移出返回、取消及销毁。
@@ -68,7 +72,7 @@ pnpm --filter @piant/ui build
 pnpm --filter @piant/examples-ui-smoke dev
 ```
 
-在浏览器点击「Increase gap」观察间距变化；点击「Unmount」检查画布移除、节点销毁和响应式订阅清理。访问 `/theme.html` 查看主题消费场景，访问 `/pressable.html` 查看交互原语消费场景，访问 `/foundations.html` 查看七个基础组件的组合预览并操作主题、进度、窄容器、缩放和卸载；`/buttons.html` 提供 Button/IconButton 的键盘、事件替换、禁用与反复加载验证；`/textFields.html` 提供 TextField/Field 的编辑、标签、错误、主题、选区与卸载检查。示例源码位于 [GitHub](https://github.com/sumy7/piant/tree/main/examples/ui-smoke)。
+在浏览器点击「Increase gap」观察间距变化；点击「Unmount」检查画布移除、节点销毁和响应式订阅清理。访问 `/theme.html` 查看主题消费场景，访问 `/pressable.html` 查看交互原语消费场景，访问 `/foundations.html` 查看七个基础组件的组合预览并操作主题、进度、窄容器、缩放和卸载；`/buttons.html` 提供 Button/IconButton 的键盘、事件替换、禁用与反复加载验证；`/selection.html` 提供选择控件组合验证；`/textFields.html` 提供 TextField/Field 的编辑、标签、错误、主题、选区与卸载检查。示例源码位于 [GitHub](https://github.com/sumy7/piant/tree/main/examples/ui-smoke)。
 
 ## 包与核心的职责
 

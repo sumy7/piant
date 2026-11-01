@@ -12,6 +12,7 @@ export default defineConfig({
       foundations: './src/foundations.ts',
       buttons: './src/buttons.ts',
       textFields: './src/textFields.ts',
+      selection: './src/selection.ts',
     },
   },
   html: { tags: [{ tag: 'link', attrs: { rel: 'icon', href: 'data:,' } }] },

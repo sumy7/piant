@@ -17,7 +17,8 @@ pnpm add @piant/ui @piant/core "pixi.js@^8.22.0"
 - 展示：`Icon`、`Badge`、`ProgressBar`、`Spinner`。
 - 操作：`Button`、`IconButton`。
 - 输入：`TextField`、`Field`。
-- 类型：`ColorMode`、`ControlDensity`、`ThemeTokens`、`ThemeOverrides`、`ThemeOptions`、`UITheme`、`UIProviderProps`、`ControllableStateOptions`、`PressableOptions`、`PressableState`、`SpacerProps`、`StackProps`、`SurfaceProps`、`SeparatorProps`、`IconProps`、`IconDraw`、`BadgeProps`、`ProgressBarProps`、`SpinnerProps`、`ButtonProps`、`IconButtonProps`、`ButtonIconContext`、`ButtonPressEvent`、`ButtonSize`、`ButtonVariant`、`TextFieldProps`、`TextFieldSize`、`TextFieldType`、`FieldProps`。
+- 选择：`Checkbox`、`ToggleSwitch`、`RadioGroup`。
+- 类型：`ColorMode`、`ControlDensity`、`ThemeTokens`、`ThemeOverrides`、`ThemeOptions`、`UITheme`、`UIProviderProps`、`ControllableStateOptions`、`PressableOptions`、`PressableState`、`SpacerProps`、`StackProps`、`SurfaceProps`、`SeparatorProps`、`IconProps`、`IconDraw`、`BadgeProps`、`ProgressBarProps`、`SpinnerProps`、`ButtonProps`、`IconButtonProps`、`ButtonIconContext`、`ButtonPressEvent`、`ButtonSize`、`ButtonVariant`、`TextFieldProps`、`TextFieldSize`、`TextFieldType`、`FieldProps`、`CheckboxProps`、`ToggleSwitchProps`、`RadioGroupProps`、`RadioGroupOption`。
 
 `@piant/core` 是 peer dependency，由应用提供，版本须满足已安装 UI 包的 `peerDependencies`。Core 的 peer dependency 为 `pixi.js ^8.22.0`。UI 构建保留对 core 的外部引用，不打包另一份 core 或响应式运行时。
 
@@ -61,6 +62,12 @@ export function App() {
 `TextField` 复用 core Input 的真实原生输入、受控/非受控值和 IME 行为，支持主题尺寸、焦点、禁用/只读、错误、原生表单属性及事件。`ref` 返回公开 PInput，其 `element`、`focus()`、`blur()` 可用于原生编辑接入。独立字段需提供 `aria-label` 或 `aria-labelledby`。
 
 `Field` 使用延迟 `children` 为唯一 TextField 提供标签、说明、错误与必填上下文，Canvas 文本与真实 DOM 标签/说明同步关联。两者均需 UIProvider；完整属性、语义与输入法验证边界见[文本字段文档](../../docs/ui/text-field.md)。
+
+## 选择控件
+
+`Checkbox` 支持布尔和 mixed 状态，`ToggleSwitch` 仅支持布尔开关，`RadioGroup` 支持一组命名选项中的单选。三者需在 UIProvider 的延迟子树中创建，支持受控/非受控值、可点击标签、禁用、描述、主题和键盘语义；RadioGroup 使用组内单 Tab 停靠并支持动态选项。
+
+控件不承诺原生表单提交；应用持有选择结果并接入自己的提交逻辑。属性、独立在线示例和辅助技术验证边界见[选择控件文档](../../docs/ui/selection.md)。
 
 ## 主题
 
@@ -135,4 +142,4 @@ pnpm --filter @piant/examples-ui-smoke build
 pnpm --filter @piant/examples-ui-smoke dev
 ```
 
-`verify:package` 在仓库外复制工作区版本元数据与构建文件，执行 Changesets 版本预演后 pack，并隔离验证发布消费。它会检查发布 peer 与核心版本匹配，同时断言源码版本与 Changesets 未被改写。使用真实本地 core tarball 的验证不能等同于 registry 发布验证。浏览器中打开 smoke 示例，检查初始间距、点击「Increase gap」后的间距变化，以及「Unmount」后的资源清理；`/theme.html` 提供主题消费场景，`/pressable.html` 提供交互原语消费场景，`/foundations.html` 提供七个基础组件的组合预览，可操作主题、进度、窄容器、缩放和卸载；`/buttons.html` 提供 Button/IconButton 的键盘、事件替换、禁用与反复加载验证；`/textFields.html` 提供 TextField/Field 的编辑、标签、错误、主题、选区与卸载检查。生产构建成功本身不代表浏览器运行通过。
+`verify:package` 在仓库外复制工作区版本元数据与构建文件，执行 Changesets 版本预演后 pack，并隔离验证发布消费。它会检查发布 peer 与核心版本匹配，同时断言源码版本与 Changesets 未被改写。使用真实本地 core tarball 的验证不能等同于 registry 发布验证。浏览器中打开 smoke 示例，检查初始间距、点击「Increase gap」后的间距变化，以及「Unmount」后的资源清理；`/theme.html` 提供主题消费场景，`/pressable.html` 提供交互原语消费场景，`/foundations.html` 提供七个基础组件的组合预览，可操作主题、进度、窄容器、缩放和卸载；`/buttons.html` 提供 Button/IconButton 的键盘、事件替换、禁用与反复加载验证；`/selection.html` 提供选择控件组合验证；`/textFields.html` 提供 TextField/Field 的编辑、标签、错误、主题、选区与卸载检查。生产构建成功本身不代表浏览器运行通过。
