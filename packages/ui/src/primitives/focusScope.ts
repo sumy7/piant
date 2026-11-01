@@ -44,6 +44,24 @@ export interface FocusEntry {
   dispose(): void;
 }
 
+interface SemanticState {
+  hidden: boolean;
+  inert: boolean;
+  ariaHidden: string | null;
+  display: string;
+  displayPriority: string;
+}
+
+interface SemanticRegion {
+  node: PNode;
+  binding: DOMElementBinding;
+  visible(): boolean;
+  markerHidden: boolean;
+  wasVisible: boolean;
+  onBeforeHide(): void;
+  release(): void;
+}
+
 /** Internal group identity; membership cannot cross provider scopes. */
 class FocusGroup implements RovingFocusGroup {
   readonly element = document.createElement('div');
@@ -75,6 +93,7 @@ class FocusGroup implements RovingFocusGroup {
       if (entry.group === this) entry.dispose();
     }
     this.element.remove();
+    this.scope.releaseSemantic(this.element);
     this.scope.groups.delete(this);
   }
 }
@@ -159,10 +178,8 @@ export class FocusScope implements UIFocusScope {
   readonly focused: Getter<HTMLElement | null>;
   private readonly setFocused: (value: HTMLElement | null) => void;
   private readonly hosts = new Map<HTMLElement, HTMLElement>();
-  private readonly regions = new Set<{
-    node: PNode;
-    binding: DOMElementBinding;
-  }>();
+  private readonly regions = new Set<SemanticRegion>();
+  private readonly semantics = new Map<HTMLElement, SemanticState>();
   private observer?: MutationObserver;
   private constraint?: (element: HTMLElement) => boolean;
   private readonly inertHosts = new Map<HTMLElement, boolean>();
@@ -301,12 +318,27 @@ export class FocusScope implements UIFocusScope {
         records.some((record) => {
           if (record.type === 'childList') return true;
           const target = record.target as HTMLElement;
+          // DOMPipe may assign the same hidden flag on every render. Compare
+          // current state with the last refresh, including attribute removals.
+          if (record.attributeName === 'hidden') {
+            const region = [...this.regions].find(
+              (region) => target === region.binding.hostElement,
+            );
+            if (region) return target.hidden !== region.markerHidden;
+          }
           if (target.getAttribute(record.attributeName!) === record.oldValue)
             return false;
-          return this.entries.some(
-            (entry) =>
-              target === entry.binding.element ||
-              target.contains(entry.binding.hostElement),
+          return (
+            this.entries.some(
+              (entry) =>
+                target === entry.binding.element ||
+                target.contains(entry.binding.hostElement),
+            ) ||
+            [...this.regions].some(
+              (region) =>
+                target === region.binding.element ||
+                target.contains(region.binding.hostElement),
+            )
           );
         })
       )
@@ -372,7 +404,11 @@ export class FocusScope implements UIFocusScope {
   }
 
   /** Internal semantic region, with DOM descendants following logical PNode ancestry. */
-  registerRegion(node: PNode, binding: DOMElementBinding): () => void {
+  registerRegion(
+    node: PNode,
+    binding: DOMElementBinding,
+    options: { visible?: Getter<boolean>; onBeforeHide?: () => void } = {},
+  ): () => void {
     if (this.disposed)
       throw new Error('Cannot register a region in a disposed UIProvider.');
     if (node.isDestroyed) {
@@ -380,9 +416,24 @@ export class FocusScope implements UIFocusScope {
       return () => {};
     }
     this.connect(binding.element.ownerDocument);
-    const region = { node, binding };
+    const region: SemanticRegion = {
+      node,
+      binding,
+      visible: () => options.visible?.() ?? true,
+      markerHidden: binding.hostElement.hidden,
+      wasVisible: false,
+      onBeforeHide: () => options.onBeforeHide?.(),
+      release: () => {},
+    };
     this.regions.add(region);
     const stop = node.observeLayout(() => this.refresh());
+    const stopOptions = root((dispose) => {
+      createEffect(() => {
+        void options.visible?.();
+        this.refresh();
+      });
+      return dispose;
+    });
     this.refresh();
     this.schedule();
     let active = true;
@@ -390,8 +441,10 @@ export class FocusScope implements UIFocusScope {
       if (!active) return;
       active = false;
       stop();
+      stopOptions();
       removeDestroy();
       this.regions.delete(region);
+      this.releaseSemantic(binding.element);
       // Keep retained child bindings in their DOMPipe until their own cleanup.
       const host = [...this.hosts.values()].find((item) =>
         item.contains(binding.element),
@@ -405,8 +458,63 @@ export class FocusScope implements UIFocusScope {
       this.refresh();
     };
     const removeDestroy = node.onDestroy(release);
+    region.release = release;
     onCleanup(release);
     return release;
+  }
+
+  /** Restore attributes owned by the registry when a semantic container leaves. */
+  releaseSemantic(element: HTMLElement) {
+    const previous = this.semantics.get(element);
+    if (!previous) return;
+    this.semantics.delete(element);
+    element.hidden = previous.hidden;
+    element.inert = previous.inert;
+    if (previous.ariaHidden === null) element.removeAttribute('aria-hidden');
+    else element.setAttribute('aria-hidden', previous.ariaHidden);
+    if (previous.display)
+      element.style.setProperty(
+        'display',
+        previous.display,
+        previous.displayPriority,
+      );
+    else element.style.removeProperty('display');
+  }
+
+  private syncSemantic(
+    element: HTMLElement,
+    visible: boolean,
+    allowed: boolean,
+  ) {
+    let previous = this.semantics.get(element);
+    if (!previous) {
+      previous = {
+        hidden: element.hidden,
+        inert: element.inert,
+        ariaHidden: element.getAttribute('aria-hidden'),
+        display: element.style.getPropertyValue('display'),
+        displayPriority: element.style.getPropertyPriority('display'),
+      };
+      this.semantics.set(element, previous);
+    }
+    const hidden = previous.hidden || !visible;
+    const inert = previous.inert || hidden || !allowed;
+    if (element.hidden !== hidden) element.hidden = hidden;
+    if (element.inert !== inert) element.inert = inert;
+    setAttribute(
+      element,
+      'aria-hidden',
+      hidden ? 'true' : (previous.ariaHidden ?? undefined),
+    );
+    const display = hidden ? 'none' : previous.display;
+    const priority = hidden ? '' : previous.displayPriority;
+    if (
+      element.style.getPropertyValue('display') !== display ||
+      element.style.getPropertyPriority('display') !== priority
+    ) {
+      if (display) element.style.setProperty('display', display, priority);
+      else element.style.removeProperty('display');
+    }
   }
 
   /** Internal instance modal boundary, shared by native and Canvas semantics. */
@@ -524,6 +632,36 @@ export class FocusScope implements UIFocusScope {
     this.refreshing = true;
     try {
       const sorted = this.sorted();
+      for (const region of this.regions) {
+        region.markerHidden = region.binding.hostElement.hidden;
+        const visible =
+          region.visible() &&
+          region.node.isVisible &&
+          region.binding.visible &&
+          !region.markerHidden;
+        const hiding = region.wasVisible && !visible;
+        region.wasVisible = visible;
+        if (hiding) this.recoverFocus(region.onBeforeHide);
+        this.syncSemantic(
+          region.binding.element,
+          visible,
+          this.allows(region.binding.element),
+        );
+      }
+      for (const group of this.groups) {
+        const members = sorted.filter((entry) => entry.group === group);
+        const visible = members.some(
+          (entry) =>
+            entry.node.isVisible &&
+            entry.binding.visible &&
+            !entry.binding.hostElement.hidden &&
+            !entry.binding.element.hidden,
+        );
+        const allowed = members.some((entry) =>
+          this.allows(entry.binding.element),
+        );
+        this.syncSemantic(group.element, visible, allowed);
+      }
       for (const [host, inert] of this.inertHosts) {
         if (
           !sorted.some(
@@ -576,7 +714,7 @@ export class FocusScope implements UIFocusScope {
         }
       };
       const placeRegion = (
-        region: { node: PNode; binding: DOMElementBinding },
+        region: SemanticRegion,
         host: HTMLElement,
       ): HTMLElement => {
         const parent = enclosing(region.node, false);
@@ -717,9 +855,12 @@ export class FocusScope implements UIFocusScope {
     doc?.defaultView?.removeEventListener('focus', this.onWindowFocus);
     for (const entry of [...this.entries]) entry.dispose();
     for (const group of [...this.groups]) group.dispose();
+    for (const region of [...this.regions]) region.release();
     for (const host of this.hosts.values()) host.remove();
     this.hosts.clear();
     this.regions.clear();
+    for (const element of [...this.semantics.keys()])
+      this.releaseSemantic(element);
     for (const [host, inert] of this.inertHosts) host.inert = inert;
     this.inertHosts.clear();
     this.constraint = undefined;

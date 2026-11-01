@@ -70,7 +70,7 @@ export interface OverlayHostProps {
 
 const OverlayContext = createContext<OverlayManager>();
 const hosts = new WeakMap<HTMLElement, OverlayManager>();
-const scopes = new WeakSet<FocusScope>();
+const scopes = new Map<FocusScope, OverlayManager>();
 
 /** Install once inside the UIProvider of each independently mounted instance. */
 export function OverlayHost(props: OverlayHostProps) {
@@ -84,11 +84,14 @@ export function OverlayHost(props: OverlayHostProps) {
     );
   const manager = new OverlayManager(target, focus);
   hosts.set(target, manager);
-  scopes.add(focus);
+  scopes.set(focus, manager);
   onCleanup(() => {
-    manager.dispose();
-    hosts.delete(target);
-    scopes.delete(focus);
+    try {
+      manager.dispose();
+    } finally {
+      hosts.delete(target);
+      scopes.delete(focus);
+    }
   });
   return OverlayContext.Provider({ value: manager, children: props.children });
 }
@@ -108,14 +111,6 @@ interface Surface {
 function viewportRect(element: HTMLElement): OverlayRect {
   const rect = element.getBoundingClientRect();
   return { x: rect.left, y: rect.top, width: rect.width, height: rect.height };
-}
-function contains(rect: OverlayRect, x: number, y: number) {
-  return (
-    x >= rect.x &&
-    y >= rect.y &&
-    x < rect.x + rect.width &&
-    y < rect.y + rect.height
-  );
 }
 function stopEvent(event: Event) {
   event.preventDefault();
@@ -180,10 +175,28 @@ class OverlayManager {
     );
   }
   private belongs(event: MouseEvent) {
-    return (
-      this.owns(event.target) ||
-      contains(viewportRect(this.target), event.clientX, event.clientY)
+    // Shifted foreign surfaces and external DOM can cover this instance's
+    // rectangle. Only actual DOM ownership establishes event ownership.
+    for (const element of event.composedPath()) {
+      for (const manager of scopes.values()) {
+        if (manager.doc !== this.doc) continue;
+        if (
+          element === manager.target ||
+          manager.stack.some((surface) => surface.shell === element)
+        )
+          return manager === this;
+      }
+    }
+    // Canvas targets have DOMPipe siblings rather than ancestor mount targets.
+    const owner = [...scopes.values()].find(
+      (manager) =>
+        manager.doc === this.doc &&
+        manager.focus.entries.some(
+          (entry) => entry.binding.element === event.target,
+        ),
     );
+    if (owner) return owner === this;
+    return this.owns(event.target);
   }
   private suppressGesture(origin: PointerEvent) {
     this.stopGesture();
@@ -336,36 +349,34 @@ class OverlayManager {
       this.modalIndex() < 0 ? undefined : (element) => this.permitted(element),
     );
   }
-  remove(surface: Surface) {
+  remove(surface: Surface, hadFocus: boolean) {
     const index = this.stack.indexOf(surface);
     if (index < 0) return;
-    const wasTop =
-      index === this.stack.length - 1 ||
-      this.stack
-        .slice(index)
-        .some((entry) => entry.content.contains(this.doc.activeElement));
-    // Closing an ancestor closes descendants before releasing its context.
-    for (const child of this.stack.slice(index + 1).reverse()) child.close();
+    const shouldRestore = index === this.stack.length - 1 || hadFocus;
+    // Nested surfaces are disposed by their captured content owner. Opening
+    // later in this stack does not make an independent surface a descendant.
     this.stack.splice(index, 1);
     this.syncConstraint();
     if (!this.stack.length) this.disconnect();
     const active = this.doc.activeElement;
     const canRestore = !active || active === this.doc.body || this.owns(active);
     if (
-      wasTop &&
+      shouldRestore &&
       canRestore &&
       surface.options.restoreFocus !== false &&
       !this.disposed
     ) {
-      const previous = surface.previousFocus;
-      const entry = this.focus.entries.find(
-        (entry) => entry.binding.element === previous,
-      );
-      if (entry?.available()) this.focus.focus(entry);
-      else if (previous && visible(previous) && this.permitted(previous))
-        previous.focus({ preventScroll: true });
-      else if (this.stack.length) this.focusSurface();
-      else this.focus.focusFirst();
+      this.focus.recoverFocus(() => {
+        const previous = surface.previousFocus;
+        const entry = this.focus.entries.find(
+          (entry) => entry.binding.element === previous,
+        );
+        if (entry?.available()) this.focus.focus(entry);
+        else if (previous && visible(previous) && this.permitted(previous))
+          previous.focus({ preventScroll: true });
+        else if (this.stack.length) this.focusSurface();
+        else this.focus.focusFirst();
+      });
     }
   }
   private disconnect() {
@@ -474,6 +485,7 @@ export function createOverlay(options: OverlayOptions): OverlayState {
     }
     function close() {
       if (closed) return;
+      const hadFocus = content.contains(manager.doc.activeElement);
       closed = true;
       controller.abort();
       // Remove DOM before restoring focus; detached entries are unavailable.
@@ -483,7 +495,7 @@ export function createOverlay(options: OverlayOptions): OverlayState {
         () => shell.remove(),
         () => instance?.destroy(),
         stopContent,
-        () => manager.remove(surface),
+        () => manager.remove(surface, hadFocus),
         () => setReady(false),
         () => setElement(undefined),
         () => setPosition(undefined),

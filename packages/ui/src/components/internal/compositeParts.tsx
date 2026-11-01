@@ -3,7 +3,6 @@ import {
   createEffect,
   createState,
   type Getter,
-  onCleanup,
   type PNode,
   Show,
   type StyleValue,
@@ -159,19 +158,17 @@ export function createCompositeTrigger(options: CompositeTriggerOptions): {
   if (options.headingLevel !== undefined) {
     const heading = document.createElement('div');
     const binding = attachDOMElement(node, heading);
-    const release = getFocusScope().registerRegion(node, binding);
-    onCleanup(release);
-    node.onDestroy(release);
+    semanticContainerStyle(heading);
+    getFocusScope().registerRegion(node, binding);
     createEffect(() => {
       heading.setAttribute('role', 'heading');
       heading.setAttribute('aria-level', String(options.headingLevel ?? 3));
-      semanticContainerStyle(heading, true);
     });
   }
   return { node, focus };
 }
 
-function semanticContainerStyle(element: HTMLElement, active: boolean) {
+function semanticContainerStyle(element: HTMLElement) {
   element.style.position = 'static';
   element.style.pointerEvents = 'none';
   element.style.width = '0';
@@ -181,7 +178,6 @@ function semanticContainerStyle(element: HTMLElement, active: boolean) {
   element.style.maxWidth = '0';
   element.style.maxHeight = '0';
   element.style.overflow = 'visible';
-  element.style.display = active ? 'block' : 'none';
 }
 
 export interface CompositePanelOptions {
@@ -217,12 +213,12 @@ export function createCompositePanel(options: CompositePanelOptions): PNode {
       return false;
     });
   }
-  // Register before View's display effect so focused descendants can leave while
-  // their trigger is still available and their content owner is still alive.
   createEffect(() => {
     const active = options.active;
+    // Leave focus before unmounting a content owner too; registry transitions
+    // cover eager refreshes that run before this effect can observe the change.
     if (wasActive && !active && node && focusInside())
-      untrack(() => options.onBeforeHide?.());
+      untrack(() => scope.recoverFocus(() => options.onBeforeHide?.()));
     wasActive = active;
     if (active) setVisited(true);
   });
@@ -254,27 +250,26 @@ export function createCompositePanel(options: CompositePanelOptions): PNode {
     }),
   }) as PNode;
   const binding = attachDOMElement(node, region);
-  const unregister = scope.registerRegion(node, binding);
-  onCleanup(unregister);
-  node.onDestroy(unregister);
+  semanticContainerStyle(region);
   if (options.role === 'tabpanel') {
     const focus = createFocusable(node, {
       domElement: binding,
       role: 'tabpanel',
       name: '',
-      get hidden() {
-        return !options.active;
-      },
     });
     createEffect(() => setFocusVisible(focus.focusVisible()));
   }
+  scope.registerRegion(node, binding, {
+    visible: () => options.active,
+    // The registry invokes this before hiding semantic DOM in any refresh order.
+    onBeforeHide: () => {
+      if (focusInside()) options.onBeforeHide?.();
+    },
+  });
   createEffect(() => {
     region.id = options.id;
     region.setAttribute('role', options.role ?? 'region');
     region.setAttribute('aria-labelledby', options.labelledBy);
-    region.hidden = !options.active;
-    region.inert = !options.active;
-    semanticContainerStyle(region, options.active);
   });
   return node;
 }

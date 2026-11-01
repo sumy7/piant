@@ -336,6 +336,88 @@ try {
         document.querySelectorAll('[data-piant-overlay]').length === 0,
     ),
   );
+  await fixture(() => window.overlayFixture.a.overlay.setOpen(true));
+  await page.waitForFunction(() => window.overlayFixture.a.overlay.ready());
+  await fixture(() => window.overlayFixture.a.modal.setOpen(true));
+  await page.waitForFunction(() => window.overlayFixture.a.modal.ready());
+  await fixture(() => window.overlayFixture.a.overlay.setOpen(false));
+  check(
+    'closing an earlier sibling preserves later modal and its focus',
+    await fixture(() => {
+      const a = window.overlayFixture.a;
+      return (
+        a.modal.open() &&
+        a.modal.ready() &&
+        a.modal.element().isConnected &&
+        document.activeElement.getAttribute('aria-label') === 'modal-input-a'
+      );
+    }),
+  );
+  await fixture(() => window.overlayFixture.a.modal.setOpen(false));
+  await page.setViewportSize({ width: 740, height: 760 });
+  await fixture(() => window.overlayFixture.a.modal.setOpen(true));
+  await page.waitForFunction(() => window.overlayFixture.a.modal.ready());
+  await fixture(() => window.overlayFixture.b.overlay.setOpen(true));
+  await page.waitForFunction(() => window.overlayFixture.b.overlay.ready());
+  const foreign = await page
+    .getByRole('textbox', { name: 'overlay-input-b', exact: true })
+    .boundingBox();
+  check(
+    'shifted foreign input genuinely overlaps the other instance target',
+    await fixture(() => {
+      const input = document
+        .querySelector('[aria-label=overlay-input-b]')
+        .getBoundingClientRect();
+      const target = window.overlayFixture.a.target.getBoundingClientRect();
+      return input.left < target.right && input.right > target.left;
+    }),
+  );
+  await page.mouse.click(foreign.x + 20, foreign.y + 10);
+  check(
+    'foreign overlay pointer keeps modal open and focuses foreign input',
+    await fixture(
+      () =>
+        window.overlayFixture.a.modal.open() &&
+        window.overlayFixture.b.overlay.open() &&
+        document.activeElement.getAttribute('aria-label') === 'overlay-input-b',
+    ),
+  );
+  await page
+    .getByRole('textbox', { name: 'overlay-input-b', exact: true })
+    .fill('independent foreign input');
+  await page.screenshot({ path: `${output}/foreign-overlay-ownership.png` });
+  await fixture(() => {
+    window.overlayFixture.b.overlay.setOpen(false);
+    window.overlayFixture.a.modal.setOpen(false);
+  });
+  await page.setViewportSize({ width: 1120, height: 760 });
+  await fixture(() => {
+    window.overlayFixture.a.modal.setOpen(true);
+    const external = document.createElement('div');
+    external.id = 'external-app-popover';
+    external.popover = 'manual';
+    external.style.cssText =
+      'position:fixed;inset:auto;left:80px;top:80px;width:200px;height:100px;margin:0';
+    const input = document.createElement('input');
+    input.setAttribute('aria-label', 'external-app-input');
+    external.append(input);
+    document.body.append(external);
+  });
+  await page.waitForFunction(() => window.overlayFixture.a.modal.ready());
+  await fixture(() => document.querySelector('#external-app-popover').showPopover());
+  await page.getByRole('textbox', { name: 'external-app-input' }).click();
+  check(
+    'external native popover over Canvas remains interactive without dismissing modal',
+    await fixture(
+      () =>
+        window.overlayFixture.a.modal.open() &&
+        document.activeElement.getAttribute('aria-label') === 'external-app-input',
+    ),
+  );
+  await fixture(() => {
+    document.querySelector('#external-app-popover').remove();
+    window.overlayFixture.a.modal.setOpen(false);
+  });
   await activate('open-a');
   await page.waitForFunction(() => window.overlayFixture.a.overlay.ready());
   await fixture(() => window.overlayFixture.a.setDark(true));

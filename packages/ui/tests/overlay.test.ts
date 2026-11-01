@@ -6,10 +6,11 @@ import {
   onCleanup,
   type PNode,
   PRoot,
+  render,
   root,
   View,
 } from '@piant/core';
-import { Container, Ticker } from 'pixi.js';
+import { Container, DOMContainer, Ticker } from 'pixi.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   createFocusable,
@@ -18,6 +19,7 @@ import {
   OverlayHost,
   type OverlayOptions,
   type OverlayState,
+  Tabs,
   UIProvider,
   useUITheme,
 } from '../dist/index.js';
@@ -112,6 +114,7 @@ afterEach(async () => {
   delete (HTMLElement.prototype as unknown as { showPopover?: unknown })
     .showPopover;
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 async function settle() {
   for (let i = 0; i < 6; i++) await Promise.resolve();
@@ -213,6 +216,151 @@ function key(
 }
 
 describe('instance-scoped overlays', () => {
+  it('restores an automatic controlled tab without emitting another selection request', async () => {
+    vi.stubGlobal('OffscreenCanvas', undefined);
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(
+      () =>
+        ({
+          font: '14px Arial',
+          setTransform() {},
+          clearRect() {},
+          fillText() {},
+          fillRect() {},
+          measureText: (text: string) => ({
+            width: text.length * 7,
+            actualBoundingBoxAscent: 11,
+            actualBoundingBoxDescent: 3,
+          }),
+        }) as never,
+    );
+    const target = document.createElement('div');
+    document.body.append(target);
+    box(target);
+    const scene = new PRoot(new Container(), { width: 400, height: 300 });
+    const changes = vi.fn();
+    let overlay!: OverlayState;
+    const stop = render(
+      () =>
+        UIProvider({
+          reducedMotion: false,
+          children: () =>
+            OverlayHost({
+              target,
+              children: () => {
+                overlay = createOverlay({
+                  width: 120,
+                  height: 80,
+                  modal: true,
+                  children: () => View({}),
+                });
+                return Tabs({
+                  label: 'Controlled tabs',
+                  value: null,
+                  onValueChange: changes,
+                  items: [
+                    { value: 'one', label: 'One', children: () => View({}) },
+                  ],
+                });
+              },
+            }),
+        }),
+      scene,
+    );
+    cleanup.push(() => {
+      stop();
+      scene.destroyRecursive();
+      target.remove();
+    });
+    const attach = (node: PNode) => {
+      for (const child of node._view.children)
+        if (child instanceof DOMContainer) target.append(child.element);
+      for (const child of node._children) attach(child);
+    };
+    attach(scene);
+    scene.doLayout();
+    await settle();
+    const tab = target.querySelector<HTMLElement>('[role=tab]')!;
+    tab.focus();
+    expect(changes).toHaveBeenCalledExactlyOnceWith('one');
+    overlay.setOpen(true);
+    await settle();
+    expect(overlay.ready()).toBe(true);
+    overlay.setOpen(false);
+    expect(document.activeElement).toBe(tab);
+    expect(changes).toHaveBeenCalledExactlyOnceWith('one');
+  });
+
+  it('keeps later sibling surfaces and their focus when an earlier surface closes', async () => {
+    let lower!: OverlayState;
+    let upper!: OverlayState;
+    let upperControl!: FocusableState;
+    setup((add, control) => {
+      lower = add({});
+      upper = add({
+        autoFocus: true,
+        children: () => {
+          const item = control('sibling action');
+          upperControl = item;
+          return item.node;
+        },
+      });
+    });
+    lower.setOpen(true);
+    upper.setOpen(true);
+    await settle();
+    const surface = upper.element();
+    lower.setOpen(false);
+    expect(upper.open()).toBe(true);
+    expect(upper.ready()).toBe(true);
+    expect(upper.element()).toBe(surface);
+    expect(surface?.isConnected).toBe(true);
+    expect(document.activeElement).toBe(upperControl.element);
+    expect(
+      mounts.destroyed.map((destroy) => destroy.mock.calls.length),
+    ).toEqual([1, 0]);
+  });
+
+  it.each([false, true])(
+    'ignores another instance surface even over its target rectangle (modal=%s)',
+    async (modal) => {
+      let left!: OverlayState;
+      let right!: OverlayState;
+      const dismiss = vi.fn();
+      setup((add) => {
+        left = add({ modal, outsidePointer: 'dismiss', onDismiss: dismiss });
+      });
+      setup((add) => {
+        right = add({});
+      }, 500);
+      left.setOpen(true);
+      right.setOpen(true);
+      await settle();
+      const event = pointer(right.element()!, { clientX: 30, clientY: 30 });
+      expect(event.defaultPrevented).toBe(false);
+      expect(left.open()).toBe(true);
+      expect(right.open()).toBe(true);
+      expect(dismiss).not.toHaveBeenCalled();
+    },
+  );
+
+  it('leaves external DOM over the mount rectangle interactive', async () => {
+    let overlay!: OverlayState;
+    const dismiss = vi.fn();
+    setup((add) => {
+      overlay = add({ modal: true, outsidePointer: 'dismiss', onDismiss: dismiss });
+    });
+    overlay.setOpen(true);
+    await settle();
+    const input = document.createElement('input');
+    document.body.append(input);
+    const event = pointer(input, { clientX: 30, clientY: 30 });
+    input.focus();
+    expect(event.defaultPrevented).toBe(false);
+    expect(document.activeElement).toBe(input);
+    expect(overlay.open()).toBe(true);
+    expect(dismiss).not.toHaveBeenCalled();
+  });
+
   it('releases interrupted gesture suppression on a new gesture with a reused pointer id or window blur', async () => {
     let overlay!: OverlayState;
     const first = setup((add) => {
