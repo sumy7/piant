@@ -334,6 +334,8 @@ for (const name of [
   'Spinner',
   'Button',
   'IconButton',
+  'Field',
+  'TextField',
 ]) {
   const implementation = new RegExp(`function ${name}\\(`);
   assert.ok(

@@ -11,6 +11,7 @@ export default defineConfig({
       input: './src/input.ts',
       foundations: './src/foundations.ts',
       buttons: './src/buttons.ts',
+      textFields: './src/textFields.ts',
     },
   },
   html: { tags: [{ tag: 'link', attrs: { rel: 'icon', href: 'data:,' } }] },

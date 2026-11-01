@@ -112,6 +112,8 @@ export function NameInput() {
 
 `node.domElement` 绑定原生 input，注册复用该元素，不额外创建一份可聚焦代理。省略 `role` 保留输入框自身的语义。原生输入继续使用浏览器的编辑、选区、中文输入和键盘行为，不按 Canvas 按钮方式截获 Enter/Space。需要监听值时，继续使用 core Input 的 `onInput`、`onChange` 等属性。
 
+原生注册未传 `description` 时，不接管或恢复 `aria-describedby`，使 Input 或 Field 管理的描述与错误引用可独立更新。显式传入 `description` 时，注册会附加自己的说明节点，并在清理时恢复注册前的引用。
+
 原生输入的禁用状态由 `Input.disabled` 管理；传入 `domElement` 时不接受注册选项 `disabled`，注册表会读取真实原生禁用状态。Canvas 代理使用 `createFocusable` 的 `disabled`，组合指针原语时把同一 getter 传给 `createPressable`。
 
 使用 Input 的 `onKeyDown` / `onKeyUp` 时，组合输入中的 Enter/Escape 留给原生 IME，不触发业务动作。祖先 capture 阶段的表单、快捷键或浮层必须先调用 core 的 `isComposingInput(event)`；Input 的目标监听不能撤销已经执行的 capture 处理。详见 [Input 的 IME 契约](/guide/components/input#ime-与键盘业务动作)。

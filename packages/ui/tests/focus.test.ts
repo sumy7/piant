@@ -199,6 +199,32 @@ describe('provider focus and semantic registration', () => {
     expect(input.tabIndex).toBe(0);
   });
 
+  it('leaves changing native descriptions owned by Input when no description override was supplied', () => {
+    const [name, setName] = createState('Initial');
+    let state!: FocusableState;
+    setup((add) => {
+      state = add(
+        {
+          get name() {
+            return name();
+          },
+        },
+        true,
+      );
+    });
+    state.element.setAttribute('aria-describedby', 'external-help');
+    setName('Updated');
+    expect(state.element.getAttribute('aria-describedby')).toBe(
+      'external-help',
+    );
+    state.element.setAttribute('aria-describedby', 'new-help new-error');
+    state.dispose();
+    expect(state.element.getAttribute('aria-describedby')).toBe(
+      'new-help new-error',
+    );
+    expect(state.element.isConnected).toBe(true);
+  });
+
   it('keeps one DOM order for canvas and input; explicit order changes preserve focused input', () => {
     const [order, setOrder] = createState(2);
     let first!: FocusableState;

@@ -11,6 +11,7 @@ it('ships executable ESM with external core imports and no JSX or bundled runtim
   expect(files.sort()).toEqual([
     'components/Badge.js',
     'components/Button.js',
+    'components/Field.js',
     'components/Icon.js',
     'components/IconButton.js',
     'components/ProgressBar.js',
@@ -19,8 +20,10 @@ it('ships executable ESM with external core imports and no JSX or bundled runtim
     'components/Spinner.js',
     'components/Stack.js',
     'components/Surface.js',
+    'components/TextField.js',
     'components/internal/createButton.js',
     'components/internal/displaySemantics.js',
+    'components/internal/fieldContext.js',
     'components/internal/motion.js',
     'index.js',
     'primitives/createControllableState.js',

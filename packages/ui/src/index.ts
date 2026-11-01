@@ -7,6 +7,7 @@ export {
   type ButtonSize,
   type ButtonVariant,
 } from './components/Button';
+export { Field, type FieldProps } from './components/Field';
 export { Icon, type IconDraw, type IconProps } from './components/Icon';
 export { IconButton, type IconButtonProps } from './components/IconButton';
 export { ProgressBar, type ProgressBarProps } from './components/ProgressBar';
@@ -15,6 +16,12 @@ export { Spacer, type SpacerProps } from './components/Spacer';
 export { Spinner, type SpinnerProps } from './components/Spinner';
 export { Stack, type StackProps } from './components/Stack';
 export { Surface, type SurfaceProps } from './components/Surface';
+export {
+  TextField,
+  type TextFieldProps,
+  type TextFieldSize,
+  type TextFieldType,
+} from './components/TextField';
 export {
   type ControllableStateOptions,
   createControllableState,
