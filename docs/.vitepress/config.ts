@@ -72,6 +72,7 @@ export default defineConfig({
             { text: 'Dialog 与 AlertDialog', link: '/ui/dialogs' },
             { text: 'Popover 与 Tooltip', link: '/ui/popovers' },
             { text: 'Menu 与 Select', link: '/ui/menu-select' },
+            { text: 'Toast 通知', link: '/ui/toast' },
           ],
         },
       ],

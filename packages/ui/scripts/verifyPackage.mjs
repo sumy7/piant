@@ -501,6 +501,66 @@ destroy.onclick = () => { mounted.destroy(); status.dataset.mounted = 'false'; s
 document.body.append(destroy);
 `,
 );
+// The notification fixture consumes every public Toast declaration from the tarball.
+writeFileSync(
+  join(consumer, 'src/toast.ts'),
+  `import { createEffect, mount, onCleanup, onError, View } from '@piant/core';
+import { Button, TextField, UIProvider, ToastProvider, ToastViewport, useToast, type ToastProviderProps, type ToastViewportProps, type ToastInput, type ToastUpdate, type ToastAction, type ToastController, type ToastRecord, type ToastDismissReason } from '@piant/ui';
+const target = document.createElement('div'); target.id = 'toast-target'; target.style.cssText = 'width:800px;height:820px';
+const status = document.createElement('output'); status.id = 'toast-status'; status.setAttribute('aria-live', 'off'); status.dataset.ready = 'false';
+document.body.append(target, status);
+let controller: ToastController | undefined;
+let actions = 0, pending = false;
+let scheduled: ReturnType<typeof setTimeout> | undefined;
+const dismissals: Record<ToastDismissReason, number> = { timeout: 0, close: 0, action: 0, programmatic: 0 };
+const publish = () => {
+  const records: readonly ToastRecord[] = controller?.items() ?? [];
+  status.dataset.items = String(records.length); status.dataset.visible = String(controller?.visible().length ?? 0);
+  status.dataset.queued = String(controller?.queuedCount() ?? 0); status.dataset.actions = String(actions);
+  status.dataset.pending = String(pending); status.dataset.titles = records.map((record) => record.title).join('|');
+  for (const reason of ['timeout', 'close', 'action', 'programmatic'] as const) status.dataset[reason] = String(dismissals[reason]);
+  status.textContent = 'Packed toasts; items=' + records.length + '; queued=' + (controller?.queuedCount() ?? 0) + '; actions=' + actions + '; dismissals=' + JSON.stringify(dismissals);
+};
+const dismissed = (reason: ToastDismissReason) => { dismissals[reason]++; status.dataset.lastReason = reason; publish(); };
+const action: ToastAction = { label: 'Undo packed toast', onAction(event) { actions++; status.dataset.actionEvent = event.type; publish(); } };
+const notice: ToastInput = { id: 'packed-notice', title: 'Packed saved notice', description: 'Saved from local tarballs', priority: 'polite', duration: 0, action, onDismiss: dismissed };
+const alert: ToastInput = { id: 'packed-alert', title: 'Packed urgent notice', description: 'An assertive notification', priority: 'assertive', duration: 0, onDismiss: dismissed };
+const queued: ToastInput = { id: 'packed-queued', title: 'Packed queued notice', priority: 'off', duration: 0, onDismiss: dismissed };
+const update: ToastUpdate = { title: 'Packed saved update', description: 'Updated through packed public types' };
+const schedule = (work: () => void) => {
+  clearTimeout(scheduled); pending = true; publish();
+  scheduled = setTimeout(() => { scheduled = undefined; pending = false; work(); publish(); }, 300);
+};
+const mounted = await mount(() => UIProvider({ children: () => {
+  onError((error) => { status.dataset.failure = String(error); });
+  const provider: ToastProviderProps = { maxVisible: 2, maxToasts: 6, duration: 0, children: () => {
+    controller = useToast(); createEffect(publish);
+    onCleanup(() => { clearTimeout(scheduled); scheduled = undefined; pending = false; });
+    const viewport: ToastViewportProps = { label: 'Packed notifications', dismissLabel: 'Close packed toast', style: { width: 760, height: 450 } };
+    return View({ style: { width: '100%', height: '100%', flexDirection: 'column', padding: 16, gap: 16 }, children: [
+      TextField({ 'aria-label': 'Packed toast draft', defaultValue: 'Selected packed draft' }),
+      View({ style: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, width: '100%' }, children: [
+        Button({ children: 'Enqueue packed toast', onPress: () => schedule(() => { controller!.show(notice); }) }),
+        Button({ children: 'Update packed toast', onPress: () => schedule(() => { controller!.update('packed-notice', update); }) }),
+        Button({ children: 'Enqueue packed alert', onPress: () => schedule(() => { controller!.show(alert); }) }),
+        Button({ children: 'Enqueue queued packed toast', onPress: () => schedule(() => { controller!.show(queued); }) }),
+        Button({ children: 'Enqueue timed packed toast', onPress: () => schedule(() => { controller!.show({ id: 'packed-timed', title: 'Packed timed notice', priority: 'off', duration: 5000, onDismiss: dismissed }); }) }),
+        Button({ children: 'Clear packed toasts', onPress: () => controller!.dismissAll() }),
+      ] }),
+      ToastViewport(viewport),
+    ] });
+  } };
+  return ToastProvider(provider);
+} }), target);
+mounted.app.render();
+await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+mounted.app.render(); status.dataset.ready = 'true'; status.dataset.mounted = 'true'; publish();
+Object.assign(window, { packedToastPrepareUnmount: () => controller?.update('packed-timed', { duration: 500 }) ?? false });
+const destroy = document.createElement('button'); destroy.textContent = 'Unmount packed toasts';
+destroy.onclick = () => { mounted.destroy(); status.dataset.mounted = 'false'; publish(); };
+document.body.append(destroy);
+`,
+);
 const consumerConfigPath = join(consumer, 'rsbuild.config.ts');
 const consumerConfig = readFileSync(consumerConfigPath, 'utf8');
 assert.ok(
@@ -511,7 +571,7 @@ writeFileSync(
   consumerConfigPath,
   consumerConfig.replace(
     "index: './src/index.ts',",
-    "index: './src/index.ts',\n      overlay: './src/overlay.ts',\n      slider: './src/slider.ts',\n      containers: './src/containers.ts',\n      dialogs: './src/dialogs.ts',\n      popoverTooltip: './src/popoverTooltip.ts',\n      menuSelect: './src/menuSelect.ts',",
+    "index: './src/index.ts',\n      overlay: './src/overlay.ts',\n      slider: './src/slider.ts',\n      containers: './src/containers.ts',\n      dialogs: './src/dialogs.ts',\n      popoverTooltip: './src/popoverTooltip.ts',\n      menuSelect: './src/menuSelect.ts',\n      toast: './src/toast.ts',",
   ),
 );
 run(['typecheck'], consumer);
@@ -527,9 +587,10 @@ execFileSync(
 import assert from 'node:assert/strict';
 import { getOwner, runWithOwner, root, useMountSurface } from '@piant/core';
 import * as ui from '@piant/ui';
-for (const name of ['OverlayHost', 'createOverlay', 'createOverlayAnchor', 'computeOverlayPosition', 'Slider', 'Tabs', 'Collapsible', 'Accordion', 'Dialog', 'DialogTrigger', 'DialogContent', 'DialogTitle', 'DialogDescription', 'DialogClose', 'AlertDialog', 'AlertDialogTrigger', 'AlertDialogContent', 'AlertDialogTitle', 'AlertDialogDescription', 'AlertDialogCancel', 'AlertDialogConfirm', 'Popover', 'PopoverTrigger', 'PopoverContent', 'PopoverClose', 'Tooltip', 'TooltipTrigger', 'TooltipContent', 'Menu', 'MenuTrigger', 'MenuContent', 'MenuItem', 'Select', 'SelectTrigger', 'SelectContent', 'SelectItem']) assert.equal(typeof ui[name], 'function', name);
+for (const name of ['OverlayHost', 'createOverlay', 'createOverlayAnchor', 'computeOverlayPosition', 'Slider', 'Tabs', 'Collapsible', 'Accordion', 'Dialog', 'DialogTrigger', 'DialogContent', 'DialogTitle', 'DialogDescription', 'DialogClose', 'AlertDialog', 'AlertDialogTrigger', 'AlertDialogContent', 'AlertDialogTitle', 'AlertDialogDescription', 'AlertDialogCancel', 'AlertDialogConfirm', 'Popover', 'PopoverTrigger', 'PopoverContent', 'PopoverClose', 'Tooltip', 'TooltipTrigger', 'TooltipContent', 'Menu', 'MenuTrigger', 'MenuContent', 'MenuItem', 'Select', 'SelectTrigger', 'SelectContent', 'SelectItem', 'ToastProvider', 'ToastViewport', 'useToast']) assert.equal(typeof ui[name], 'function', name);
 assert.equal(getOwner(), null);
 assert.equal(useMountSurface(), undefined);
+assert.throws(() => ui.useToast(), /ToastProvider|UIProvider/);
 const stop = root((dispose) => {
   const owner = getOwner();
   assert.ok(owner);
@@ -703,6 +764,10 @@ for (const name of [
   'SelectTrigger',
   'SelectContent',
   'SelectItem',
+  'ToastProvider',
+  'ToastViewport',
+  'useToast',
+  'createToastStore',
   'componentRoot',
   'createCompositePanel',
   'createCompositeTrigger',
