@@ -14,19 +14,23 @@ it('ships executable ESM with external core imports and no JSX or bundled runtim
     'components/Button.js',
     'components/Checkbox.js',
     'components/Collapsible.js',
+    'components/Combobox.js',
     'components/Dialog.js',
     'components/Field.js',
     'components/Icon.js',
     'components/IconButton.js',
     'components/Menu.js',
+    'components/NumberField.js',
     'components/Popover.js',
     'components/ProgressBar.js',
     'components/RadioGroup.js',
+    'components/SearchField.js',
     'components/Select.js',
     'components/Separator.js',
     'components/Slider.js',
     'components/Spacer.js',
     'components/Spinner.js',
+    'components/SplitPane.js',
     'components/Stack.js',
     'components/Surface.js',
     'components/Tabs.js',
@@ -180,4 +184,17 @@ it('ships the container exports, props and shared panel declarations', () => {
   );
   expect(accordion).toContain("type: 'single'");
   expect(accordion).toContain("type: 'multiple'");
+});
+
+it('ships all tool field runtime and type exports from the public entry', () => {
+  const directory = resolve(import.meta.dirname, '../dist');
+  const entry = readFileSync(`${directory}/index.js`, 'utf8');
+  const declarations = readFileSync(`${directory}/index.d.ts`, 'utf8');
+  for (const name of ['SearchField', 'NumberField', 'Combobox', 'SplitPane']) {
+    expect(entry).toContain(name);
+    expect(declarations).toContain(`${name}Props`);
+    const source = readFileSync(`${directory}/components/${name}.js`, 'utf8');
+    expect(source).not.toMatch(/from ["']@piant\/core\//);
+  }
+  expect(declarations).toContain('ComboboxOption');
 });

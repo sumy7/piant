@@ -79,3 +79,5 @@ pnpm --filter @piant/ui verify:package
 类型检查、组件测试、在线示例编译/运行测试与生产构建检查工程链路。`verify:package` 使用版本预演后的本地 tarball 进行隔离消费验证，不等同于 registry 发布验证。浏览器截图、操作日志与 DOM/AX 检查提供相应场景的证据，不能由构建成功推断视觉通过。
 
 Canvas/DOM 的组合仍需要目标平台验证。自动化的合成事件不代表真实系统输入法候选流程，DOM 或可访问性树正确也不代表 VoiceOver 等辅助技术的实际朗读与导航已验收。具体输入与焦点边界见[文本字段](/ui/text-field)和[焦点与语义桥接](/ui/focus)。
+
+搜索图层、数字参数、可编辑候选与拖动分栏的组合参见[工具面板](/ui/tool-panel)。

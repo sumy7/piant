@@ -130,3 +130,5 @@ pnpm --filter @piant/examples-ui-smoke build
 ```
 
 包验证覆盖发布产物的隔离消费链路。使用本地 core tarball 时，这是本地产物验证，不是 registry 发布验证；浏览器实际运行需单独检查。
+
+工具场景扩展包括 [SearchField](/ui/search-field)、[NumberField](/ui/number-field)、[Combobox](/ui/combobox) 与 [SplitPane](/ui/split-pane)。各组件有独立在线示例，组合用法见[工具面板](/ui/tool-panel)。

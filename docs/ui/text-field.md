@@ -91,3 +91,5 @@ Core 仅在支持选区的文本类输入中读取数字 `selectionStart` / `sel
 TextField 使用语义背景、边框、文字、圆角和间距，原生字体从同一主题 tokens 写入；占位文字使用 `colors.textMuted`，运行时更新仅作用于所属输入实例。焦点、无效、只读和禁用状态分别表达；自定义样式后需检查文字和焦点对比度，以及窄容器与放大字号下的尺寸。
 
 Field 的 DOM 标签/说明/错误与 TextField 的真实输入共同表达语义，不创建透明的第二个输入代理。浏览器键盘与 DOM/可访问性树检查属于工程证据；VoiceOver 等辅助技术的朗读、导航和系统输入法候选行为须单独验收，不能由自动化测试或构建成功推断。焦点作用域规则见[焦点与语义桥接](/ui/focus)。
+
+组合输入可通过 `semantics` 适配同一个原生输入的焦点注册：支持 `role`、`expanded`、`controls`、`hasPopup`、`activeDescendant` 和 `value: { now, min?, max?, text? }`。角色及关联随 getter 更新，不创建额外焦点目标。SearchField、NumberField、Combobox 使用此接口提供搜索、数值范围和可编辑候选语义；普通文本输入无需设置。范围数值只对相应范围角色生效，调用方须保证引用 ID 对应真实且可用的语义节点。

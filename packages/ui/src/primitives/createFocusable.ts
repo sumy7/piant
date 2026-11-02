@@ -30,10 +30,12 @@ interface FocusableSemantics {
     | 'tabpanel'
     | 'link'
     | 'slider'
+    | 'separator'
     | 'spinbutton'
     | 'menu'
     | 'listbox'
-    | 'combobox';
+    | 'combobox'
+    | 'searchbox';
   description?: string;
   checked?: boolean | 'mixed';
   expanded?: boolean;
@@ -230,7 +232,8 @@ function registerFocusable(
   }
   function activationKey(event: KeyboardEvent): 'Enter' | ' ' | undefined {
     const role = options.role ?? 'button';
-    if (role === 'slider' || role === 'spinbutton') return;
+    if (role === 'slider' || role === 'spinbutton' || role === 'separator')
+      return;
     if (event.key === ' ' && role !== 'link') return ' ';
     if (
       event.key === 'Enter' &&
@@ -314,7 +317,8 @@ function registerFocusable(
     const role = native ? options.role : (options.role ?? 'button');
     const checkable =
       role === 'checkbox' || role === 'radio' || role === 'switch';
-    const range = role === 'slider' || role === 'spinbutton';
+    const range =
+      role === 'slider' || role === 'spinbutton' || role === 'separator';
     const checked = checkable ? options.checked : undefined;
     const values = {
       role,

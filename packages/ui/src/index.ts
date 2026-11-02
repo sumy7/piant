@@ -11,6 +11,11 @@ export {
 export { Checkbox, type CheckboxProps } from './components/Checkbox';
 export { Collapsible, type CollapsibleProps } from './components/Collapsible';
 export {
+  Combobox,
+  type ComboboxOption,
+  type ComboboxProps,
+} from './components/Combobox';
+export {
   AlertDialog,
   AlertDialogCancel,
   type AlertDialogCancelProps,
@@ -55,6 +60,7 @@ export {
   MenuTrigger,
   type MenuTriggerProps,
 } from './components/Menu';
+export { NumberField, type NumberFieldProps } from './components/NumberField';
 export {
   Popover,
   PopoverClose,
@@ -71,6 +77,7 @@ export {
   type RadioGroupOption,
   type RadioGroupProps,
 } from './components/RadioGroup';
+export { SearchField, type SearchFieldProps } from './components/SearchField';
 export {
   Select,
   SelectContent,
@@ -86,6 +93,7 @@ export { Separator, type SeparatorProps } from './components/Separator';
 export { Slider, type SliderProps } from './components/Slider';
 export { Spacer, type SpacerProps } from './components/Spacer';
 export { Spinner, type SpinnerProps } from './components/Spinner';
+export { SplitPane, type SplitPaneProps } from './components/SplitPane';
 export { Stack, type StackProps } from './components/Stack';
 export { Surface, type SurfaceProps } from './components/Surface';
 export { Tabs, type TabsItem, type TabsProps } from './components/Tabs';

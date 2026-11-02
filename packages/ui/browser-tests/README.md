@@ -109,3 +109,19 @@ Serve the same consumer's `dist-tree` directory on port 4189 and run `node packa
 The mandatory Tooltip regression can also be run alone with `pnpm --filter @piant/ui exec vitest run tests/tooltip.test.ts -t "four instances"`. It disposes four simultaneously open Dialog/Tooltip trees using the GPU-free fixture. Core style bindings stop on node destruction as well as owner cleanup, preventing parent focus/pressed cleanup from writing into already-freed child Yoga nodes. The core lifecycle test intercepts invalid writes in its failing pre-fix case so it does not corrupt the test process. Diagnostic archives and baseline provenance belong in the issue/MR evidence, alongside fresh isolated and combined results.
 
 Actual OS IME candidate windows and VoiceOver remain COD-179/COD-180. CDP composition, Unicode input and Chrome AX inspection are recorded separately and do not establish either native acceptance result. Instance-scoped modals use `aria-modal="false"` and do not block other Canvas instances or external page DOM.
+
+## SearchField, NumberField, SplitPane and Combobox
+
+Use Node matching the repository engines (for example `volta run --node 24.12.0 pnpm ...`). Run the fixture server above and then:
+
+```sh
+PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs node packages/ui/browser-tests/toolsVerify.mjs
+```
+
+`TOOLS_URL` defaults to `http://127.0.0.1:4177/tools.html`; `TOOLS_EVIDENCE_DIR` defaults to `/tmp/piant-cod171/browser`. The two tool panels share `examples/ui-gallery/src/ToolPanel.ts` with the online docs. Checks cover Chinese CDP composition and Enter/Escape protection, explicit search clear/focus, temporary numerical strings and commit/blur/decimal steps/ranges/null, real mouse/touch divider drags, scaled coordinates, outside release/cancel, keyboard constraints and container resize restoration, editable filtering/selection/cancellation/empty candidates, active descendant/AX associations, dark/compact/200% typography, narrow containers, instance isolation and live teardown/remount. JSON logs, screenshots and Chrome's AX tree are saved under the evidence directory. `pointercancel` is dispatched; mouse/touch movement uses actual Chrome input.
+
+After `pnpm docs:build`, serve `docs/.vitepress/dist` on port4192 and run `toolsDocsVerify.mjs` with `PLAYWRIGHT_MODULE`. Override `TOOLS_DOCS_URL` and `TOOLS_DOCS_EVIDENCE_DIR` as needed. This executes all four independent production examples and the composed online tool panel, including dynamic empty options and remount.
+
+After `pnpm --filter @piant/ui verify:package`, serve the reported `consumer/dist` on port4193 and run the same `toolsVerify.mjs` with `TOOLS_URL=http://127.0.0.1:4193/tools.html` and a separate `TOOLS_EVIDENCE_DIR`. The tool panel is typechecked and compiled against isolated, strictly installed local tarballs; public runtime exports, one core/MobX installation and unused component elimination are checked by the package verifier. This is local release-preview evidence, not an npm registry release.
+
+CDP composition and Chrome AX do not establish actual operating system Chinese candidate-window behavior or VoiceOver reading/navigation. Those remain separate platform acceptance checks. Numerical parsing supports decimal-point notation; split sizes are logical pixels; Combobox is local single selection without virtualization or remote candidates. See each component's API page for precise contracts.

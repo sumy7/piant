@@ -193,3 +193,5 @@ pnpm --filter @piant/examples-ui-smoke dev
 ## 组合工作流验收
 
 [文档编辑工作流](../../docs/ui/workflow.md)将带原生输入的 Dialog、嵌套 Menu/Select/Popover/Tooltip、AlertDialog 和 Toast 保存/撤销反馈组合在一起。在线示例与 `examples/ui-gallery` 的 `workflow.html` 共享场景源码，独立 A/B 工作区可切换外观、窄容器和 CSS 缩放，并分别卸载或重挂载。完整发布消费、浏览器命令与工程证据边界见 [浏览器验收说明](browser-tests/README.md)。
+
+工具场景扩展：`SearchField`、`NumberField`、`Combobox` 和 `SplitPane` 均从根入口导入。交互与边界见[工具面板](https://piant.sumygg.com/ui/tool-panel)，每个组件有独立在线示例和 API 说明。

@@ -14,6 +14,7 @@ import {
 } from '@piant/core';
 import {
   createFocusable,
+  type FocusableOptions,
   type FocusableState,
 } from '../primitives/createFocusable';
 import { useUIFocus } from '../primitives/focusScope';
@@ -63,6 +64,11 @@ export interface TextFieldProps extends Pick<
   | 'onInput'
   | 'onChange'
 > {
+  /** Adapt the existing native input's focus registration for composed fields. */
+  semantics?: Pick<
+    FocusableOptions,
+    'role' | 'expanded' | 'controls' | 'hasPopup' | 'activeDescendant' | 'value'
+  >;
   size?: TextFieldSize;
   type?: TextFieldType;
   invalid?: boolean;
@@ -251,6 +257,24 @@ function renderTextField(
   setFocus(
     createFocusable(node, {
       domElement: node.domElement,
+      get role() {
+        return props.semantics?.role;
+      },
+      get expanded() {
+        return props.semantics?.expanded;
+      },
+      get controls() {
+        return props.semantics?.controls;
+      },
+      get hasPopup() {
+        return props.semantics?.hasPopup;
+      },
+      get activeDescendant() {
+        return props.semantics?.activeDescendant;
+      },
+      get value() {
+        return props.semantics?.value;
+      },
       get name() {
         return name();
       },
