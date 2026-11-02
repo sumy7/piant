@@ -389,7 +389,12 @@ try {
   await scroll.waitFor();
   await scroll.focus();
   await page.keyboard.press('End');
-  await wait();
+  await page.waitForFunction(
+    () =>
+      document
+        .querySelector('[aria-label="Overflow draft"]')
+        ?.getAttribute('tabindex') === '0',
+  );
   await page.keyboard.press('Tab');
   test(
     'keyboard End scroll exposes clipped body input and Tab reaches it',
@@ -398,7 +403,12 @@ try {
   await input('Overflow draft').fill('键盘到达溢出正文');
   await scroll.focus();
   await page.keyboard.press('Home');
-  await wait();
+  await page.waitForFunction(
+    () =>
+      document
+        .querySelector('[aria-label="Fixture draft"]')
+        ?.getAttribute('tabindex') === '0',
+  );
   await page.keyboard.press('Tab');
   test(
     'keyboard Home restores first body input',

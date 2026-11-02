@@ -70,6 +70,15 @@ export interface FocusableState {
 }
 
 const registrations = new WeakMap<PNode, FocusableState>();
+const descriptionLinks = new WeakMap<PNode, { add(id: string): () => void }>();
+
+/** Internal composition hook: retain authored descriptions across semantic refreshes. */
+export function linkFocusableDescription(node: PNode, id: string): () => void {
+  const links = descriptionLinks.get(node);
+  if (!links)
+    throw new Error('Tooltip requires a registered focusable trigger.');
+  return links.add(id);
+}
 const elements = new WeakSet<HTMLElement>();
 let descriptionId = 0;
 
@@ -109,6 +118,9 @@ function registerFocusable(
   const [focused, setFocused] = createState(false);
   const [focusVisible, setFocusVisible] = createState(false);
   const [pressed, setPressed] = createState(false);
+  const [descriptionRevision, setDescriptionRevision] = createState(0);
+  const linkedDescriptions = new Map<string, number>();
+  let lastLinkedDescriptions: string[] = [];
   const description = element.ownerDocument.createElement('span');
   description.id = `piant-description-${++descriptionId}`;
   description.hidden = true;
@@ -321,14 +333,32 @@ function registerFocusable(
     element.hidden = Boolean(options.hidden) || previous.get('hidden') !== null;
     const text = options.description ?? '';
     if (description.textContent !== text) description.textContent = text;
-    if (managesDescription)
+    descriptionRevision();
+    const linked = [...linkedDescriptions.keys()];
+    if (managesDescription) {
       setAttribute(
         element,
         'aria-describedby',
-        [previous.get('aria-describedby'), text ? description.id : undefined]
+        [
+          previous.get('aria-describedby'),
+          text ? description.id : undefined,
+          ...linked,
+        ]
           .filter(Boolean)
           .join(' ') || undefined,
       );
+    } else if (linked.length || lastLinkedDescriptions.length) {
+      const managed = new Set([...linked, ...lastLinkedDescriptions]);
+      const authored = (element.getAttribute('aria-describedby') ?? '')
+        .split(/\s+/)
+        .filter((id) => id && !managed.has(id));
+      setAttribute(
+        element,
+        'aria-describedby',
+        [...authored, ...linked].join(' ') || undefined,
+      );
+    }
+    lastLinkedDescriptions = linked;
     if (!available()) cancel();
     void options.order;
     untrack(() => scope.refresh());
@@ -339,6 +369,17 @@ function registerFocusable(
     disposed = true;
     cancel();
     entry.updateFocus(false);
+    if (!managesDescription && lastLinkedDescriptions.length) {
+      const managed = new Set(lastLinkedDescriptions);
+      setAttribute(
+        element,
+        'aria-describedby',
+        (element.getAttribute('aria-describedby') ?? '')
+          .split(/\s+/)
+          .filter((id) => id && !managed.has(id))
+          .join(' ') || undefined,
+      );
+    }
     stop();
     stopLayout();
     removeDestroy();
@@ -358,6 +399,7 @@ function registerFocusable(
         else element.setAttribute(name, value);
       }
     } else binding.dispose();
+    descriptionLinks.delete(node);
     registrations.delete(node);
     elements.delete(element);
   }
@@ -370,6 +412,21 @@ function registerFocusable(
     focus: () => scope.focus(entry),
     dispose,
   };
+  descriptionLinks.set(node, {
+    add(id) {
+      linkedDescriptions.set(id, (linkedDescriptions.get(id) ?? 0) + 1);
+      setDescriptionRevision((value) => value + 1);
+      let released = false;
+      return () => {
+        if (released) return;
+        released = true;
+        const count = linkedDescriptions.get(id) ?? 0;
+        if (count <= 1) linkedDescriptions.delete(id);
+        else linkedDescriptions.set(id, count - 1);
+        if (!disposed) setDescriptionRevision((value) => value + 1);
+      };
+    },
+  });
   registrations.set(node, state);
   elements.add(element);
   element.addEventListener('click', click);

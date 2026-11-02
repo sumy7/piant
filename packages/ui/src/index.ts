@@ -43,6 +43,16 @@ export type {
   DisclosureItem,
   PanelMountStrategy,
 } from './components/internal/compositeParts';
+export {
+  Popover,
+  PopoverClose,
+  type PopoverCloseProps,
+  PopoverContent,
+  type PopoverContentProps,
+  type PopoverProps,
+  PopoverTrigger,
+  type PopoverTriggerProps,
+} from './components/Popover';
 export { ProgressBar, type ProgressBarProps } from './components/ProgressBar';
 export {
   RadioGroup,
@@ -66,6 +76,14 @@ export {
   ToggleSwitch,
   type ToggleSwitchProps,
 } from './components/ToggleSwitch';
+export {
+  Tooltip,
+  TooltipContent,
+  type TooltipContentProps,
+  type TooltipProps,
+  TooltipTrigger,
+  type TooltipTriggerProps,
+} from './components/Tooltip';
 export {
   type ControllableStateOptions,
   createControllableState,

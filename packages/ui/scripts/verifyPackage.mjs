@@ -407,6 +407,25 @@ const destroy = document.createElement('button'); destroy.textContent = 'Unmount
 destroy.onclick = () => { mounted.destroy(); status.textContent = 'Unmounted; confirmed=' + confirmed; }; document.body.append(destroy);
 `,
 );
+writeFileSync(
+  join(consumer, 'src/popoverTooltip.ts'),
+  `import { mount, View } from '@piant/core';
+import { UIProvider, OverlayHost, Popover, PopoverTrigger, PopoverContent, PopoverClose, Tooltip, TooltipTrigger, TooltipContent, TextField, Button, type PopoverProps, type PopoverTriggerProps, type PopoverContentProps, type PopoverCloseProps, type TooltipProps, type TooltipTriggerProps, type TooltipContentProps } from '@piant/ui';
+const target = document.createElement('div'); target.style.cssText = 'width:720px;height:520px'; document.body.append(target);
+let actions = 0;
+const close: PopoverCloseProps = { children: 'Packed popover close' };
+const trigger: PopoverTriggerProps = { children: 'Packed popover' };
+const content: PopoverContentProps = { name: 'Packed popover editor', width: 320, height: 200, placement: 'right-start', children: () => TextField({ 'aria-label': 'Packed popover draft' }), actions: () => PopoverClose(close) };
+const popover: PopoverProps = { children: () => [PopoverTrigger(trigger), PopoverContent(content)] };
+const helpTrigger: TooltipTriggerProps = { children: 'Packed tooltip', onPress: () => { actions++; } };
+const helpContent: TooltipContentProps = { children: 'Packed tooltip description', width: 240, placement: 'bottom-start' };
+const tooltip: TooltipProps = { openDelay: 25, closeDelay: 50, children: () => [TooltipTrigger(helpTrigger), TooltipContent(helpContent)] };
+const mounted = await mount(() => UIProvider({ children: () => OverlayHost({ children: () => View({ style: { flexDirection: 'column', gap: 20 }, children: [Popover(popover), Button({ children: 'Packed next target' }), Tooltip(tooltip)] }) }) }), target);
+const status = document.createElement('output'); status.id = 'floating-status'; status.textContent = 'Packed anchored popups ready'; document.body.append(status);
+const destroy = document.createElement('button'); destroy.textContent = 'Unmount anchored popups';
+destroy.onclick = () => { mounted.destroy(); status.textContent = 'Unmounted; actions=' + actions; }; document.body.append(destroy);
+`,
+);
 const consumerConfigPath = join(consumer, 'rsbuild.config.ts');
 const consumerConfig = readFileSync(consumerConfigPath, 'utf8');
 assert.ok(
@@ -417,7 +436,7 @@ writeFileSync(
   consumerConfigPath,
   consumerConfig.replace(
     "index: './src/index.ts',",
-    "index: './src/index.ts',\n      overlay: './src/overlay.ts',\n      slider: './src/slider.ts',\n      containers: './src/containers.ts',\n      dialogs: './src/dialogs.ts',",
+    "index: './src/index.ts',\n      overlay: './src/overlay.ts',\n      slider: './src/slider.ts',\n      containers: './src/containers.ts',\n      dialogs: './src/dialogs.ts',\n      popoverTooltip: './src/popoverTooltip.ts',",
   ),
 );
 run(['typecheck'], consumer);
@@ -433,7 +452,7 @@ execFileSync(
 import assert from 'node:assert/strict';
 import { getOwner, runWithOwner, root, useMountSurface } from '@piant/core';
 import * as ui from '@piant/ui';
-for (const name of ['OverlayHost', 'createOverlay', 'createOverlayAnchor', 'computeOverlayPosition', 'Slider', 'Tabs', 'Collapsible', 'Accordion', 'Dialog', 'DialogTrigger', 'DialogContent', 'DialogTitle', 'DialogDescription', 'DialogClose', 'AlertDialog', 'AlertDialogTrigger', 'AlertDialogContent', 'AlertDialogTitle', 'AlertDialogDescription', 'AlertDialogCancel', 'AlertDialogConfirm']) assert.equal(typeof ui[name], 'function', name);
+for (const name of ['OverlayHost', 'createOverlay', 'createOverlayAnchor', 'computeOverlayPosition', 'Slider', 'Tabs', 'Collapsible', 'Accordion', 'Dialog', 'DialogTrigger', 'DialogContent', 'DialogTitle', 'DialogDescription', 'DialogClose', 'AlertDialog', 'AlertDialogTrigger', 'AlertDialogContent', 'AlertDialogTitle', 'AlertDialogDescription', 'AlertDialogCancel', 'AlertDialogConfirm', 'Popover', 'PopoverTrigger', 'PopoverContent', 'PopoverClose', 'Tooltip', 'TooltipTrigger', 'TooltipContent']) assert.equal(typeof ui[name], 'function', name);
 assert.equal(getOwner(), null);
 assert.equal(useMountSurface(), undefined);
 const stop = root((dispose) => {
@@ -594,6 +613,13 @@ for (const name of [
   'AlertDialogDescription',
   'AlertDialogCancel',
   'AlertDialogConfirm',
+  'Popover',
+  'PopoverTrigger',
+  'PopoverContent',
+  'PopoverClose',
+  'Tooltip',
+  'TooltipTrigger',
+  'TooltipContent',
   'componentRoot',
   'createCompositePanel',
   'createCompositeTrigger',

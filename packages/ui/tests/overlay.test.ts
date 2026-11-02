@@ -216,6 +216,140 @@ function key(
 }
 
 describe('instance-scoped overlays', () => {
+  it('observes document Escape for descriptive help without falling through its own modal', async () => {
+    let modal!: OverlayState;
+    let help!: OverlayState;
+    let action!: FocusableState;
+    const dismiss = vi.fn();
+    setup((add, control) => {
+      modal = add({
+        modal: true,
+        children: () => {
+          const item = control('modal action');
+          action = item;
+          return item.node;
+        },
+      });
+      help = add({
+        autoFocus: false,
+        restoreFocus: false,
+        escapeScope: 'document',
+        onDismiss: dismiss,
+      });
+    });
+    modal.setOpen(true);
+    await settle();
+    help.setOpen(true);
+    await settle();
+    key(action.element, 'Escape');
+    expect(help.open()).toBe(false);
+    expect(modal.open()).toBe(true);
+    expect(dismiss).toHaveBeenCalledTimes(1);
+    key(action.element, 'Escape');
+    expect(modal.open()).toBe(false);
+  });
+
+  it('observes a foreign instance Escape once without stealing its dismissal event', async () => {
+    let left!: OverlayState;
+    let help!: OverlayState;
+    let action!: FocusableState;
+    const dismiss = vi.fn();
+    setup((add, control) => {
+      left = add({
+        modal: true,
+        children: () => {
+          const item = control('left action');
+          action = item;
+          return item.node;
+        },
+      });
+    });
+    setup((add) => {
+      help = add({
+        autoFocus: false,
+        restoreFocus: false,
+        escapeScope: 'document',
+        open: true,
+        onDismiss: dismiss,
+      });
+    }, 500);
+    left.setOpen(true);
+    await settle();
+    key(action.element, 'Escape');
+    expect(left.open()).toBe(false);
+    expect(dismiss).toHaveBeenCalledTimes(1);
+    // Controlled help rejects the close request, but does not re-request within one dispatch.
+    expect(help.open()).toBe(true);
+  });
+
+  it('dismisses descriptive help with body focus without consuming unrelated page events', async () => {
+    let help!: OverlayState;
+    setup((add) => {
+      help = add({
+        autoFocus: false,
+        restoreFocus: false,
+        escapeScope: 'document',
+      });
+    });
+    help.setOpen(true);
+    await settle();
+    expect(key(document.body, 'Escape').defaultPrevented).toBe(false);
+    expect(help.open()).toBe(false);
+  });
+
+  it('does not restore nonmodal focus over the newly focused background control', async () => {
+    let overlay!: OverlayState;
+    let destination!: FocusableState;
+    setup((add, control) => {
+      control('trigger');
+      destination = control('destination');
+      overlay = add({
+        autoFocus: true,
+        dismissOnFocusOutside: true,
+        children: () => control('content').node,
+      });
+    });
+    overlay.setOpen(true);
+    await settle();
+    destination.focus();
+    expect(overlay.open()).toBe(false);
+    expect(document.activeElement).toBe(destination.element);
+  });
+
+  it('links nonmodal Tab exits to the trigger logical order exactly once on controlled refusal', async () => {
+    let overlay!: OverlayState;
+    let trigger!: FocusableState;
+    let next!: FocusableState;
+    let content!: FocusableState;
+    const changes = vi.fn();
+    setup((add, control) => {
+      trigger = control('trigger');
+      next = control('next');
+      overlay = add({
+        open: true,
+        autoFocus: true,
+        dismissOnFocusOutside: true,
+        tabAnchor: trigger.element,
+        onOpenChange: changes,
+        children: () => {
+          const item = control('content');
+          content = item;
+          return item.node;
+        },
+      });
+    });
+    await settle();
+    key(content.element, 'Tab');
+    expect(document.activeElement).toBe(next.element);
+    expect(changes).toHaveBeenCalledExactlyOnceWith(false);
+    expect(overlay.open()).toBe(true);
+    content.focus();
+    changes.mockClear();
+    key(content.element, 'Tab', { shiftKey: true });
+    expect(document.activeElement).toBe(trigger.element);
+    expect(changes).toHaveBeenCalledExactlyOnceWith(false);
+  });
+
   it('resolves initial focus once per opening without accepting a foreign target', async () => {
     let overlay!: OverlayState;
     let first!: FocusableState;

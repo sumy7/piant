@@ -23,6 +23,7 @@ pnpm add @piant/ui @piant/core "pixi.js@^8.22.0"
 - 输入：`TextField`、`Field`。
 - 选择：`Checkbox`、`ToggleSwitch`、`RadioGroup`。
 - 弹窗：`Dialog`、`DialogTrigger`、`DialogContent`、`DialogTitle`、`DialogDescription`、`DialogClose`；`AlertDialog`、`AlertDialogTrigger`、`AlertDialogContent`、`AlertDialogTitle`、`AlertDialogDescription`、`AlertDialogCancel`、`AlertDialogConfirm`。
+- 锚定面板与提示：`Popover`、`PopoverTrigger`、`PopoverContent`、`PopoverClose`；`Tooltip`、`TooltipTrigger`、`TooltipContent`。
 - 类型：`ColorMode`、`ControlDensity`、`ThemeTokens`、`ThemeOverrides`、`ThemeOptions`、`UITheme`、`UIProviderProps`、`ControllableStateOptions`、`PressableOptions`、`PressableState`、`SpacerProps`、`StackProps`、`SurfaceProps`、`SeparatorProps`、`IconProps`、`IconDraw`、`BadgeProps`、`ProgressBarProps`、`SpinnerProps`、`ButtonProps`、`IconButtonProps`、`ButtonIconContext`、`ButtonPressEvent`、`ButtonSize`、`ButtonVariant`、`TextFieldProps`、`TextFieldSize`、`TextFieldType`、`FieldProps`、`CheckboxProps`、`ToggleSwitchProps`、`RadioGroupProps`、`RadioGroupOption`。
 
 `@piant/core` 是 peer dependency，由应用提供，版本须满足已安装 UI 包的 `peerDependencies`。Core 的 peer dependency 为 `pixi.js ^8.22.0`。UI 构建保留对 core 的外部引用，不打包另一份 core 或响应式运行时。
@@ -138,6 +139,12 @@ export function ThemedApp() {
 Dialog 默认聚焦首个可用控件，允许 Escape 与遮罩请求关闭；AlertDialog 默认聚焦 Cancel，遮罩保持打开，Escape 只请求关闭。`initialFocus` 每次打开只解析一次；主题更新不重建输入。Tab / Shift+Tab 约束、嵌套和关闭恢复复用 Host，触发器消失时使用实例安全回退。确认业务仅放在 Confirm 的 `onPress`，打开、关闭或卸载均不自动确认；`event.preventDefault()` 可阻止按钮自动请求关闭，受控最终状态仍由调用方提交。
 
 真实 DOM 宿主提供 `dialog` / `alertdialog` 角色和标题/描述 ID；没有 Title 时 Content 必须提供非空 `name`。模态范围仅属于当前实例，其他 Canvas 或网页 DOM 仍可操作，因此使用 `aria-modal="false"`，不声称页面级 APG 模态支持。AX 树和自动化输入合成检查不等同于 VoiceOver 朗读、导航或系统中文候选窗口验收；支持边界见文档。
+
+## Popover 与 Tooltip
+
+`Popover` 在触发器附近展示非模态表单或操作面板，支持受控/非受控打开值、触发器切换、必填内容名称、一次性初始焦点和独立操作区。Escape、外部指针或焦点默认请求关闭；Tab 可从首尾离开，背景操作继续执行。`Tooltip` 只接受简短非交互文字，悬停默认等待 500ms，键盘聚焦立即显示，指针离开有 200ms 宽限，可移入继续阅读且没有阅读倒计时；Escape 关闭并抑制当前会话重开。触摸不触发悬停，按钮保留原本动作。
+
+两者均在 `UIProvider` / `OverlayHost` 内通过函数子树创建，关闭销毁内容，触发器失效或 owner/Host 卸载会释放视觉面及计时器。Popover 使用 `dialog` 与 `aria-modal="false"`，Tooltip 使用 `tooltip` 并合并触发器的 `aria-describedby`，不获取或恢复焦点。完整属性、独立在线示例、受控关闭和输入/辅助技术边界见 [Popover 与 Tooltip 文档](../../docs/ui/popovers.md)。
 
 ## 工程边界
 
