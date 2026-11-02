@@ -24,3 +24,9 @@ pnpm --filter @piant/examples-ui-gallery build
 在浏览器中验证编辑、标签聚焦、字段校验、复选框、开关、单选、按钮键盘操作、保存/加载反馈，以及两次挂载之间的状态和清理隔离。组合明暗主题、紧凑密度、200% 字号和窄宽度，保留截图与操作日志。
 
 实际系统输入法和 VoiceOver 等辅助技术需要分别验收，不能由合成事件、DOM/AX 检查或构建通过推断。详细组件索引、在线面板和验收操作见 [Gallery 文档](../../docs/ui/gallery.md)；每个组件的独立示例见该文档索引。
+
+## 文档编辑与浮层组合
+
+同一个开发服务的 `/workflow`（生产产物为 `workflow.html`）提供第二条验收路径：带原生输入的 Dialog 中组合 Menu、Select、Popover、Tooltip 与明确确认的 AlertDialog，保存后用 Toast 反馈并可显式撤销。A/B 工作区支持独立主题、密度、200% 字号、窄容器、CSS 缩放及卸载/重挂载。
+
+场景源码 `src/OverlayWorkflow.tsx` 与文档在线示例复用；所有保存、归档、撤销均为当前内存中的本地示例，不连接真实数据服务。完整 API 与支持边界见 [组合工作流指南](../../docs/ui/workflow.md)。

@@ -10,6 +10,7 @@ import {
   symlinkSync,
   writeFileSync,
 } from 'node:fs';
+import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { dirname, isAbsolute, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -561,6 +562,91 @@ destroy.onclick = () => { mounted.destroy(); status.dataset.mounted = 'false'; p
 document.body.append(destroy);
 `,
 );
+// Precompile the shared example outside the consumer. Keep the original TSX as
+// a type-only fixture: JSX contextual types are lost by the JSX-to-factory pass.
+// The browser receives JavaScript and requires no JSX transform or Babel plugin.
+const workflowDirectory = join(root, 'examples/ui-gallery/src');
+const docsRequire = createRequire(join(root, 'docs/package.json'));
+const { parseSync, transformSync } = docsRequire('@babel/core');
+const workflowSourcePath = join(workflowDirectory, 'OverlayWorkflow.tsx');
+const workflowSource = readFileSync(workflowSourcePath, 'utf8');
+const workflow = transformSync(workflowSource, {
+  filename: workflowSourcePath,
+  babelrc: false,
+  configFile: false,
+  ast: true,
+  parserOpts: { plugins: ['typescript', 'jsx'] },
+  presets: [docsRequire.resolve('@piant/babel-preset-piant')],
+});
+assert.ok(
+  workflow?.code && workflow.ast,
+  'Missing transformed workflow fixture',
+);
+assert.ok(
+  parseSync(workflow.code, {
+    filename: 'OverlayWorkflow.ts',
+    babelrc: false,
+    configFile: false,
+    parserOpts: { plugins: ['typescript'] },
+  }),
+  'Prepared workflow must parse as TypeScript without JSX',
+);
+for (const statement of workflow.ast.program.body) {
+  if (statement.source) {
+    assert.ok(
+      ['@piant/core', '@piant/ui'].includes(statement.source.value),
+      `Workflow must consume public packages: ${statement.source.value}`,
+    );
+  }
+}
+const ts = docsRequire('typescript');
+const emittedWorkflow = ts.transpileModule(workflow.code, {
+  fileName: 'OverlayWorkflow.ts',
+  compilerOptions: {
+    target: ts.ScriptTarget.ES2020,
+    module: ts.ModuleKind.ESNext,
+    verbatimModuleSyntax: true,
+  },
+  reportDiagnostics: true,
+});
+assert.equal(
+  emittedWorkflow.diagnostics?.length ?? 0,
+  0,
+  'Workflow emission must succeed',
+);
+writeFileSync(
+  join(consumer, 'src/OverlayWorkflow.js'),
+  emittedWorkflow.outputText,
+);
+writeFileSync(join(consumer, 'src/workflowSource.tsx'), workflowSource);
+writeFileSync(
+  join(consumer, 'src/OverlayWorkflow.d.ts'),
+  "export * from './workflowSource';\n",
+);
+const workflowHostPath = join(workflowDirectory, 'workflow.ts');
+const workflowHost = readFileSync(workflowHostPath, 'utf8');
+const workflowHostAST = parseSync(workflowHost, {
+  filename: workflowHostPath,
+  babelrc: false,
+  configFile: false,
+  parserOpts: { plugins: ['typescript'] },
+});
+assert.ok(workflowHostAST, 'Missing workflow host fixture');
+for (const statement of workflowHostAST.program.body) {
+  if (statement.source) {
+    assert.ok(
+      ['@piant/core', '@piant/ui', './OverlayWorkflow', './style.css'].includes(
+        statement.source.value,
+      ),
+      `Workflow host must consume public packages/local fixture: ${statement.source.value}`,
+    );
+  }
+}
+writeFileSync(join(consumer, 'src/workflow.ts'), workflowHost);
+cpSync(join(workflowDirectory, 'style.css'), join(consumer, 'src/style.css'));
+console.log(
+  'Prepared workflow: original TSX checked against installed declarations; browser runs precompiled JavaScript with no consumer JSX/Babel transform.',
+);
 const consumerConfigPath = join(consumer, 'rsbuild.config.ts');
 const consumerConfig = readFileSync(consumerConfigPath, 'utf8');
 assert.ok(
@@ -571,7 +657,7 @@ writeFileSync(
   consumerConfigPath,
   consumerConfig.replace(
     "index: './src/index.ts',",
-    "index: './src/index.ts',\n      overlay: './src/overlay.ts',\n      slider: './src/slider.ts',\n      containers: './src/containers.ts',\n      dialogs: './src/dialogs.ts',\n      popoverTooltip: './src/popoverTooltip.ts',\n      menuSelect: './src/menuSelect.ts',\n      toast: './src/toast.ts',",
+    "index: './src/index.ts',\n      overlay: './src/overlay.ts',\n      slider: './src/slider.ts',\n      containers: './src/containers.ts',\n      dialogs: './src/dialogs.ts',\n      popoverTooltip: './src/popoverTooltip.ts',\n      menuSelect: './src/menuSelect.ts',\n      toast: './src/toast.ts',\n      workflow: './src/workflow.ts',",
   ),
 );
 run(['typecheck'], consumer);
@@ -656,6 +742,7 @@ const control = process.env.PIANT_TREE_SHAKE_CONTROL === '1';
 const used = process.env.PIANT_TREE_USE_SPACER === '1';
 export default defineConfig({
   source: { exclude: [/tree\\.js$/], entry: { index: used ? './src/tree-used.js' : './src/tree.js' } },
+  html: { tags: [{ tag: 'link', attrs: { rel: 'icon', href: 'data:,' } }] },
   output: { distPath: { root: control ? 'dist-control' : used ? 'dist-used' : 'dist-tree' }, minify: false },
   tools: { rspack: { optimization: control ? { sideEffects: false, usedExports: false } : {} } },
 });

@@ -189,3 +189,7 @@ pnpm --filter @piant/examples-ui-smoke dev
 ```
 
 `verify:package` 在仓库外复制工作区版本元数据与构建文件，执行 Changesets 版本预演后 pack，并隔离验证发布消费。它会检查发布 peer 与核心版本匹配，同时断言源码版本与 Changesets 未被改写。使用真实本地 core tarball 的验证不能等同于 registry 发布验证。浏览器中打开 smoke 示例，检查初始间距、点击「Increase gap」后的间距变化，以及「Unmount」后的资源清理；`/theme.html` 提供主题消费场景，`/pressable.html` 提供交互原语消费场景，`/foundations.html` 提供七个基础组件的组合预览，可操作主题、进度、窄容器、缩放和卸载；`/buttons.html` 提供 Button/IconButton 的键盘、事件替换、禁用与反复加载验证；`/selection.html` 提供选择控件组合验证；`/textFields.html` 提供 TextField/Field 的编辑、标签、错误、主题、选区与卸载检查。生产构建成功本身不代表浏览器运行通过。
+
+## 组合工作流验收
+
+[文档编辑工作流](../../docs/ui/workflow.md)将带原生输入的 Dialog、嵌套 Menu/Select/Popover/Tooltip、AlertDialog 和 Toast 保存/撤销反馈组合在一起。在线示例与 `examples/ui-gallery` 的 `workflow.html` 共享场景源码，独立 A/B 工作区可切换外观、窄容器和 CSS 缩放，并分别卸载或重挂载。完整发布消费、浏览器命令与工程证据边界见 [浏览器验收说明](browser-tests/README.md)。

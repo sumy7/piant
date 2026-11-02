@@ -6,6 +6,8 @@
 
 [UI Gallery](/ui/gallery)将布局、图标、状态展示、按钮、文本字段和选择控件组合成可操作设置面板，并提供全部公开组件的独立在线示例索引。仓库 `examples/ui-gallery` 还提供两个独立 Canvas、窄容器与卸载/重挂载控制，用于组合验证。
 
+[浮层组合工作流](/ui/workflow)将文档编辑、嵌套菜单与选择、归档确认和保存/撤销通知组成第二条本地操作路径，与仓库工作流入口复用同一场景。
+
 ## 安装
 
 ```bash
@@ -57,6 +59,22 @@ UI 以 `@piant/core` 为 peer dependency，范围以已安装 UI 包的 `peerDep
 ## 浮层底座
 
 `OverlayHost` 为每个挂载实例建立独立浮层栈；`createOverlay` 管理打开状态、视觉面、关闭策略和模态焦点，`createOverlayAnchor` 将 Canvas 节点接入 viewport 定位。锚定、嵌套、带输入的模态宿主与双 Canvas 示例见[浮层底座与实例隔离](/ui/overlays)。这是组合浮层组件的底座，调用方仍负责内容和业务语义。
+
+## Dialog 与 AlertDialog
+
+Dialog 组合带原生输入的编辑器，提供打开状态、内容命名、初始焦点、实例内约束和关闭恢复；AlertDialog 将取消与明确确认分开，默认聚焦安全的取消动作。[Dialog 与 AlertDialog](/ui/dialogs)说明组合部件、关闭策略、内容释放与实际模态范围。
+
+## Popover 与 Tooltip
+
+Popover 提供锚定触发器的非模态交互面板，允许焦点离开；Tooltip 只展示与触发器关联的简短非交互文字，支持悬停、聚焦、继续阅读与 Escape 关闭。[Popover 与 Tooltip](/ui/popovers)分别提供独立在线示例与支持边界。
+
+## Menu 与 Select
+
+Menu 承载明确动作，Select 将候选浏览与单值提交分开，二者支持稳定 key、禁用项发现、方向键及字符导航。[Menu 与 Select](/ui/menu-select)说明状态、事件取消、动态选项、关闭策略以及 select-only 语义。
+
+## Toast 通知
+
+ToastProvider、useToast 和 ToastViewport 管理有界队列、更新与指定树位置的通知展示。通知默认持续显示，不自动聚焦；有限时长在交互或不可用期间暂停。[Toast 指南](/ui/toast)包含排队、持久操作、播报通道和卸载示例。
 
 ## 使用 Spacer
 

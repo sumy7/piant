@@ -4,6 +4,7 @@ import { pluginBabel } from '@rsbuild/plugin-babel';
 
 const require = createRequire(import.meta.url);
 export default defineConfig({
+  source: { entry: { index: './src/index.ts', workflow: './src/workflow.ts' } },
   plugins: [
     pluginBabel({
       include: /\.(?:jsx|tsx)$/,

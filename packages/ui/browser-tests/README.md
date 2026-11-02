@@ -89,3 +89,23 @@ Start `pnpm docs:dev --host 127.0.0.1` and run `node packages/ui/browser-tests/t
 `TOAST_FIXTURE_URL` defaults to `http://127.0.0.1:4177/toast.html`; `TOAST_EVIDENCE_DIR` defaults to `/tmp/piant-cod169`. The real Chrome checks cover input focus/selection, stable status/alert channels and AX, FIFO limits and upsert, action/dismiss pointer and keyboard paths, action replacement during a held gesture, hover/focus timeout pauses, keyboard scrolling at 200% font scale, viewport/provider teardown, parent Dialog routing and independent instances. Timed notifications are explicitly enabled; the default is persistent. The viewport lives in its retained Canvas tree and respects ancestor clipping and modal inertness. Chrome AX and simulated events do not certify VoiceOver or system IME (COD-179/COD-180).
 
 After `pnpm --filter @piant/ui verify:package`, serve its reported `consumer/dist` directory on port 4188 and run `node packages/ui/browser-tests/toastPackageVerify.mjs` with the same Playwright/output variables. `TOAST_PACKAGE_URL` defaults to `http://127.0.0.1:4188/toast.html`. This validates locally packed public API/types and production interactions, not an npm registry release.
+
+## Composed overlay workflow and release checks
+
+Build core/UI first, then run `pnpm --filter @piant/examples-ui-gallery dev --host 127.0.0.1 --port 4190`. The `/workflow` entry and the documentation `/ui/workflow` share `examples/ui-gallery/src/OverlayWorkflow.tsx`. Do not rebuild dependency `dist` directories during a live browser run; restart the development server after a dependency rebuild if its resolver cached missing outputs.
+
+```sh
+PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs node packages/ui/browser-tests/workflowVerify.mjs
+```
+
+`WORKFLOW_URL` defaults to `http://127.0.0.1:4190/workflow`; `WORKFLOW_EVIDENCE_DIR` defaults to `/tmp/piant-cod170/workflow`. The same script runs against the standalone production `workflow.html` and the isolated tarball consumer's `workflow.html`. It covers document/Popover native editing, Menu/Select commit and disabled states, safe AlertDialog cancellation and confirmation, Toast undo, background gesture consumption, two instance modals, native hit geometry during page/CSS scaling, narrow 200% keyboard scrolling and repeated live teardown.
+
+After `pnpm docs:build`, serve `docs/.vitepress/dist` on port 5173 and run `node packages/ui/browser-tests/workflowDocsVerify.mjs` with `PLAYWRIGHT_MODULE`. `WORKFLOW_DOCS_URL` defaults to `http://127.0.0.1:5173/ui/workflow.html`, and `WORKFLOW_DOCS_EVIDENCE_DIR` to `/tmp/piant-cod170/docs`. It checks the actual online example's nested keyboard flow, save/undo, appearance changes and scene unmount/remount.
+
+After `verify:package`, serve the reported `consumer/dist` on port 4188 and set `WORKFLOW_URL=http://127.0.0.1:4188/workflow.html` to validate the composed workflow against installed tarballs. The verification script checks the original shared TSX against installed declarations and precompiles its executable JavaScript before copying; consumers still load executable UI JavaScript without compiling dependency JSX. Public imports, core/MobX identity and tree-shaking are checked separately.
+
+Serve the same consumer's `dist-tree` directory on port 4189 and run `node packages/ui/browser-tests/unusedUiVerify.mjs` with `PLAYWRIGHT_MODULE`; `UNUSED_UI_URL` defaults to `http://127.0.0.1:4189/`, and `UNUSED_UI_EVIDENCE_DIR` to `/tmp/piant-cod170/unused-ui`. This checks the production core-only consumer for absent UI DOM/keyboard interception and intact external native editing. Core retains its own initialization semantics.
+
+The mandatory Tooltip regression can also be run alone with `pnpm --filter @piant/ui exec vitest run tests/tooltip.test.ts -t "four instances"`. It disposes four simultaneously open Dialog/Tooltip trees using the GPU-free fixture. Core style bindings stop on node destruction as well as owner cleanup, preventing parent focus/pressed cleanup from writing into already-freed child Yoga nodes. The core lifecycle test intercepts invalid writes in its failing pre-fix case so it does not corrupt the test process. Diagnostic archives and baseline provenance belong in the issue/MR evidence, alongside fresh isolated and combined results.
+
+Actual OS IME candidate windows and VoiceOver remain COD-179/COD-180. CDP composition, Unicode input and Chrome AX inspection are recorded separately and do not establish either native acceptance result. Instance-scoped modals use `aria-modal="false"` and do not block other Canvas instances or external page DOM.

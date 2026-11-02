@@ -597,4 +597,49 @@ describe('Tooltip', () => {
     expect(surface()).toBeNull();
     expect(changes.mock.calls).toEqual([[true], [true], [false]]);
   });
+  it('disposes and remounts four instances with Dialog and Tooltip simultaneously open', async () => {
+    for (let cycle = 0; cycle < 4; cycle++) {
+      let trigger!: PNode;
+      const state = fixture(() => [
+        TextField({ 'aria-label': 'Cycle background editor' }),
+        Dialog({
+          defaultOpen: true,
+          children: () =>
+            DialogContent({
+              name: 'Cycle modal',
+              children: () => [
+                TextField({ 'aria-label': 'Cycle dialog editor' }),
+                Tooltip({
+                  children: () => [
+                    TooltipTrigger({
+                      children: 'Cycle help action',
+                      ref: (node) => {
+                        trigger = node;
+                      },
+                    }),
+                    TooltipContent({ children: 'Cycle help text' }),
+                  ],
+                }),
+              ],
+            }),
+        }),
+      ]);
+      await settle();
+      pixiPointer(trigger, 'pointerenter');
+      await advance(500);
+      expect(surface()).not.toBeNull();
+      expect(document.querySelector('[role=dialog]')).not.toBeNull();
+      named('Cycle background editor').focus();
+      await settle();
+      expect(document.activeElement).toBe(named('Cycle dialog editor'));
+      state.dispose();
+      await settle();
+      expect(document.querySelector('[data-piant-overlay]')).toBeNull();
+      expect(runtime.sync).toHaveLength(0);
+    }
+    expect(runtime.destroyed).toHaveLength(8);
+    expect(
+      runtime.destroyed.every((destroy) => destroy.mock.calls.length === 1),
+    ).toBe(true);
+  });
 });

@@ -1,10 +1,12 @@
-import { effect } from '../reactivity/effects';
+import { cleanup, effect, root } from '../reactivity/effects';
 
 type StylePatch<T extends object> = {
   [Key in keyof T]?: T[Key] | undefined;
 };
 
 type StyleTarget<T extends object> = {
+  readonly isDestroyed: boolean;
+  onDestroy(callback: () => void): () => void;
   _layoutStyle: Partial<T>;
   setStyle(style: Partial<T>): void;
 };
@@ -21,30 +23,40 @@ export function bindStyle<T extends object>(
   const defaults = { ...element._layoutStyle } as Record<string, unknown>;
   let previous = { ...defaults };
 
-  effect(() => {
-    const resolved = resolveStyle();
-    const next = { ...defaults };
+  const stop = root((dispose) => {
+    effect(() => {
+      if (element.isDestroyed) return;
+      const resolved = resolveStyle();
+      if (element.isDestroyed) return;
+      const next = { ...defaults };
 
-    if (resolved) {
-      for (const [key, value] of Object.entries(resolved)) {
-        if (value === undefined) {
-          if (!(key in defaults)) {
-            delete next[key];
+      if (resolved) {
+        for (const [key, value] of Object.entries(resolved)) {
+          if (value === undefined) {
+            if (!(key in defaults)) {
+              delete next[key];
+            }
+          } else {
+            next[key] = value;
           }
-        } else {
-          next[key] = value;
         }
       }
-    }
 
-    const patch: Record<string, unknown> = { ...next };
-    for (const key of Object.keys(previous)) {
-      if (!(key in next)) {
-        patch[key] = undefined;
+      const patch: Record<string, unknown> = { ...next };
+      for (const key of Object.keys(previous)) {
+        if (!(key in next)) {
+          patch[key] = undefined;
+        }
       }
-    }
 
-    element.setStyle(patch as Partial<T>);
-    previous = { ...next };
+      element.setStyle(patch as Partial<T>);
+      previous = { ...next };
+    });
+    return dispose;
+  });
+  const removeDestroy = element.onDestroy(stop);
+  cleanup(() => {
+    stop();
+    removeDestroy();
   });
 }
