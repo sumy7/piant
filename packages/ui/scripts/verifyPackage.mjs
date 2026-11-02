@@ -213,8 +213,214 @@ run(
   ],
   consumer,
 );
+// A plain TypeScript consumer exercises the new declarations without a JSX
+// transform or source-path imports. It is also a runnable browser fixture.
+writeFileSync(
+  join(consumer, 'src/overlay.ts'),
+  `import { getOwner, type ContextOwner, runWithOwner, useMountSurface, type MountSurface, mount, View } from '@piant/core';
+import { UIProvider, OverlayHost, createOverlay, createOverlayAnchor, computeOverlayPosition, Button, Surface, type OverlayAnchor, type OverlayOptions, type OverlayState, type OverlayHostProps, type OverlayRect, type OverlayPlacement, type OverlayPositionOptions, type OverlayPosition, type OverlayDismissReason } from '@piant/ui';
+const target = document.createElement('div');
+target.style.cssText = 'width:420px;height:260px';
+document.body.append(target);
+const bounds: OverlayRect = { x: 0, y: 0, width: 420, height: 260 };
+const placement: OverlayPlacement = 'bottom-start';
+const positioning: OverlayPositionOptions = { placement, flip: true, shift: true };
+const result: OverlayPosition = computeOverlayPosition({ x: 24, y: 20, width: 100, height: 36 }, { width: 180, height: 100 }, bounds, positioning);
+if (result.x !== 24 || result.y !== 60) throw new Error('Packed positioning failed');
+let overlay: OverlayState;
+const mounted = await mount(() => UIProvider({ children: () => {
+  const surface: MountSurface | undefined = useMountSurface();
+  if (surface?.target !== target) throw new Error('Packed mount context failed');
+  const owner: ContextOwner | null = getOwner();
+  if (!owner || !runWithOwner(owner, () => getOwner() === owner)) throw new Error('Packed owner binding failed');
+  const hostProps: OverlayHostProps = { children: () => {
+    let anchor: OverlayAnchor | undefined;
+    const options: OverlayOptions = {
+      get anchor() { return anchor; }, width: 220, height: 100, placement,
+      onDismiss(reason: OverlayDismissReason) { target.dataset.dismiss = reason; },
+      children: (state) => Surface({ style: { width: '100%', height: '100%' }, children: Button({ children: 'Close overlay', onPress: () => state.setOpen(false) }) }),
+    };
+    overlay = createOverlay(options);
+    return View({ ref: (node) => { anchor = createOverlayAnchor(node); }, style: { width: 180, height: 40 }, children: Button({ children: 'Open overlay', onPress: () => overlay.setOpen(true) }) });
+  } };
+  return OverlayHost(hostProps);
+} }), target);
+const destroy = document.createElement('button');
+destroy.textContent = 'Unmount overlay fixture';
+destroy.onclick = () => mounted.destroy();
+document.body.append(destroy);
+`,
+);
+// Exercise SliderProps through the installed declarations and create a browser
+// fixture which checks real semantic keyboard editing after the first frame.
+writeFileSync(
+  join(consumer, 'src/slider.ts'),
+  `import { createState, mount, View } from '@piant/core';
+import { Slider, type SliderProps, UIProvider } from '@piant/ui';
+const target = document.createElement('div');
+target.style.cssText = 'width:420px;height:180px';
+const status = document.createElement('p');
+status.id = 'slider-status';
+status.textContent = 'Mounting packed Slider';
+document.body.append(target, status);
+let value = () => 0;
+let changes = 0;
+let setDisabled = (_next: boolean) => {};
+const mounted = await mount(() => UIProvider({ children: () => {
+  const [current, setCurrent] = createState(0.2);
+  const [disabled, updateDisabled] = createState(false);
+  value = current;
+  setDisabled = updateDisabled;
+  const props: SliderProps = {
+    name: 'Packed playback speed', description: 'Controlled decimal range',
+    min: -1, max: 1, step: 0.1,
+    get value() { return current(); },
+    get disabled() { return disabled(); },
+    valueText: (next) => next.toFixed(1) + 'x',
+    onValueChange(next) { changes++; setCurrent(next); },
+    style: { width: 360, height: 40 },
+  };
+  return View({ style: { padding: 20 }, children: Slider(props) });
+} }), target);
+mounted.app.render();
+await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+mounted.app.render();
+await Promise.resolve();
+const semantic = target.querySelector<HTMLElement>('[role="slider"]');
+if (!semantic) throw new Error('Packed Slider semantic proxy missing');
+if (semantic.getAttribute('aria-valuemin') !== '-1' || semantic.getAttribute('aria-valuemax') !== '1') throw new Error('Packed Slider range semantics failed');
+semantic.focus();
+semantic.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true }));
+if (value() !== 0.3 || changes !== 1 || semantic.getAttribute('aria-valuenow') !== '0.3') throw new Error('Packed Slider controlled keyboard update failed');
+setDisabled(true);
+semantic.dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true, cancelable: true }));
+if (value() !== 0.3 || changes !== 1 || semantic.tabIndex !== -1) throw new Error('Packed Slider disabled boundary failed');
+setDisabled(false);
+status.textContent = 'PASS: packed Slider controlled decimals, range semantics, keyboard and disabled state';
+const destroy = document.createElement('button');
+destroy.textContent = 'Unmount Slider fixture';
+destroy.onclick = () => { mounted.destroy(); status.textContent = 'Unmounted packed Slider'; };
+document.body.append(destroy);
+`,
+);
+// Container fixtures use plain TS factories and every public props/item type.
+// Browser assertions exercise the installed component code and native semantics.
+writeFileSync(
+  join(consumer, 'src/containers.ts'),
+  `import { createState, mount, onCleanup, View } from '@piant/core';
+import { Tabs, type TabsProps, type TabsItem, Collapsible, type CollapsibleProps, Accordion, type AccordionProps, type DisclosureItem, type PanelMountStrategy, TextField, UIProvider } from '@piant/ui';
+const target = document.createElement('div');
+target.style.cssText = 'width:520px;height:620px';
+const status = document.createElement('p');
+status.id = 'containers-status'; status.textContent = 'Mounting packed containers';
+document.body.append(target, status);
+let created = 0, disposed = 0;
+const content = (name: string) => () => {
+  created++;
+  onCleanup(() => { disposed++; });
+  return TextField({ 'aria-label': name, defaultValue: name });
+};
+const mounted = await mount(() => UIProvider({ children: () => {
+  const [selected, setSelected] = createState<string | null>('first');
+  const strategy: PanelMountStrategy = 'lazy';
+  const tabItems: readonly TabsItem[] = [
+    { value: 'first', label: 'Packed first tab', children: content('Packed first draft') },
+    { value: 'second', label: 'Packed second tab', children: content('Packed second draft') },
+  ];
+  const tabProps: TabsProps = { label: 'Packed tab group', items: tabItems, get value() { return selected(); }, onValueChange: setSelected, mountStrategy: strategy };
+  const disclosureProps: CollapsibleProps = { label: 'Packed disclosure', defaultOpen: true, mountStrategy: strategy, children: content('Packed disclosure draft') };
+  const accordionItems: readonly DisclosureItem[] = [
+    { value: 'a', label: 'Packed accordion A', children: content('Packed accordion A draft') },
+    { value: 'b', label: 'Packed accordion B', children: content('Packed accordion B draft') },
+  ];
+  const accordionProps: AccordionProps = { type: 'multiple', items: accordionItems, defaultValue: ['a'], mountStrategy: 'keepMounted' };
+  return View({ style: { padding: 16, gap: 12 }, children: [Tabs(tabProps), Collapsible(disclosureProps), Accordion(accordionProps)] });
+} }), target);
+async function settle() { mounted.root.doLayout(); mounted.app.render(); await Promise.resolve(); }
+await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+await settle();
+function named(name: string) {
+  const element = target.querySelector<HTMLElement>('[aria-label="' + name + '"]');
+  if (!element) throw new Error('Packed container missing ' + name);
+  return element;
+}
+function check(condition: unknown, message: string) { if (!condition) throw new Error(message); }
+const first = named('Packed first tab');
+const firstDraft = named('Packed first draft') as HTMLInputElement;
+const panel = document.getElementById(first.getAttribute('aria-controls')!);
+check(panel?.getAttribute('role') === 'tabpanel' && panel.getAttribute('aria-labelledby') === first.id, 'Packed Tabs panel relationship failed');
+firstDraft.value = 'retained packed draft';
+firstDraft.dispatchEvent(new InputEvent('input', { bubbles: true }));
+named('Packed second tab').click(); await settle();
+check(named('Packed second tab').getAttribute('aria-selected') === 'true' && firstDraft.tabIndex === -1, 'Packed Tabs switching/hidden focus failed');
+first.click(); await settle();
+check(named('Packed first draft') === firstDraft && firstDraft.value === 'retained packed draft', 'Packed Tabs lazy draft identity failed');
+const disclosure = named('Packed disclosure');
+const disclosureDraft = named('Packed disclosure draft');
+disclosure.click(); await settle();
+check(disclosure.getAttribute('aria-expanded') === 'false' && disclosureDraft.tabIndex === -1, 'Packed Collapsible hidden state failed');
+disclosure.click(); await settle();
+check(named('Packed disclosure draft') === disclosureDraft, 'Packed Collapsible lazy identity failed');
+const accordionADraft = named('Packed accordion A draft');
+named('Packed accordion B').click(); await settle();
+check(named('Packed accordion A').getAttribute('aria-expanded') === 'true' && named('Packed accordion B').getAttribute('aria-expanded') === 'true', 'Packed multiple Accordion failed');
+named('Packed accordion A').click(); await settle();
+check(!accordionADraft.isConnected || accordionADraft.tabIndex === -1, 'Packed Accordion hidden focus failed');
+status.textContent = 'PASS: packed Tabs, Collapsible, Accordion, hidden focus and retained inputs';
+const destroy = document.createElement('button'); destroy.textContent = 'Unmount container fixture';
+destroy.onclick = () => {
+  mounted.destroy();
+  check(created === disposed, 'Packed container content cleanup failed');
+  status.textContent = 'Unmounted packed containers; created=' + created + '; disposed=' + disposed;
+};
+document.body.append(destroy);
+`,
+);
+const consumerConfigPath = join(consumer, 'rsbuild.config.ts');
+const consumerConfig = readFileSync(consumerConfigPath, 'utf8');
+assert.ok(
+  consumerConfig.includes("index: './src/index.ts',"),
+  'Missing consumer entry anchor',
+);
+writeFileSync(
+  consumerConfigPath,
+  consumerConfig.replace(
+    "index: './src/index.ts',",
+    "index: './src/index.ts',\n      overlay: './src/overlay.ts',\n      slider: './src/slider.ts',\n      containers: './src/containers.ts',",
+  ),
+);
 run(['typecheck'], consumer);
 run(['build'], consumer);
+// Execute pure APIs from installed tarballs, in addition to building the GPU
+// browser fixture. This proves executable exports rather than declarations only.
+execFileSync(
+  process.execPath,
+  [
+    '--input-type=module',
+    '-e',
+    `
+import assert from 'node:assert/strict';
+import { getOwner, runWithOwner, root, useMountSurface } from '@piant/core';
+import * as ui from '@piant/ui';
+for (const name of ['OverlayHost', 'createOverlay', 'createOverlayAnchor', 'computeOverlayPosition', 'Slider', 'Tabs', 'Collapsible', 'Accordion']) assert.equal(typeof ui[name], 'function', name);
+assert.equal(getOwner(), null);
+assert.equal(useMountSurface(), undefined);
+const stop = root((dispose) => {
+  const owner = getOwner();
+  assert.ok(owner);
+  assert.equal(runWithOwner(owner, () => getOwner()), owner);
+  return dispose;
+});
+stop();
+const position = ui.computeOverlayPosition({ x: 20, y: 20, width: 60, height: 30 }, { width: 100, height: 80 }, { x: 0, y: 0, width: 400, height: 300 });
+assert.equal(position.x, 20);
+assert.equal(position.y, 54);
+assert.equal(position.placement, 'bottom-start');
+console.log('PASS: packed overlay positioning, owner APIs and public runtime exports');
+`,
+  ],
+  { cwd: consumer, stdio: 'inherit', env: process.env },
+);
 const dependencyTree = JSON.parse(
   execFileSync(
     'pnpm',
@@ -339,6 +545,18 @@ for (const name of [
   'Checkbox',
   'ToggleSwitch',
   'RadioGroup',
+  'Slider',
+  'getSliderRange',
+  'Tabs',
+  'Collapsible',
+  'Accordion',
+  'componentRoot',
+  'createCompositePanel',
+  'createCompositeTrigger',
+  'OverlayHost',
+  'createOverlay',
+  'createOverlayAnchor',
+  'computeOverlayPosition',
 ]) {
   const implementation = new RegExp(`function ${name}\\(`);
   assert.ok(

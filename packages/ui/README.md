@@ -106,6 +106,14 @@ export function ThemedApp() {
 
 可选 `domRoot` 只为指定 DOM 元素设置字体、文字颜色和配色方案，销毁时恢复原内联样式。原生 `Input` 的字号、字体和文字颜色从其真实 DOM 祖先继承；嵌套 DOM 主题须提供各自不同的根元素。Canvas 组件仍须显式消费 tokens。完整合并规则、默认值及视觉验证边界见[主题文档](../../docs/ui/theme.md)。
 
+## 滑块
+
+`Slider` 组合 Canvas 轨道与拇指、UI 焦点语义及受控/非受控状态，支持小数步长、横向/纵向、横向 RTL、拖动与方向键/Home/End。接入示例、刻度对齐、取消行为和辅助技术验证边界见[Slider 文档](../../docs/ui/slider.md)。
+
+## 标签与折叠容器
+
+`Tabs`、`Collapsible`、`Accordion` 提供数据驱动的页面切换和展开容器，支持受控/非受控状态、键盘导航与标题/面板关联。面板可在隐藏时释放、首次打开后保留或预先创建并保留；各组件示例和生命周期说明见[容器文档](../../docs/ui/containers.md)。
+
 ## 共享交互
 
 `createControllableState({ value?, defaultValue, onChange? })` 返回 `[value, setValue]`。`defaultValue` 必填且只读取一次；`value` 为 `undefined` 时非受控，`null`、`false`、`0` 仍是受控值。Setter 接受值或 updater，使用 `Object.is` 跳过相同值并返回请求值。受控模式只通知最新回调，由父级提交；切回非受控时恢复最后内部值或初始化默认值。通过 getter 可适配 `value/defaultValue/onValueChange`、`checked/defaultChecked/onCheckedChange`、`open/defaultOpen/onOpenChange`。
@@ -117,6 +125,10 @@ export function ThemedApp() {
 ## 焦点与语义
 
 `UIProvider` 根实例创建焦点作用域，嵌套默认继承，`focusScope="isolate"` 可独立管理。`createFocusable` 为 Canvas 节点提供透明语义代理，或通过 `domElement: node.domElement` 注册 core Input 的原生元素。它提供焦点、focus-visible、键盘按压状态和激活回调；`createRovingFocusGroup` 提供单 Tab 停靠与箭头/Home/End 导航。指针仍由 `createPressable` 处理，两条路径共享业务动作。Canvas 焦点环需显式消费 `focusVisible()`。接入和读屏验证边界见[焦点文档](../../docs/ui/focus.md)。
+
+## 浮层底座
+
+在每个独立挂载实例的 `UIProvider` 内安装一个 `OverlayHost`，使用 `createOverlay` 创建锚定或模态视觉面，通过 `createOverlayAnchor` 绑定 Canvas 锚点。浮层内容保留创建处的主题、状态和焦点上下文，视觉面使用浏览器 manual popover 与独立 Canvas 越过祖先裁剪和背景原生输入。尺寸、关闭策略、实例内模态范围与浏览器要求见[浮层文档](../../docs/ui/overlays.md)。
 
 ## 工程边界
 

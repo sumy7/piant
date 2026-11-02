@@ -1,6 +1,20 @@
 import { Application, EventsTicker } from 'pixi.js';
 import { PRoot } from '../elements/PRoot';
+import { createContext, useContext } from '../reactivity/context';
+import { untrack } from '../reactivity/effects';
 import { render } from './runtime';
+
+export interface MountSurface {
+  readonly target: HTMLElement | HTMLCanvasElement;
+  readonly canvas: HTMLCanvasElement;
+}
+
+const MountSurfaceContext = createContext<MountSurface>();
+
+/** Read this component's mounting surface; low-level render() supplies none. */
+export function useMountSurface(): MountSurface | undefined {
+  return useContext(MountSurfaceContext);
+}
 
 export type MountOptions = {
   /** Fix this axis in logical/CSS pixels; otherwise follow the mounted element. */
@@ -331,7 +345,28 @@ export async function mount(
       width: app.screen.width,
       height: app.screen.height,
     });
-    dispose = render(component, root);
+    dispose = render(() => {
+      let failure: unknown;
+      let failed = false;
+      const content = MountSurfaceContext.Provider({
+        value: { target, canvas },
+        children: () => {
+          try {
+            // Creating the top-level component must not subscribe the
+            // provider's memo to incidental reads in that component.
+            return untrack(component);
+          } catch (error) {
+            // Provider children run in a MobX reaction, which otherwise
+            // reports errors instead of rejecting initial mount().
+            failed = true;
+            failure = error;
+            return null;
+          }
+        },
+      });
+      if (failed) throw failure;
+      return content;
+    }, root);
     app.renderer.on('resize', syncRoot);
     app.renderer.runners.postrender.add(domRunner);
     if (typeof ResizeObserver !== 'undefined') {

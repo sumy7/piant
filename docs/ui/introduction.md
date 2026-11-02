@@ -36,6 +36,14 @@ UI 以 `@piant/core` 为 peer dependency，范围以已安装 UI 包的 `peerDep
 
 `Checkbox` 支持二态和混合态，`ToggleSwitch` 表达布尔开关，`RadioGroup` 提供单选、组内焦点和动态选项。受控/非受控、Space/方向键、禁用与主题缩放示例见[选择控件指南](/ui/selection)。
 
+## 滑块
+
+`Slider` 提供单值范围选择，支持小数步长、受控/非受控值、横向/纵向、横向 RTL、指针拖动和键盘调整。[Slider 指南](/ui/slider)包含可操作示例、数值刻度、事件与语义说明。
+
+## 标签与折叠容器
+
+`Tabs` 组织同一位置的不同页面，`Collapsible` 控制独立面板展开，`Accordion` 提供单开或多开分组。它们组合主题、键盘焦点及标题/面板语义，并显式选择隐藏内容的生命周期。[Tabs 与折叠容器](/ui/containers)分别提供在线示例。
+
 ## 共享交互
 
 `createControllableState` 统一受控与非受控值，可适配 `value`、`checked`、`open` 三组控件属性。`createPressable` 绑定已有 Piant 节点，提供 hover、按压和禁用状态，处理控件内释放、移出返回、取消及销毁。
@@ -45,6 +53,10 @@ UI 以 `@piant/core` 为 peer dependency，范围以已安装 UI 包的 `peerDep
 ## 焦点与语义
 
 `UIProvider` 为注册项提供焦点作用域；`createFocusable` 协调 Canvas 语义代理与原生 Input，提供 Tab 导航、focus-visible 和键盘激活。`createRovingFocusGroup` 让组内控件共用一个 Tab 停靠项，并用箭头/Home/End 移动焦点。Canvas 焦点环仍由组件显式绘制。接入方式、作用域隔离与验证边界见[焦点与语义桥接](/ui/focus)。
+
+## 浮层底座
+
+`OverlayHost` 为每个挂载实例建立独立浮层栈；`createOverlay` 管理打开状态、视觉面、关闭策略和模态焦点，`createOverlayAnchor` 将 Canvas 节点接入 viewport 定位。锚定、嵌套、带输入的模态宿主与双 Canvas 示例见[浮层底座与实例隔离](/ui/overlays)。这是组合浮层组件的底座，调用方仍负责内容和业务语义。
 
 ## 使用 Spacer
 

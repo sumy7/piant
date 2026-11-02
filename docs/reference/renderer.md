@@ -89,6 +89,22 @@ try {
 
 ---
 
+## useMountSurface
+
+在 `mount` 创建的组件作用域内读取所属挂载元素和实际 Canvas。每个实例提供独立值，嵌套组件可直接读取；不会查询全局 Canvas 或根据 DOM 位置推测所属实例。
+
+```ts
+interface MountSurface {
+  readonly target: HTMLElement | HTMLCanvasElement;
+  readonly canvas: HTMLCanvasElement;
+}
+function useMountSurface(): MountSurface | undefined;
+```
+
+`target` 是传给 `mount` 的第二个参数，`canvas` 是此次挂载实际使用的 Canvas。作用域外或使用低层 `render` 时返回 `undefined`。异步回调需要遵循 [owner 恢复与清理契约](/reference/reactivity#getowner-与-runwithowner)；此函数只提供元素引用，不延长实例生命周期。
+
+---
+
 ## render
 
 `render` 是底层渲染函数，在新的响应式 owner 中执行组件，将返回内容插入指定的 `PNode`，并返回该 owner 的清理函数（disposer）。已有 `render` / `PRoot` 接入方式可以继续使用，适用于宿主自行管理 PixiJS 的场景。

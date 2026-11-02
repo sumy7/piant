@@ -122,6 +122,43 @@ const theme = useContext(ThemeContext);
 
 ---
 
+## getOwner 与 runWithOwner
+
+低层宿主可保存当前响应式 owner，在延迟创建内容时恢复其 context、错误处理和清理注册位置。视觉挂载位置不会改变这些逻辑上下文。
+
+```ts
+function getOwner(): ContextOwner | null;
+function runWithOwner<T>(owner: ContextOwner | null, callback: () => T): T;
+```
+
+`ContextOwner` 是应当原样传回的句柄，不应修改其内部字段。`getOwner()` 在作用域外返回 `null`。`runWithOwner` 同步执行回调并返回结果，结束或抛错后恢复原 owner；错误交给所选 owner 的 `onError` 处理，没有处理器时继续抛出。处理器接受错误时返回 `undefined`。
+
+它不创建作用域，不隔离响应式依赖，也不会跨 `await` 保留 owner。需要独立销毁内容时，先在所属 context 内创建 `root`，保存其 owner，并将 disposer 注册到父级 `onCleanup`。`root` 的 disposer 不会自动加入父级。关闭内容时调用该 disposer，并取消或忽略尚未执行的异步回调；不要在清理后的 owner 下创建新内容。
+
+```ts
+import { getOwner, onCleanup, root, runWithOwner } from '@piant/core';
+
+let contentOwner: ReturnType<typeof getOwner> = null;
+let closed = false;
+const disposeContent = root(dispose => {
+  contentOwner = getOwner();
+  return dispose;
+});
+const close = () => {
+  closed = true;
+  disposeContent();
+};
+onCleanup(close);
+
+queueMicrotask(() => {
+  if (!closed) runWithOwner(contentOwner, () => {
+    // 此处创建的 effect 和 onCleanup 归 disposeContent 管理。
+  });
+});
+```
+
+---
+
 ## createSelector
 
 创建高效的选择器，用于列表中选中状态的细粒度更新。

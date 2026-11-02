@@ -3,7 +3,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { View } from '../src/components/View';
 import { effect } from '../src/reactivity/effects';
 import { createState, onCleanup } from '../src/reactivity/hooks';
-import { mount } from '../src/renderer/mount';
+import {
+  type MountSurface,
+  mount,
+  useMountSurface,
+} from '../src/renderer/mount';
 
 const state = vi.hoisted(() => ({
   init: vi.fn(),
@@ -103,6 +107,42 @@ afterEach(() => {
 });
 
 describe('mount', () => {
+  it('provides each mount surface only inside its own owner context', async () => {
+    expect(useMountSurface()).toBeUndefined();
+    const surfaces: MountSurface[] = [];
+    const make = () => {
+      surfaces.push(useMountSurface()!);
+      return View({});
+    };
+    const firstTarget = host();
+    const secondTarget = document.createElement('canvas');
+    host().append(secondTarget);
+    const first = await mount(make, firstTarget);
+    const second = await mount(make, secondTarget);
+    cleanup.push(first.destroy, second.destroy);
+    expect(surfaces).toEqual([
+      { target: firstTarget, canvas: first.canvas },
+      { target: secondTarget, canvas: second.canvas },
+    ]);
+    expect(surfaces[0]).not.toBe(surfaces[1]);
+    expect(useMountSurface()).toBeUndefined();
+    first.destroy();
+    expect(second.isDestroyed).toBe(false);
+  });
+
+  it('does not recreate the component when an incidental creation-time state read changes', async () => {
+    const [value, setValue] = createState(0);
+    const component = vi.fn(() => {
+      value();
+      expect(useMountSurface()).toBeDefined();
+      return View({});
+    });
+    const instance = await mount(component, host());
+    cleanup.push(instance.destroy);
+    setValue(1);
+    expect(component).toHaveBeenCalledTimes(1);
+  });
+
   it('frees dynamically removed nodes immediately without double-freeing on app destruction', async () => {
     const [visible, setVisible] = createState(true);
     const instance = await mount(
