@@ -71,6 +71,7 @@ export default defineConfig({
             { text: '浮层底座与实例隔离', link: '/ui/overlays' },
             { text: 'Dialog 与 AlertDialog', link: '/ui/dialogs' },
             { text: 'Popover 与 Tooltip', link: '/ui/popovers' },
+            { text: 'Menu 与 Select', link: '/ui/menu-select' },
           ],
         },
       ],

@@ -30,10 +30,16 @@ interface FocusableSemantics {
     | 'tabpanel'
     | 'link'
     | 'slider'
-    | 'spinbutton';
+    | 'spinbutton'
+    | 'menu'
+    | 'listbox'
+    | 'combobox';
   description?: string;
   checked?: boolean | 'mixed';
   expanded?: boolean;
+  controls?: string;
+  hasPopup?: 'menu' | 'listbox' | 'dialog';
+  activeDescendant?: string;
   selected?: boolean;
   pressed?: boolean | 'mixed';
   value?: { now: number; min?: number; max?: number; text?: string };
@@ -141,6 +147,12 @@ function registerFocusable(
     'tabindex',
     'hidden',
   ];
+  for (const [key, attribute] of [
+    ['controls', 'aria-controls'],
+    ['hasPopup', 'aria-haspopup'],
+    ['activeDescendant', 'aria-activedescendant'],
+  ] as const)
+    if (key in options) attributes.push(attribute);
   const previous = new Map(
     attributes.map((name) => [name, element.getAttribute(name)]),
   );
@@ -328,6 +340,18 @@ function registerFocusable(
           : value,
       );
     }
+    if ('controls' in options)
+      setAttribute(element, 'aria-controls', options.controls);
+    if ('hasPopup' in options)
+      setAttribute(element, 'aria-haspopup', options.hasPopup);
+    if ('activeDescendant' in options)
+      setAttribute(
+        element,
+        'aria-activedescendant',
+        role === 'menu' || role === 'listbox' || role === 'combobox'
+          ? options.activeDescendant
+          : undefined,
+      );
     if (!native)
       (element as HTMLButtonElement).disabled = Boolean(options.disabled);
     element.hidden = Boolean(options.hidden) || previous.get('hidden') !== null;

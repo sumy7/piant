@@ -24,6 +24,7 @@ pnpm add @piant/ui @piant/core "pixi.js@^8.22.0"
 - 选择：`Checkbox`、`ToggleSwitch`、`RadioGroup`。
 - 弹窗：`Dialog`、`DialogTrigger`、`DialogContent`、`DialogTitle`、`DialogDescription`、`DialogClose`；`AlertDialog`、`AlertDialogTrigger`、`AlertDialogContent`、`AlertDialogTitle`、`AlertDialogDescription`、`AlertDialogCancel`、`AlertDialogConfirm`。
 - 锚定面板与提示：`Popover`、`PopoverTrigger`、`PopoverContent`、`PopoverClose`；`Tooltip`、`TooltipTrigger`、`TooltipContent`。
+- 菜单与选择面板：`Menu`、`MenuTrigger`、`MenuContent`、`MenuItem`；`Select`、`SelectTrigger`、`SelectContent`、`SelectItem`。
 - 类型：`ColorMode`、`ControlDensity`、`ThemeTokens`、`ThemeOverrides`、`ThemeOptions`、`UITheme`、`UIProviderProps`、`ControllableStateOptions`、`PressableOptions`、`PressableState`、`SpacerProps`、`StackProps`、`SurfaceProps`、`SeparatorProps`、`IconProps`、`IconDraw`、`BadgeProps`、`ProgressBarProps`、`SpinnerProps`、`ButtonProps`、`IconButtonProps`、`ButtonIconContext`、`ButtonPressEvent`、`ButtonSize`、`ButtonVariant`、`TextFieldProps`、`TextFieldSize`、`TextFieldType`、`FieldProps`、`CheckboxProps`、`ToggleSwitchProps`、`RadioGroupProps`、`RadioGroupOption`。
 
 `@piant/core` 是 peer dependency，由应用提供，版本须满足已安装 UI 包的 `peerDependencies`。Core 的 peer dependency 为 `pixi.js ^8.22.0`。UI 构建保留对 core 的外部引用，不打包另一份 core 或响应式运行时。
@@ -145,6 +146,12 @@ Dialog 默认聚焦首个可用控件，允许 Escape 与遮罩请求关闭；Al
 `Popover` 在触发器附近展示非模态表单或操作面板，支持受控/非受控打开值、触发器切换、必填内容名称、一次性初始焦点和独立操作区。Escape、外部指针或焦点默认请求关闭；Tab 可从首尾离开，背景操作继续执行。`Tooltip` 只接受简短非交互文字，悬停默认等待 500ms，键盘聚焦立即显示，指针离开有 200ms 宽限，可移入继续阅读且没有阅读倒计时；Escape 关闭并抑制当前会话重开。触摸不触发悬停，按钮保留原本动作。
 
 两者均在 `UIProvider` / `OverlayHost` 内通过函数子树创建，关闭销毁内容，触发器失效或 owner/Host 卸载会释放视觉面及计时器。Popover 使用 `dialog` 与 `aria-modal="false"`，Tooltip 使用 `tooltip` 并合并触发器的 `aria-describedby`，不获取或恢复焦点。完整属性、独立在线示例、受控关闭和输入/辅助技术边界见 [Popover 与 Tooltip 文档](../../docs/ui/popovers.md)。
+
+## Menu 与 Select
+
+`Menu` 将稳定 key 的动作数据渲染为菜单，支持循环方向导航、Home/End、字符前缀及禁用项发现；明确激活后执行条目回调与根动作，再请求关闭。`Select` 提供单值 select-only combobox，DOM 焦点留在触发器，通过 `aria-activedescendant` 浏览 listbox；方向键只预览，Enter/Space 或点击提交，Escape、Tab 和外部关闭取消预览。值与打开状态分别受控，未知或移除的存储值显示 placeholder，不自动通知值变化。
+
+两者沿用 `UIProvider` / `OverlayHost` 的锚定与清理能力，关闭释放内容；外部关闭默认消费该次指针手势，避免同时执行背景操作。Content 可自动生成条目，或由调用方按根数据的稳定 key 自定义 Item 样式和回调。它们不提供可编辑 Combobox、Submenu 或隐藏原生表单字段。公共 API、独立在线示例、回调取消顺序、动态数据和辅助技术边界见 [Menu 与 Select 文档](../../docs/ui/menu-select.md)。
 
 ## 工程边界
 

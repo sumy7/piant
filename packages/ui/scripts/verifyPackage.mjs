@@ -426,6 +426,81 @@ const destroy = document.createElement('button'); destroy.textContent = 'Unmount
 destroy.onclick = () => { mounted.destroy(); status.textContent = 'Unmounted; actions=' + actions; }; document.body.append(destroy);
 `,
 );
+// Menu/Select declarations and factories are consumed from the tarballs only.
+writeFileSync(
+  join(consumer, 'src/menuSelect.ts'),
+  `import { createEffect, createState, mount, View } from '@piant/core';
+import { UIProvider, OverlayHost, Button, Menu, MenuTrigger, MenuContent, MenuItem, Select, SelectTrigger, SelectContent, SelectItem, type MenuProps, type MenuOption, type MenuTriggerProps, type MenuContentProps, type MenuItemProps, type SelectProps, type SelectOption, type SelectTriggerProps, type SelectContentProps, type SelectItemProps, type ChoiceSelectEvent } from '@piant/ui';
+const target = document.createElement('div'); target.id = 'menu-select-target'; target.style.cssText = 'width:720px;height:540px';
+const status = document.createElement('output'); status.id = 'menu-select-status'; status.dataset.ready = 'false';
+document.body.append(target, status);
+let actions = 0, changes = 0, menuItemEvents = 0, selectItemEvents = 0;
+let lastAction = 'none';
+let value: () => string | null = () => null;
+let menuOpen = () => false, selectOpen = () => false;
+const publish = () => {
+  status.dataset.actions = String(actions); status.dataset.lastAction = lastAction;
+  status.dataset.value = value() ?? 'null'; status.dataset.changes = String(changes);
+  status.dataset.menuItemEvents = String(menuItemEvents); status.dataset.selectItemEvents = String(selectItemEvents);
+  status.dataset.menuOpen = String(menuOpen()); status.dataset.selectOpen = String(selectOpen());
+  status.textContent = 'Packed choices; actions=' + actions + '; value=' + (value() ?? 'null') + '; changes=' + changes;
+};
+const failure = (error: unknown) => { status.dataset.failure = String(error); };
+const items: readonly MenuOption[] = [
+  { value: 'rename', label: 'Packed Rename' },
+  { value: 'copy', label: 'Packed Copy' },
+  { value: 'blocked', label: 'Packed unavailable action', disabled: true },
+];
+const options: readonly SelectOption[] = [
+  { value: 'alpha', label: 'Packed Alpha' },
+  { value: 'beta', label: 'Packed Beta' },
+  { value: 'blocked', label: 'Packed unavailable choice', disabled: true },
+  { value: 'gamma', label: 'Packed Gamma' },
+];
+const mounted = await mount(() => UIProvider({ children: () => OverlayHost({ children: () => {
+  const [selected, setSelected] = createState<string | null>('alpha');
+  const [menuVisible, setMenuVisible] = createState(false);
+  const [selectVisible, setSelectVisible] = createState(false);
+  value = selected; menuOpen = menuVisible; selectOpen = selectVisible;
+  const menuTrigger: MenuTriggerProps = { children: 'Packed menu' };
+  const menuContent: MenuContentProps = {
+    width: 280, height: 230, placement: 'right-start', onError: failure,
+    children: () => items.map((item) => {
+      const props: MenuItemProps = { value: item.value, onSelect(event: ChoiceSelectEvent) { menuItemEvents++; status.dataset.lastItemEvent = event.type; publish(); } };
+      return MenuItem(props);
+    }),
+  };
+  const menu: MenuProps = {
+    label: 'Packed actions', items,
+    get open() { return menuVisible(); }, onOpenChange: setMenuVisible,
+    onAction(key, event: ChoiceSelectEvent) { actions++; lastAction = key; status.dataset.lastActionEvent = event.type; publish(); },
+    children: () => [MenuTrigger(menuTrigger), MenuContent(menuContent)],
+  };
+  const selectTrigger: SelectTriggerProps = { size: 'md', variant: 'secondary' };
+  const selectContent: SelectContentProps = {
+    width: 300, height: 260, placement: 'right-start', onError: failure,
+    children: () => options.map((option) => {
+      const props: SelectItemProps = { value: option.value, onSelect(event: ChoiceSelectEvent) { selectItemEvents++; status.dataset.lastItemEvent = event.type; publish(); } };
+      return SelectItem(props);
+    }),
+  };
+  const select: SelectProps = {
+    label: 'Packed selection', options, placeholder: 'Packed placeholder',
+    get value() { return selected(); }, onValueChange(next) { changes++; setSelected(next); publish(); },
+    get open() { return selectVisible(); }, onOpenChange: setSelectVisible,
+    children: () => [SelectTrigger(selectTrigger), SelectContent(selectContent)],
+  };
+  createEffect(publish);
+  return View({ style: { flexDirection: 'column', padding: 16, gap: 20 }, children: [Menu(menu), Select(select), Button({ children: 'Packed choices next target' })] });
+} }) }), target);
+mounted.app.render();
+await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+mounted.app.render(); status.dataset.ready = 'true'; status.dataset.mounted = 'true'; publish();
+const destroy = document.createElement('button'); destroy.textContent = 'Unmount packed choices';
+destroy.onclick = () => { mounted.destroy(); status.dataset.mounted = 'false'; status.textContent = 'Unmounted packed choices; actions=' + actions + '; value=' + (value() ?? 'null') + '; changes=' + changes; };
+document.body.append(destroy);
+`,
+);
 const consumerConfigPath = join(consumer, 'rsbuild.config.ts');
 const consumerConfig = readFileSync(consumerConfigPath, 'utf8');
 assert.ok(
@@ -436,7 +511,7 @@ writeFileSync(
   consumerConfigPath,
   consumerConfig.replace(
     "index: './src/index.ts',",
-    "index: './src/index.ts',\n      overlay: './src/overlay.ts',\n      slider: './src/slider.ts',\n      containers: './src/containers.ts',\n      dialogs: './src/dialogs.ts',\n      popoverTooltip: './src/popoverTooltip.ts',",
+    "index: './src/index.ts',\n      overlay: './src/overlay.ts',\n      slider: './src/slider.ts',\n      containers: './src/containers.ts',\n      dialogs: './src/dialogs.ts',\n      popoverTooltip: './src/popoverTooltip.ts',\n      menuSelect: './src/menuSelect.ts',",
   ),
 );
 run(['typecheck'], consumer);
@@ -452,7 +527,7 @@ execFileSync(
 import assert from 'node:assert/strict';
 import { getOwner, runWithOwner, root, useMountSurface } from '@piant/core';
 import * as ui from '@piant/ui';
-for (const name of ['OverlayHost', 'createOverlay', 'createOverlayAnchor', 'computeOverlayPosition', 'Slider', 'Tabs', 'Collapsible', 'Accordion', 'Dialog', 'DialogTrigger', 'DialogContent', 'DialogTitle', 'DialogDescription', 'DialogClose', 'AlertDialog', 'AlertDialogTrigger', 'AlertDialogContent', 'AlertDialogTitle', 'AlertDialogDescription', 'AlertDialogCancel', 'AlertDialogConfirm', 'Popover', 'PopoverTrigger', 'PopoverContent', 'PopoverClose', 'Tooltip', 'TooltipTrigger', 'TooltipContent']) assert.equal(typeof ui[name], 'function', name);
+for (const name of ['OverlayHost', 'createOverlay', 'createOverlayAnchor', 'computeOverlayPosition', 'Slider', 'Tabs', 'Collapsible', 'Accordion', 'Dialog', 'DialogTrigger', 'DialogContent', 'DialogTitle', 'DialogDescription', 'DialogClose', 'AlertDialog', 'AlertDialogTrigger', 'AlertDialogContent', 'AlertDialogTitle', 'AlertDialogDescription', 'AlertDialogCancel', 'AlertDialogConfirm', 'Popover', 'PopoverTrigger', 'PopoverContent', 'PopoverClose', 'Tooltip', 'TooltipTrigger', 'TooltipContent', 'Menu', 'MenuTrigger', 'MenuContent', 'MenuItem', 'Select', 'SelectTrigger', 'SelectContent', 'SelectItem']) assert.equal(typeof ui[name], 'function', name);
 assert.equal(getOwner(), null);
 assert.equal(useMountSurface(), undefined);
 const stop = root((dispose) => {
@@ -620,6 +695,14 @@ for (const name of [
   'Tooltip',
   'TooltipTrigger',
   'TooltipContent',
+  'Menu',
+  'MenuTrigger',
+  'MenuContent',
+  'MenuItem',
+  'Select',
+  'SelectTrigger',
+  'SelectContent',
+  'SelectItem',
   'componentRoot',
   'createCompositePanel',
   'createCompositeTrigger',

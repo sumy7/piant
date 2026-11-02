@@ -44,6 +44,18 @@ export type {
   PanelMountStrategy,
 } from './components/internal/compositeParts';
 export {
+  type ChoiceSelectEvent,
+  Menu,
+  MenuContent,
+  type MenuContentProps,
+  MenuItem,
+  type MenuItemProps,
+  type MenuOption,
+  type MenuProps,
+  MenuTrigger,
+  type MenuTriggerProps,
+} from './components/Menu';
+export {
   Popover,
   PopoverClose,
   type PopoverCloseProps,
@@ -59,6 +71,17 @@ export {
   type RadioGroupOption,
   type RadioGroupProps,
 } from './components/RadioGroup';
+export {
+  Select,
+  SelectContent,
+  type SelectContentProps,
+  SelectItem,
+  type SelectItemProps,
+  type SelectOption,
+  type SelectProps,
+  SelectTrigger,
+  type SelectTriggerProps,
+} from './components/Select';
 export { Separator, type SeparatorProps } from './components/Separator';
 export { Slider, type SliderProps } from './components/Slider';
 export { Spacer, type SpacerProps } from './components/Spacer';

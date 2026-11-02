@@ -3,6 +3,7 @@ import {
   createState,
   type Getter,
   onCleanup,
+  onTick,
   type PNode,
   untrack,
 } from '@piant/core';
@@ -52,12 +53,12 @@ export function createTriggerSlot(onUnavailable: () => void) {
           const next = valid();
           const previous = available();
           setAvailable(next);
-          if (previous && !next) onUnavailable();
+          if (previous && !next && !focus.isDisposed) onUnavailable();
         },
         invalidate() {
           if (!disposed && available()) {
             setAvailable(false);
-            onUnavailable();
+            if (!focus.isDisposed) onUnavailable();
           }
         },
         containsEvent(event) {
@@ -81,6 +82,9 @@ export function createTriggerSlot(onUnavailable: () => void) {
       current = binding;
       setRevision((value) => value + 1);
       const stop = anchor.observe(() => untrack(binding.refresh));
+      // DOMPipe connects and clips semantic bridges after layout. Observe the
+      // next frame too, so initially-open popups need no focus/pointer event.
+      onCleanup(onTick(() => untrack(binding.refresh)));
       createEffect(() => {
         void unavailable();
         void focus.focused();
@@ -92,7 +96,7 @@ export function createTriggerSlot(onUnavailable: () => void) {
         if (current === binding) {
           current = undefined;
           setRevision((value) => value + 1);
-          onUnavailable();
+          if (!focus.isDisposed) onUnavailable();
         }
       });
       return binding;

@@ -2,6 +2,7 @@ import {
   createEffect,
   createState,
   type Getter,
+  mergeProps,
   onCleanup,
   type PNode,
   root,
@@ -12,7 +13,10 @@ import {
   View,
   type ViewStyles,
 } from '@piant/core';
-import { createFocusable } from '../../primitives/createFocusable';
+import {
+  createFocusable,
+  type FocusableOptions,
+} from '../../primitives/createFocusable';
 import {
   createPressable,
   type PressableOptions,
@@ -46,10 +50,21 @@ type ContentProps = ButtonOptions & {
   children?: Parameters<typeof View>[0]['children'];
 };
 
+export type ButtonSemantics = Pick<
+  FocusableOptions,
+  | 'role'
+  | 'expanded'
+  | 'controls'
+  | 'hasPopup'
+  | 'activeDescendant'
+  | 'onKeyDown'
+>;
+
 /** The two public button components share one visual and interaction contract. */
 export function createButton(
   props: ContentProps,
   iconOnly: boolean,
+  semantics?: ButtonSemantics,
 ): ReturnType<typeof View> {
   let stop = () => {};
   let removeDestroy = () => {};
@@ -63,7 +78,7 @@ export function createButton(
   const node = root((cleanup) => {
     stop = cleanup;
     try {
-      return renderButton(props, iconOnly);
+      return renderButton(props, iconOnly, semantics);
     } catch (error) {
       cleanup();
       throw error;
@@ -76,7 +91,11 @@ export function createButton(
   return node;
 }
 
-function renderButton(props: ContentProps, iconOnly: boolean): PNode {
+function renderButton(
+  props: ContentProps,
+  iconOnly: boolean,
+  semantics?: ButtonSemantics,
+): PNode {
   useUIFocus();
   const theme = useUITheme();
   const size = () => props.size ?? 'md';
@@ -276,15 +295,21 @@ function renderButton(props: ContentProps, iconOnly: boolean): PNode {
     },
     onPress: activate,
   });
-  const focusable = createFocusable(node, {
-    get name() {
-      return name();
-    },
-    get disabled() {
-      return unavailable();
-    },
-    onActivate: activate,
-  });
+  const focusable = createFocusable(
+    node,
+    mergeProps(
+      {
+        get name() {
+          return name();
+        },
+        get disabled() {
+          return unavailable();
+        },
+        onActivate: activate,
+      },
+      semantics ?? {},
+    ) as FocusableOptions,
+  );
   createEffect(() => {
     setVisual({
       hovered: pressable.hovered(),

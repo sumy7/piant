@@ -192,6 +192,10 @@ export class FocusScope implements UIFocusScope {
   private windowActive = true;
   private doc?: Document;
 
+  get isDisposed() {
+    return this.disposed;
+  }
+
   constructor() {
     [this.focused, this.setFocused] = createState<HTMLElement | null>(null);
   }

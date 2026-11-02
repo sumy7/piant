@@ -61,3 +61,17 @@ PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs node packages/ui/browse
 `FLOATING_DOCS_URL` defaults to `http://127.0.0.1:5173/ui/popovers`, `FLOATING_FIXTURE_URL` to `http://127.0.0.1:4177/popoverTooltip.html`, and `FLOATING_EVIDENCE_DIR` to `/tmp/piant-cod167`. The script records actual mouse/keyboard/touch paths, nonmodal Tab exits, nested Tooltip/Popover/Dialog routing, controlled refusal, scroll/CSS and Pixi scaling, viewport edges, content measurement, text editing/selection, timers and owner teardown/remount. Screenshots, Chrome AX trees, runtime errors, resource errors and a completion flag are saved. OS candidate windows and VoiceOver remain COD-179/COD-180; CDP composition and AX trees do not certify them.
 
 After `pnpm --filter @piant/ui verify:package`, serve its reported `consumer/dist` directory on port 4188 and run `node packages/ui/browser-tests/popoverTooltipPackageVerify.mjs` with the same `PLAYWRIGHT_MODULE`. `FLOATING_PACKAGE_URL` defaults to `http://127.0.0.1:4188/popoverTooltip.html`. The production consumer checks public exports/types, actual Trigger toggling, Tab exits, Tooltip descriptions, ordinary Button actions and unmount. Local tarballs are not registry release verification.
+
+## Menu and Select
+
+Start the fixture server above, then run:
+
+```sh
+PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs node packages/ui/browser-tests/menuSelectVerify.mjs
+```
+
+For the two independent documentation examples, also start `pnpm docs:dev --host 127.0.0.1` and run `node packages/ui/browser-tests/menuSelectDocsVerify.mjs` with the same Playwright/output variables. `MENU_SELECT_DOCS_URL` defaults to `http://127.0.0.1:5173/ui/menu-select`; checks include committed AX values, rejected close focus, nested Menu and both examples at a 390px viewport with dark/compact/200% font scale. The log records the existing docs favicon 404 separately from component failures.
+
+`MENU_SELECT_FIXTURE_URL` defaults to `http://127.0.0.1:4177/menuSelect.html`; `MENU_SELECT_EVIDENCE_DIR` defaults to `/tmp/piant-cod168`. The real Chrome fixture covers Canvas mouse/touch gestures, keyboard boundaries and typeahead, disabled items, controlled rejection and retained focus, an 80-option list with automatic reveal, keyed changes, 200% typography, empty data, nested Dialogs, instance isolation, initially open popups and four owner teardown/remount cycles. It saves screenshots, actual AX trees, runtime/resource errors and a completion flag. Composition-marked events and CDP are limited evidence; actual OS IME and VoiceOver remain COD-179/COD-180.
+
+After `pnpm --filter @piant/ui verify:package`, serve its reported `consumer/dist` directory on port 4188 and run `node packages/ui/browser-tests/menuSelectPackageVerify.mjs` with the same `PLAYWRIGHT_MODULE`. `MENU_SELECT_PACKAGE_URL` defaults to `http://127.0.0.1:4188/menuSelect.html`. This checks the Menu/Select root exports and installed declarations, real production interactions, native roles/value relationships and live unmount. It validates local tarballs, not a registry release.
