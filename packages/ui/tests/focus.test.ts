@@ -19,6 +19,8 @@ import {
   useUIFocus,
 } from '../dist/index.js';
 
+import { linkFocusableDescription } from '../dist/primitives/createFocusable.js';
+
 const cleanups: Array<() => void> = [];
 afterEach(() => {
   for (const cleanup of cleanups.splice(0).reverse()) cleanup();
@@ -595,4 +597,37 @@ describe('roving focus', () => {
     one.dispose();
     dispose();
   });
+});
+
+it('composes tooltip description IDs with authored descriptions across semantic refreshes', () => {
+  const [name, setName] = createState('Original');
+  let state!: FocusableState;
+  const { nodes } = setup((add) => {
+    state = add({
+      get name() {
+        return name();
+      },
+      description: 'Authored details',
+    });
+  });
+  const original = state.element.getAttribute('aria-describedby')!;
+  const first = linkFocusableDescription(nodes[0], 'tooltip-id');
+  const second = linkFocusableDescription(nodes[0], 'tooltip-id');
+  expect(state.element.getAttribute('aria-describedby')).toBe(
+    `${original} tooltip-id`,
+  );
+  setName('Refreshed');
+  expect(state.element.getAttribute('aria-describedby')).toBe(
+    `${original} tooltip-id`,
+  );
+  first();
+  first();
+  expect(state.element.getAttribute('aria-describedby')).toBe(
+    `${original} tooltip-id`,
+  );
+  second();
+  expect(state.element.getAttribute('aria-describedby')).toBe(original);
+  const release = linkFocusableDescription(nodes[0], 'later-tooltip');
+  state.dispose();
+  expect(() => release()).not.toThrow();
 });

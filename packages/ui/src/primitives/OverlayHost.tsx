@@ -1,6 +1,7 @@
 import {
   createContext,
   createEffect,
+  createMemo,
   createState,
   type Getter,
   getOwner,
@@ -26,7 +27,7 @@ import {
 } from './overlayPosition';
 
 export type OverlayDismissReason =
-  'escape' | 'outside-pointer' | 'anchor-removed';
+  'escape' | 'outside-pointer' | 'anchor-removed' | 'focus-outside';
 export interface OverlayOptions extends OverlayPositionOptions {
   open?: boolean;
   defaultOpen?: boolean;
@@ -37,13 +38,25 @@ export interface OverlayOptions extends OverlayPositionOptions {
   width: number;
   height: number;
   modal?: boolean;
+  /** Descriptive surfaces do not take focus or shield interactive layers below. */
+  noninteractive?: boolean;
   dismissOnEscape?: boolean;
+  /** Descriptive hover content can observe Escape even when focus is elsewhere. */
+  escapeScope?: 'instance' | 'document';
+  /** Nonmodal surfaces can dismiss after focus leaves their content. */
+  dismissOnFocusOutside?: boolean;
+  /** Link boundary Tab exits to this trigger's logical focus order. */
+  tabAnchor?: HTMLElement;
   /** Only pointer events belonging to this mount are outside events. */
-  outsidePointer?: 'dismiss' | 'block' | 'ignore';
+  outsidePointer?: 'dismiss' | 'dismiss-and-block' | 'block' | 'ignore';
+  /** Exclude the geometric anchor from outside-pointer policies. */
+  anchorIsInside?: boolean;
   /** Return false to veto a dismissal request. Controlled open remains authoritative. */
   onDismiss?: (reason: OverlayDismissReason, event?: Event) => boolean | void;
   /** Defaults to true for modal surfaces. */
   autoFocus?: boolean;
+  /** Resolve once when ready. An unavailable target falls back to the surface. */
+  initialFocus?: () => HTMLElement | undefined;
   restoreFocus?: boolean;
   /** Called under the creation context once per opening. Use reactive content. */
   children: (overlay: OverlayState) => unknown;
@@ -71,6 +84,7 @@ export interface OverlayHostProps {
 const OverlayContext = createContext<OverlayManager>();
 const hosts = new WeakMap<HTMLElement, OverlayManager>();
 const scopes = new Map<FocusScope, OverlayManager>();
+const escapeDispatches = new WeakMap<KeyboardEvent, Set<OverlayManager>>();
 
 /** Install once inside the UIProvider of each independently mounted instance. */
 export function OverlayHost(props: OverlayHostProps) {
@@ -154,6 +168,9 @@ class OverlayManager {
     this.doc = target.ownerDocument;
     this.win = this.doc.defaultView!;
   }
+  private interactiveTop() {
+    return this.stack.findLast((surface) => !surface.options.noninteractive);
+  }
   private modalIndex() {
     for (let i = this.stack.length - 1; i >= 0; i--)
       if (this.stack[i].options.modal) return i;
@@ -235,21 +252,47 @@ class OverlayManager {
     this.stopGesture = cleanup;
   }
   private onPointer = (event: PointerEvent) => {
-    const top = this.stack.at(-1);
+    const top = this.interactiveTop();
     if (
       !top ||
       !this.belongs(event) ||
-      top.content.contains(event.target as Node)
+      top.content.contains(event.target as Node) ||
+      this.stack
+        .slice(this.stack.indexOf(top) + 1)
+        .some(
+          (surface) =>
+            surface.options.noninteractive &&
+            surface.content.contains(event.target as Node),
+        )
     )
       return;
+    const anchor = top.options.anchor;
+    if (top.options.anchorIsInside && anchor) {
+      const element = anchor instanceof HTMLElement ? anchor : anchor.element;
+      const rect = element.getBoundingClientRect();
+      if (
+        event.clientX >= rect.left &&
+        event.clientX <= rect.right &&
+        event.clientY >= rect.top &&
+        event.clientY <= rect.bottom
+      )
+        return;
+    }
     const policy =
       top.options.outsidePointer ?? (top.options.modal ? 'block' : 'dismiss');
-    const blocked = this.modalIndex() >= 0 || policy === 'block';
+    const blocked =
+      this.modalIndex() >= 0 ||
+      policy === 'block' ||
+      policy === 'dismiss-and-block';
     if (blocked) {
       this.suppressGesture(event);
       stopEvent(event);
     }
-    if (policy === 'dismiss' && event.button === 0 && event.isPrimary !== false)
+    if (
+      (policy === 'dismiss' || policy === 'dismiss-and-block') &&
+      event.button === 0 &&
+      event.isPrimary !== false
+    )
       top.requestDismiss('outside-pointer', event);
   };
   private onClick = (event: MouseEvent) => {
@@ -261,8 +304,84 @@ class OverlayManager {
       stopEvent(event);
   };
   private onKey = (event: KeyboardEvent) => {
-    if (!this.owns(event.target) || isComposingInput(event)) return;
-    const top = this.stack.at(-1);
+    if (isComposingInput(event)) return;
+    if (event.key === 'Escape' && !escapeDispatches.has(event)) {
+      const handled = new Set<OverlayManager>();
+      escapeDispatches.set(event, handled);
+      // Observe descriptive help before an owning instance consumes Escape.
+      // Foreign interactive surfaces still receive their own event normally.
+      for (const manager of scopes.values()) {
+        const surface = manager.stack.at(-1);
+        if (
+          manager.doc === this.doc &&
+          surface?.options.escapeScope === 'document' &&
+          surface.options.dismissOnEscape !== false
+        ) {
+          handled.add(manager);
+          surface.requestDismiss('escape', event);
+        }
+      }
+    }
+    if (escapeDispatches.get(event)?.has(this)) {
+      if (this.owns(event.target)) stopEvent(event);
+      return;
+    }
+    if (!this.owns(event.target)) return;
+    const top = event.key === 'Tab' ? this.interactiveTop() : this.stack.at(-1);
+    let tabDismissed = false;
+    if (
+      event.key === 'Tab' &&
+      !event.altKey &&
+      !event.ctrlKey &&
+      !event.metaKey &&
+      top?.options.tabAnchor &&
+      (top.content.contains(this.doc.activeElement) ||
+        // Select-only lists retain DOM focus on their anchor.
+        (top.options.autoFocus === false &&
+          this.doc.activeElement === top.options.tabAnchor))
+    ) {
+      const all = this.focus.tabEntries();
+      const inside = all.filter((entry) =>
+        top.content.contains(entry.binding.element),
+      );
+      const index = inside.findIndex(
+        (entry) => entry.binding.element === this.doc.activeElement,
+      );
+      if (
+        index < 0 ||
+        (event.shiftKey ? index === 0 : index === inside.length - 1)
+      ) {
+        const outside = all.filter(
+          (entry) => !top.content.contains(entry.binding.element),
+        );
+        const anchorIndex = outside.findIndex(
+          (entry) => entry.binding.element === top.options.tabAnchor,
+        );
+        const onAnchor = this.doc.activeElement === top.options.tabAnchor;
+        const next =
+          outside[anchorIndex + (event.shiftKey ? (onAnchor ? -1 : 0) : 1)];
+        if (top.options.dismissOnFocusOutside) {
+          tabDismissed = true;
+          top.requestDismiss('focus-outside', event);
+        }
+        if (next) {
+          stopEvent(event);
+          this.redirecting = true;
+          try {
+            this.focus.focus(next);
+          } finally {
+            this.redirecting = false;
+          }
+          return;
+        }
+        if (this.modalIndex() < 0) {
+          // Let native Tab continue into the surrounding page from the trigger.
+          top.options.tabAnchor?.focus({ preventScroll: true });
+          return;
+        }
+        // A terminal child still participates in the containing modal's wrap.
+      }
+    }
     if (event.key === 'Escape' && top?.options.dismissOnEscape !== false) {
       stopEvent(event);
       top?.requestDismiss('escape', event);
@@ -281,27 +400,63 @@ class OverlayManager {
           : (current + (event.shiftKey ? -1 : 1) + candidates.length) %
             candidates.length;
       stopEvent(event);
-      if (candidates.length) this.focus.focus(candidates[next]);
-      else this.focusSurface();
+      const redirecting = this.redirecting;
+      this.redirecting ||= tabDismissed;
+      try {
+        if (candidates.length) this.focus.focus(candidates[next]);
+        else this.focusSurface();
+      } finally {
+        this.redirecting = redirecting;
+      }
     }
   };
   private onFocus = (event: FocusEvent) => {
+    if (this.redirecting || !this.owns(event.target)) return;
     if (
-      this.redirecting ||
-      this.modalIndex() < 0 ||
-      !this.owns(event.target) ||
-      this.permitted(event.target as HTMLElement)
-    )
+      this.modalIndex() >= 0 &&
+      !this.permitted(event.target as HTMLElement)
+    ) {
+      this.focusSurface();
       return;
-    this.focusSurface();
+    }
+    const top = this.interactiveTop();
+    if (
+      top?.options.dismissOnFocusOutside &&
+      !top.content.contains(event.target as Node)
+    )
+      top.requestDismiss('focus-outside', event);
   };
-  focusSurface() {
+  focusSurface(initialFocus?: () => HTMLElement | undefined) {
     if (this.redirecting) return;
     this.redirecting = true;
     try {
       const index = this.modalIndex();
       const active = this.stack.slice(Math.max(0, index));
-      const top = active.at(-1);
+      const top = active.findLast((surface) => !surface.options.noninteractive);
+      if (initialFocus) {
+        const target = initialFocus();
+        if (this.interactiveTop() !== top) return;
+        const entry = this.focus.entries.find(
+          (entry) => entry.binding.element === target,
+        );
+        if (
+          entry &&
+          top?.content.contains(entry.binding.element) &&
+          this.focus.focus(entry)
+        )
+          return;
+        if (
+          !entry &&
+          target &&
+          top?.content.contains(target) &&
+          visible(target)
+        ) {
+          target.focus({ preventScroll: true });
+          if (this.doc.activeElement === target) return;
+        }
+        top?.content.focus({ preventScroll: true });
+        return;
+      }
       const first = this.focus
         .tabEntries()
         .find((entry) => top?.content.contains(entry.binding.element));
@@ -359,7 +514,13 @@ class OverlayManager {
     this.syncConstraint();
     if (!this.stack.length) this.disconnect();
     const active = this.doc.activeElement;
-    const canRestore = !active || active === this.doc.body || this.owns(active);
+    const canRestore =
+      !active ||
+      active === this.doc.body ||
+      (this.owns(active) &&
+        (surface.options.modal ||
+          hadFocus ||
+          active === surface.previousFocus));
     if (
       shouldRestore &&
       canRestore &&
@@ -461,7 +622,7 @@ export function createOverlay(options: OverlayOptions): OverlayState {
       'position:fixed;pointer-events:auto;background:rgb(0 0 0 / 30%);';
     const content = manager.doc.createElement('div');
     content.dataset.piantOverlaySurface = '';
-    content.tabIndex = -1;
+    if (!options.noninteractive) content.tabIndex = -1;
     content.style.cssText =
       'position:fixed;pointer-events:auto;overflow:hidden;outline:none;';
     shell.append(style, blocker, content);
@@ -487,16 +648,16 @@ export function createOverlay(options: OverlayOptions): OverlayState {
       if (closed) return;
       const hadFocus = content.contains(manager.doc.activeElement);
       closed = true;
-      controller.abort();
       // Remove DOM before restoring focus; detached entries are unavailable.
       let failure: unknown;
       let failed = false;
       for (const task of [
+        () => setReady(false),
+        () => controller.abort(),
         () => shell.remove(),
         () => instance?.destroy(),
         stopContent,
         () => manager.remove(surface, hadFocus),
-        () => setReady(false),
         () => setElement(undefined),
         () => setPosition(undefined),
       ]) {
@@ -680,7 +841,7 @@ export function createOverlay(options: OverlayOptions): OverlayState {
             manager.stack.at(-1) === surface &&
             (options.autoFocus ?? options.modal)
           )
-            manager.focusSurface();
+            manager.focusSurface(options.initialFocus);
           if (!closed) setReady(true);
         })
         .catch((cause: unknown) => {
@@ -695,8 +856,9 @@ export function createOverlay(options: OverlayOptions): OverlayState {
     }
   }
   stop = root((dispose) => {
+    const visible = createMemo(() => open());
     createEffect(() => {
-      if (!open() || disposed) return;
+      if (!visible() || disposed) return;
       untrack(() => {
         setError(undefined);
         try {

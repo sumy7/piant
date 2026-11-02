@@ -1,5 +1,5 @@
 import { Container, Graphics } from 'pixi.js';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   Align,
   BoxSizing,
@@ -35,6 +35,48 @@ Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
 });
 
 describe('component style bindings', () => {
+  it('releases a destroyed child style reaction before parent cleanup changes shared state', () => {
+    const [active, setActive] = createState(false);
+    const resolve = vi.fn(() => ({ borderWidth: active() ? 2 : 0 }));
+    let child!: PNode;
+    let parent!: PNode;
+    let peer!: PNode;
+    const stop = root((dispose) => {
+      child = View({
+        get style() {
+          return resolve();
+        },
+      }) as PNode;
+      parent = View({ children: child }) as PNode;
+      peer = View({
+        get style() {
+          return { width: active() ? 25 : 10 };
+        },
+      }) as PNode;
+      return dispose;
+    });
+    // Intercept the invalid write in the pre-fix case, so this regression can
+    // fail without corrupting the shared WASM allocator for subsequent tests.
+    const write = vi.spyOn(child, 'setStyle').mockImplementation(() => {});
+    parent.onDestroy(() => setActive(true));
+    try {
+      parent.destroyRecursive();
+      expect(resolve).toHaveBeenCalledTimes(1);
+      expect(write).not.toHaveBeenCalled();
+      expect(peer._layoutNode.getWidth().value).toBe(25);
+      setActive(false);
+      expect(resolve).toHaveBeenCalledTimes(1);
+      expect(peer._layoutNode.getWidth().value).toBe(10);
+      stop();
+      setActive(true);
+      expect(peer._layoutNode.getWidth().value).toBe(10);
+    } finally {
+      stop();
+      parent.destroyRecursive();
+      peer.destroyRecursive();
+      write.mockRestore();
+    }
+  });
   it('clears removed visual and Yoga styles while restoring element defaults', () => {
     root(() => {
       const [style, setStyle] = createState<ViewStyles>({

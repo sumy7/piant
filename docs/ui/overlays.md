@@ -2,6 +2,8 @@
 
 `OverlayHost`、`createOverlay` 与 `createOverlayAnchor` 为锚定面板、模态内容和嵌套浮层提供共同底座。浮层内容由现有 `Surface`、`Button`、`TextField` 等组件组成，调用方负责标题、内容、业务动作及产品需要的语义。
 
+完整交互组件见 [Dialog 与 AlertDialog](./dialogs) 和 [Popover 与 Tooltip](./popovers)。
+
 ## 锚定、模态与嵌套
 
 <LiveExample example="uiOverlay" title="浮层底座：祖先裁剪、原生输入、模态与嵌套" :height="400" />
@@ -105,15 +107,20 @@ Host 读取 DOM 矩形完成 Canvas 与宿主缩放后的坐标转换。内容�
 
 浮层的生命周期由创建它的内容 owner 决定：关闭父浮层会清理其内容中创建的子浮层；同一 Host 中独立创建的浮层不会因打开顺序而被连带关闭。关闭未持有焦点的下层浮层会保留当前上层焦点。
 
-| 选项                        | 默认值与行为                                                                                       |
-| --------------------------- | -------------------------------------------------------------------------------------------------- |
-| `modal`                     | `false`；为 `true` 时限制实例背景指针与焦点，Tab / Shift+Tab 在许可浮层内循环                      |
-| `dismissOnEscape`           | `true`；在所属实例内处理栈顶 Escape，消费已处理事件                                                |
-| `outsidePointer`            | 普通浮层 `'dismiss'`，模态 `'block'`；定义实例内视觉面之外的指针策略                               |
-| `autoFocus`                 | 模态默认 `true`，普通默认 `false`；准备完成后进入当前浮层                                          |
-| `restoreFocus`              | `true`；关闭时尝试返回先前可用焦点，必要时回退                                                     |
-| `onDismiss(reason, event?)` | `reason` 为 `'escape'` / `'outside-pointer'` / `'anchor-removed'`；返回 `false` 可否决逻辑关闭请求 |
-| `onError(error)`            | 通知异步初始化或渲染失败，同时可从 `error()` 读取                                                  |
+| 选项                        | 默认值与行为                                                                                                           |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `modal`                     | `false`；为 `true` 时限制实例背景指针与焦点，Tab / Shift+Tab 在许可浮层内循环                                          |
+| `dismissOnEscape`           | `true`；在所属实例内处理栈顶 Escape，消费已处理事件                                                                    |
+| `outsidePointer`            | 普通浮层 `'dismiss'`，模态 `'block'`；定义实例内视觉面之外的指针策略                                                   |
+| `autoFocus`                 | 模态默认 `true`，普通默认 `false`；准备完成后进入当前浮层                                                              |
+| `initialFocus`              | 可选目标解析函数，每次视觉面就绪时执行一次；不可用或属于其他浮层时聚焦视觉面本身                                       |
+| `noninteractive`            | 默认 `false`；描述层不接收焦点，也不遮蔽下层的外部指针、焦点及 Tab 策略；描述内容内部的指针仍属于浮层                  |
+| `dismissOnFocusOutside`     | 默认 `false`；焦点移到当前交互面之外时请求关闭，不抢回已移出的非模态焦点                                               |
+| `tabAnchor`                 | 可选语义触发器元素；将正文边界 Tab 接到触发器及其逻辑后继，供非模态组件使用                                            |
+| `escapeScope`               | 默认 `'instance'`；`'document'` 用于无焦点的描述层，观察 Escape 而不消费其他实例的事件；每次分发仅处理一次             |
+| `restoreFocus`              | `true`；关闭时尝试返回先前可用焦点，必要时回退                                                                         |
+| `onDismiss(reason, event?)` | `reason` 为 `'escape'` / `'outside-pointer'` / `'anchor-removed'` / `'focus-outside'`；返回 `false` 可否决逻辑关闭请求 |
+| `onError(error)`            | 通知异步初始化或渲染失败，同时可从 `error()` 读取                                                                      |
 
 `outsidePointer='dismiss'` 在实例内主指针按下时请求关闭；普通浮层允许背景手势继续，模态仍消费背景手势，避免点击穿透。`'block'` 消费外部手势但不请求关闭；`'ignore'` 不请求关闭，模态的背景限制仍然有效。属于其他 Canvas 或网页应用的事件不会被当作此实例的外部点击。打开触发事件不会被新浮层当成外部点击而立即关闭。
 

@@ -22,6 +22,10 @@ pnpm add @piant/ui @piant/core "pixi.js@^8.22.0"
 - 操作：`Button`、`IconButton`。
 - 输入：`TextField`、`Field`。
 - 选择：`Checkbox`、`ToggleSwitch`、`RadioGroup`。
+- 弹窗：`Dialog`、`DialogTrigger`、`DialogContent`、`DialogTitle`、`DialogDescription`、`DialogClose`；`AlertDialog`、`AlertDialogTrigger`、`AlertDialogContent`、`AlertDialogTitle`、`AlertDialogDescription`、`AlertDialogCancel`、`AlertDialogConfirm`。
+- 锚定面板与提示：`Popover`、`PopoverTrigger`、`PopoverContent`、`PopoverClose`；`Tooltip`、`TooltipTrigger`、`TooltipContent`。
+- 菜单与选择面板：`Menu`、`MenuTrigger`、`MenuContent`、`MenuItem`；`Select`、`SelectTrigger`、`SelectContent`、`SelectItem`。
+- 通知：`ToastProvider`、`ToastViewport`、`useToast`。
 - 类型：`ColorMode`、`ControlDensity`、`ThemeTokens`、`ThemeOverrides`、`ThemeOptions`、`UITheme`、`UIProviderProps`、`ControllableStateOptions`、`PressableOptions`、`PressableState`、`SpacerProps`、`StackProps`、`SurfaceProps`、`SeparatorProps`、`IconProps`、`IconDraw`、`BadgeProps`、`ProgressBarProps`、`SpinnerProps`、`ButtonProps`、`IconButtonProps`、`ButtonIconContext`、`ButtonPressEvent`、`ButtonSize`、`ButtonVariant`、`TextFieldProps`、`TextFieldSize`、`TextFieldType`、`FieldProps`、`CheckboxProps`、`ToggleSwitchProps`、`RadioGroupProps`、`RadioGroupOption`。
 
 `@piant/core` 是 peer dependency，由应用提供，版本须满足已安装 UI 包的 `peerDependencies`。Core 的 peer dependency 为 `pixi.js ^8.22.0`。UI 构建保留对 core 的外部引用，不打包另一份 core 或响应式运行时。
@@ -130,6 +134,32 @@ export function ThemedApp() {
 
 在每个独立挂载实例的 `UIProvider` 内安装一个 `OverlayHost`，使用 `createOverlay` 创建锚定或模态视觉面，通过 `createOverlayAnchor` 绑定 Canvas 锚点。浮层内容保留创建处的主题、状态和焦点上下文，视觉面使用浏览器 manual popover 与独立 Canvas 越过祖先裁剪和背景原生输入。尺寸、关闭策略、实例内模态范围与浏览器要求见[浮层文档](../../docs/ui/overlays.md)。
 
+## Dialog 与 AlertDialog
+
+在 `UIProvider` 与 `OverlayHost` 的延迟子树中组合根组件、Trigger、Content、Title、Description 和关闭/动作按钮。根组件支持 `open` / `defaultOpen` / `onOpenChange`；Content 通过工厂函数创建正文及可选 `actions`，关闭时释放本次内容，再打开重新创建。跨次草稿由应用提升为受控状态。完整 API、默认值和独立在线示例见 [Dialog 文档](../../docs/ui/dialogs.md)。
+
+Dialog 默认聚焦首个可用控件，允许 Escape 与遮罩请求关闭；AlertDialog 默认聚焦 Cancel，遮罩保持打开，Escape 只请求关闭。`initialFocus` 每次打开只解析一次；主题更新不重建输入。Tab / Shift+Tab 约束、嵌套和关闭恢复复用 Host，触发器消失时使用实例安全回退。确认业务仅放在 Confirm 的 `onPress`，打开、关闭或卸载均不自动确认；`event.preventDefault()` 可阻止按钮自动请求关闭，受控最终状态仍由调用方提交。
+
+真实 DOM 宿主提供 `dialog` / `alertdialog` 角色和标题/描述 ID；没有 Title 时 Content 必须提供非空 `name`。模态范围仅属于当前实例，其他 Canvas 或网页 DOM 仍可操作，因此使用 `aria-modal="false"`，不声称页面级 APG 模态支持。AX 树和自动化输入合成检查不等同于 VoiceOver 朗读、导航或系统中文候选窗口验收；支持边界见文档。
+
+## Popover 与 Tooltip
+
+`Popover` 在触发器附近展示非模态表单或操作面板，支持受控/非受控打开值、触发器切换、必填内容名称、一次性初始焦点和独立操作区。Escape、外部指针或焦点默认请求关闭；Tab 可从首尾离开，背景操作继续执行。`Tooltip` 只接受简短非交互文字，悬停默认等待 500ms，键盘聚焦立即显示，指针离开有 200ms 宽限，可移入继续阅读且没有阅读倒计时；Escape 关闭并抑制当前会话重开。触摸不触发悬停，按钮保留原本动作。
+
+两者均在 `UIProvider` / `OverlayHost` 内通过函数子树创建，关闭销毁内容，触发器失效或 owner/Host 卸载会释放视觉面及计时器。Popover 使用 `dialog` 与 `aria-modal="false"`，Tooltip 使用 `tooltip` 并合并触发器的 `aria-describedby`，不获取或恢复焦点。完整属性、独立在线示例、受控关闭和输入/辅助技术边界见 [Popover 与 Tooltip 文档](../../docs/ui/popovers.md)。
+
+## Menu 与 Select
+
+`Menu` 将稳定 key 的动作数据渲染为菜单，支持循环方向导航、Home/End、字符前缀及禁用项发现；明确激活后执行条目回调与根动作，再请求关闭。`Select` 提供单值 select-only combobox，DOM 焦点留在触发器，通过 `aria-activedescendant` 浏览 listbox；方向键只预览，Enter/Space 或点击提交，Escape、Tab 和外部关闭取消预览。值与打开状态分别受控，未知或移除的存储值显示 placeholder，不自动通知值变化。
+
+两者沿用 `UIProvider` / `OverlayHost` 的锚定与清理能力，关闭释放内容；外部关闭默认消费该次指针手势，避免同时执行背景操作。Content 可自动生成条目，或由调用方按根数据的稳定 key 自定义 Item 样式和回调。它们不提供可编辑 Combobox、Submenu 或隐藏原生表单字段。公共 API、独立在线示例、回调取消顺序、动态数据和辅助技术边界见 [Menu 与 Select 文档](../../docs/ui/menu-select.md)。
+
+## Toast
+
+`ToastProvider` 在一个 UI 焦点作用域内管理有界 FIFO 队列，`useToast` 提供创建、显式 ID 完整替换、局部更新与关闭接口，`ToastViewport` 在调用方指定的树位置展示通知。默认显示 3 条、总容量 20 条、时长为 0（持续显示）；排队条目不提前计时或播报。有限时长在悬停、聚焦、窗口/文档隐藏和内容不可用时暂停，更新重置完整时长；重要操作宜使用持续通知。
+
+通知不自动聚焦，动作与关闭按钮沿用 Button 交互，本地 Escape 只处理通知控件焦点。稳定的 polite/status 和 assertive/alert 通道与按钮分开；Provider/Viewport 卸载清理所属计时器与监听。Viewport 位于 PNode 树中，不逃离祖先裁剪或父模态限制。公共类型、关闭原因、在线排队/更新/重挂载示例及实际辅助技术验收边界见 [Toast 文档](../../docs/ui/toast.md)。
+
 ## 工程边界
 
 Core 提供渲染节点、响应式原语、生命周期、基础组件与样式能力；UI 通过 core 公共入口组合布局与控件策略，不深度导入 core 源码。
@@ -159,3 +189,7 @@ pnpm --filter @piant/examples-ui-smoke dev
 ```
 
 `verify:package` 在仓库外复制工作区版本元数据与构建文件，执行 Changesets 版本预演后 pack，并隔离验证发布消费。它会检查发布 peer 与核心版本匹配，同时断言源码版本与 Changesets 未被改写。使用真实本地 core tarball 的验证不能等同于 registry 发布验证。浏览器中打开 smoke 示例，检查初始间距、点击「Increase gap」后的间距变化，以及「Unmount」后的资源清理；`/theme.html` 提供主题消费场景，`/pressable.html` 提供交互原语消费场景，`/foundations.html` 提供七个基础组件的组合预览，可操作主题、进度、窄容器、缩放和卸载；`/buttons.html` 提供 Button/IconButton 的键盘、事件替换、禁用与反复加载验证；`/selection.html` 提供选择控件组合验证；`/textFields.html` 提供 TextField/Field 的编辑、标签、错误、主题、选区与卸载检查。生产构建成功本身不代表浏览器运行通过。
+
+## 组合工作流验收
+
+[文档编辑工作流](../../docs/ui/workflow.md)将带原生输入的 Dialog、嵌套 Menu/Select/Popover/Tooltip、AlertDialog 和 Toast 保存/撤销反馈组合在一起。在线示例与 `examples/ui-gallery` 的 `workflow.html` 共享场景源码，独立 A/B 工作区可切换外观、窄容器和 CSS 缩放，并分别卸载或重挂载。完整发布消费、浏览器命令与工程证据边界见 [浏览器验收说明](browser-tests/README.md)。

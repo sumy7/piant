@@ -10,6 +10,32 @@ export {
 } from './components/Button';
 export { Checkbox, type CheckboxProps } from './components/Checkbox';
 export { Collapsible, type CollapsibleProps } from './components/Collapsible';
+export {
+  AlertDialog,
+  AlertDialogCancel,
+  type AlertDialogCancelProps,
+  AlertDialogConfirm,
+  type AlertDialogConfirmProps,
+  AlertDialogContent,
+  type AlertDialogContentProps,
+  AlertDialogDescription,
+  type AlertDialogProps,
+  type AlertDialogTextProps,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+  type AlertDialogTriggerProps,
+  Dialog,
+  DialogClose,
+  type DialogCloseProps,
+  DialogContent,
+  type DialogContentProps,
+  DialogDescription,
+  type DialogProps,
+  type DialogTextProps,
+  DialogTitle,
+  DialogTrigger,
+  type DialogTriggerProps,
+} from './components/Dialog';
 export { Field, type FieldProps } from './components/Field';
 export { Icon, type IconDraw, type IconProps } from './components/Icon';
 export { IconButton, type IconButtonProps } from './components/IconButton';
@@ -17,12 +43,45 @@ export type {
   DisclosureItem,
   PanelMountStrategy,
 } from './components/internal/compositeParts';
+export {
+  type ChoiceSelectEvent,
+  Menu,
+  MenuContent,
+  type MenuContentProps,
+  MenuItem,
+  type MenuItemProps,
+  type MenuOption,
+  type MenuProps,
+  MenuTrigger,
+  type MenuTriggerProps,
+} from './components/Menu';
+export {
+  Popover,
+  PopoverClose,
+  type PopoverCloseProps,
+  PopoverContent,
+  type PopoverContentProps,
+  type PopoverProps,
+  PopoverTrigger,
+  type PopoverTriggerProps,
+} from './components/Popover';
 export { ProgressBar, type ProgressBarProps } from './components/ProgressBar';
 export {
   RadioGroup,
   type RadioGroupOption,
   type RadioGroupProps,
 } from './components/RadioGroup';
+export {
+  Select,
+  SelectContent,
+  type SelectContentProps,
+  SelectItem,
+  type SelectItemProps,
+  type SelectOption,
+  type SelectProps,
+  SelectTrigger,
+  type SelectTriggerProps,
+} from './components/Select';
 export { Separator, type SeparatorProps } from './components/Separator';
 export { Slider, type SliderProps } from './components/Slider';
 export { Spacer, type SpacerProps } from './components/Spacer';
@@ -37,9 +96,30 @@ export {
   type TextFieldType,
 } from './components/TextField';
 export {
+  type ToastAction,
+  type ToastController,
+  type ToastDismissReason,
+  type ToastInput,
+  ToastProvider,
+  type ToastProviderProps,
+  type ToastRecord,
+  type ToastUpdate,
+  ToastViewport,
+  type ToastViewportProps,
+  useToast,
+} from './components/Toast';
+export {
   ToggleSwitch,
   type ToggleSwitchProps,
 } from './components/ToggleSwitch';
+export {
+  Tooltip,
+  TooltipContent,
+  type TooltipContentProps,
+  type TooltipProps,
+  TooltipTrigger,
+  type TooltipTriggerProps,
+} from './components/Tooltip';
 export {
   type ControllableStateOptions,
   createControllableState,

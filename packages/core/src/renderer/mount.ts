@@ -248,6 +248,10 @@ export async function mount(
       () => root?.destroyRecursive(),
       () => {
         applications.delete(app);
+        // A pointer handler can destroy its own mount. Pixi completes that
+        // dispatch by setting the cursor after EventSystem.destroy cleared its
+        // DOM target; only this retired system must ignore that final update.
+        if (app.renderer?.events) app.renderer.events.setCursor = () => {};
         if (existingCanvas && app.renderer && 'gl' in app.renderer) {
           restoreCanvasContext(existingCanvas, app.renderer.gl);
         }

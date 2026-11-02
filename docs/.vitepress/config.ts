@@ -59,6 +59,7 @@ export default defineConfig({
           items: [
             { text: '简介与接入', link: '/ui/introduction' },
             { text: 'Gallery 设置面板', link: '/ui/gallery' },
+            { text: '浮层组合工作流', link: '/ui/workflow' },
             { text: '主题与 UIProvider', link: '/ui/theme' },
             { text: '布局与状态组件', link: '/ui/foundations' },
             { text: 'Button 与 IconButton', link: '/ui/buttons' },
@@ -69,6 +70,10 @@ export default defineConfig({
             { text: '受控状态与按压行为', link: '/ui/interactions' },
             { text: '焦点与语义桥接', link: '/ui/focus' },
             { text: '浮层底座与实例隔离', link: '/ui/overlays' },
+            { text: 'Dialog 与 AlertDialog', link: '/ui/dialogs' },
+            { text: 'Popover 与 Tooltip', link: '/ui/popovers' },
+            { text: 'Menu 与 Select', link: '/ui/menu-select' },
+            { text: 'Toast 通知', link: '/ui/toast' },
           ],
         },
       ],

@@ -53,6 +53,20 @@ describe('Piant examples compiler', () => {
     'uiRadioGroup',
     'uiGallery',
     'uiSpacer',
+    'uiSlider',
+    'uiTabs',
+    'uiCollapsible',
+    'uiAccordion',
+    'uiOverlay',
+    'uiOverlayInstances',
+    'uiDialog',
+    'uiAlertDialog',
+    'uiPopover',
+    'uiTooltip',
+    'uiMenu',
+    'uiSelect',
+    'uiToast',
+    'uiOverlayWorkflow',
   ])('compiles the %s live example through the Piant preset', async (name) => {
     const filename = fileURLToPath(
       new URL(`../../examples/${name}.tsx`, import.meta.url),
@@ -73,20 +87,26 @@ describe('Piant examples compiler', () => {
     expect(await transform('<Text />', '/outside/App.tsx')).toBeUndefined();
   });
 
-  it('compiles the Gallery panel shared by the standalone app and docs', async () => {
-    const filename = fileURLToPath(
-      new URL(
-        '../../../examples/ui-gallery/src/SettingsPanel.tsx',
-        import.meta.url,
-      ),
-    );
-    const result = await transform(await readFile(filename, 'utf8'), filename);
-    const code = typeof result === 'object' && result ? result.code : '';
-    expect(code).toContain('createComponent');
-    expect(code).toContain('@piant/ui');
-    expect(code).not.toContain('<UIProvider');
-    expect(await transform('<View />', `${filename}?raw`)).toBeUndefined();
-  });
+  it.each(['SettingsPanel', 'OverlayWorkflow'])(
+    'compiles the shared %s scene used by standalone and docs',
+    async (name) => {
+      const filename = fileURLToPath(
+        new URL(
+          `../../../examples/ui-gallery/src/${name}.tsx`,
+          import.meta.url,
+        ),
+      );
+      const result = await transform(
+        await readFile(filename, 'utf8'),
+        filename,
+      );
+      const code = typeof result === 'object' && result ? result.code : '';
+      expect(code).toContain('createComponent');
+      expect(code).toContain('@piant/ui');
+      expect(code).not.toContain('<UIProvider');
+      expect(await transform('<View />', `${filename}?raw`)).toBeUndefined();
+    },
+  );
 
   it('renders highlighted TSX with the same light and dark themes as the docs', async () => {
     const module = await piantExamples().load(`${exampleFile}?highlighted`);

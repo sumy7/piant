@@ -128,6 +128,8 @@ describe('style consumption types', () => {
   it('types reset patches without widening setters to any', () => {
     type ExampleStyle = { width?: number; label?: string };
     const target = {
+      isDestroyed: false,
+      onDestroy: (_callback: () => void) => () => {},
       _layoutStyle: {} as ExampleStyle,
       setStyle(_style: {
         width?: number | undefined;
