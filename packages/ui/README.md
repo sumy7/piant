@@ -22,6 +22,7 @@ pnpm add @piant/ui @piant/core "pixi.js@^8.22.0"
 - 操作：`Button`、`IconButton`。
 - 输入：`TextField`、`Field`。
 - 选择：`Checkbox`、`ToggleSwitch`、`RadioGroup`。
+- 弹窗：`Dialog`、`DialogTrigger`、`DialogContent`、`DialogTitle`、`DialogDescription`、`DialogClose`；`AlertDialog`、`AlertDialogTrigger`、`AlertDialogContent`、`AlertDialogTitle`、`AlertDialogDescription`、`AlertDialogCancel`、`AlertDialogConfirm`。
 - 类型：`ColorMode`、`ControlDensity`、`ThemeTokens`、`ThemeOverrides`、`ThemeOptions`、`UITheme`、`UIProviderProps`、`ControllableStateOptions`、`PressableOptions`、`PressableState`、`SpacerProps`、`StackProps`、`SurfaceProps`、`SeparatorProps`、`IconProps`、`IconDraw`、`BadgeProps`、`ProgressBarProps`、`SpinnerProps`、`ButtonProps`、`IconButtonProps`、`ButtonIconContext`、`ButtonPressEvent`、`ButtonSize`、`ButtonVariant`、`TextFieldProps`、`TextFieldSize`、`TextFieldType`、`FieldProps`、`CheckboxProps`、`ToggleSwitchProps`、`RadioGroupProps`、`RadioGroupOption`。
 
 `@piant/core` 是 peer dependency，由应用提供，版本须满足已安装 UI 包的 `peerDependencies`。Core 的 peer dependency 为 `pixi.js ^8.22.0`。UI 构建保留对 core 的外部引用，不打包另一份 core 或响应式运行时。
@@ -129,6 +130,14 @@ export function ThemedApp() {
 ## 浮层底座
 
 在每个独立挂载实例的 `UIProvider` 内安装一个 `OverlayHost`，使用 `createOverlay` 创建锚定或模态视觉面，通过 `createOverlayAnchor` 绑定 Canvas 锚点。浮层内容保留创建处的主题、状态和焦点上下文，视觉面使用浏览器 manual popover 与独立 Canvas 越过祖先裁剪和背景原生输入。尺寸、关闭策略、实例内模态范围与浏览器要求见[浮层文档](../../docs/ui/overlays.md)。
+
+## Dialog 与 AlertDialog
+
+在 `UIProvider` 与 `OverlayHost` 的延迟子树中组合根组件、Trigger、Content、Title、Description 和关闭/动作按钮。根组件支持 `open` / `defaultOpen` / `onOpenChange`；Content 通过工厂函数创建正文及可选 `actions`，关闭时释放本次内容，再打开重新创建。跨次草稿由应用提升为受控状态。完整 API、默认值和独立在线示例见 [Dialog 文档](../../docs/ui/dialogs.md)。
+
+Dialog 默认聚焦首个可用控件，允许 Escape 与遮罩请求关闭；AlertDialog 默认聚焦 Cancel，遮罩保持打开，Escape 只请求关闭。`initialFocus` 每次打开只解析一次；主题更新不重建输入。Tab / Shift+Tab 约束、嵌套和关闭恢复复用 Host，触发器消失时使用实例安全回退。确认业务仅放在 Confirm 的 `onPress`，打开、关闭或卸载均不自动确认；`event.preventDefault()` 可阻止按钮自动请求关闭，受控最终状态仍由调用方提交。
+
+真实 DOM 宿主提供 `dialog` / `alertdialog` 角色和标题/描述 ID；没有 Title 时 Content 必须提供非空 `name`。模态范围仅属于当前实例，其他 Canvas 或网页 DOM 仍可操作，因此使用 `aria-modal="false"`，不声称页面级 APG 模态支持。AX 树和自动化输入合成检查不等同于 VoiceOver 朗读、导航或系统中文候选窗口验收；支持边界见文档。
 
 ## 工程边界
 

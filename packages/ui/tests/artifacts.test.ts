@@ -14,6 +14,7 @@ it('ships executable ESM with external core imports and no JSX or bundled runtim
     'components/Button.js',
     'components/Checkbox.js',
     'components/Collapsible.js',
+    'components/Dialog.js',
     'components/Field.js',
     'components/Icon.js',
     'components/IconButton.js',

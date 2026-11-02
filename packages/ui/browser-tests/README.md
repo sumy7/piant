@@ -37,3 +37,16 @@ PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs node packages/ui/browse
 ```
 
 `CONTAINERS_TEST_URL` defaults to `http://127.0.0.1:5173/ui/containers`; `CONTAINERS_EVIDENCE_DIR` defaults to `/tmp/piant-cod164`. Checks cover native Tab/Shift+Tab paths, automatic/manual activation, keyed reorder/removal, disabled headers, single/multiple expansion, retained and recreated inputs, hidden focus rejection, input hit positions and example teardown/remount. The script saves screenshots, a JSON check log and the actual Chrome accessibility tree. AX inspection does not establish VoiceOver reading or navigation results.
+
+
+## Dialog and AlertDialog
+
+Start the docs server with `pnpm docs:dev --host 127.0.0.1` and the fixture server above, then run:
+
+```sh
+PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs node packages/ui/browser-tests/dialogVerify.mjs
+```
+
+`DIALOG_TEST_URL` defaults to `http://127.0.0.1:5173/ui/dialogs`, `DIALOG_FIXTURE_URL` to `http://127.0.0.1:4177/dialog.html`, and `DIALOG_EVIDENCE_DIR` to `/tmp/piant-cod166`. The script records screenshots, the Chrome AX tree, interaction checks and limitations. It covers native TextField initial focus/selection, keyboard and real Canvas pointer paths, nested restoration, rejected controlled requests, background blocking, safe trigger removal, Cancel/Confirm semantics, CDP composition, narrow/overflow layouts, theme/density/font scaling, reduced motion and teardown/remount. OS Chinese input method candidate windows and VoiceOver are separate follow-ups (COD-179/COD-180). Instance-only interaction blocking deliberately uses `aria-modal="false"`, rather than claiming document-wide modality.
+
+After `pnpm --filter @piant/ui verify:package`, serve its reported `consumer/dist` directory with `python3 -m http.server 4188 --bind 127.0.0.1 --directory /path/to/consumer/dist`. Run `node packages/ui/browser-tests/dialogPackageVerify.mjs` with the same `PLAYWRIGHT_MODULE`. `DIALOG_PACKAGE_TEST_URL` defaults to `http://127.0.0.1:4188/dialogs.html`. This checks executable public exports, Dialog focus/Tab/restoration, AlertDialog safe initial focus and real Canvas confirmation, and live unmount from the production consumer. It writes `packed-browser-results.json` and a screenshot alongside the other evidence. It validates local tarballs, not an npm registry release.

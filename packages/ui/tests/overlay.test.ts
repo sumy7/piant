@@ -216,6 +216,61 @@ function key(
 }
 
 describe('instance-scoped overlays', () => {
+  it('resolves initial focus once per opening without accepting a foreign target', async () => {
+    let overlay!: OverlayState;
+    let first!: FocusableState;
+    let preferred!: FocusableState;
+    let background!: FocusableState;
+    const choose = vi.fn(() => preferred.element);
+    setup((add, control) => {
+      background = control('background');
+      overlay = add({
+        modal: true,
+        initialFocus: choose,
+        children: () => {
+          const a = control('first');
+          const b = control('preferred');
+          first = a;
+          preferred = b;
+          return [a.node, b.node];
+        },
+      });
+    });
+    overlay.setOpen(true);
+    await settle();
+    expect(document.activeElement).toBe(preferred.element);
+    first.focus();
+    overlay.updatePosition();
+    expect(document.activeElement).toBe(first.element);
+    expect(choose).toHaveBeenCalledTimes(1);
+    overlay.setOpen(false);
+    choose.mockImplementation(() => background.element);
+    overlay.setOpen(true);
+    await settle();
+    expect(document.activeElement).toBe(overlay.element());
+    expect(choose).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps an unavailable registered initial target outside focus', async () => {
+    let overlay!: OverlayState;
+    let preferred!: FocusableState;
+    setup((add, control) => {
+      overlay = add({
+        modal: true,
+        initialFocus: () => preferred.element,
+        children: () => {
+          const item = control('unavailable');
+          preferred = item;
+          item.element.style.display = 'none';
+          return item.node;
+        },
+      });
+    });
+    overlay.setOpen(true);
+    await settle();
+    expect(document.activeElement).toBe(overlay.element());
+  });
+
   it('restores an automatic controlled tab without emitting another selection request', async () => {
     vi.stubGlobal('OffscreenCanvas', undefined);
     vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(
@@ -347,7 +402,11 @@ describe('instance-scoped overlays', () => {
     let overlay!: OverlayState;
     const dismiss = vi.fn();
     setup((add) => {
-      overlay = add({ modal: true, outsidePointer: 'dismiss', onDismiss: dismiss });
+      overlay = add({
+        modal: true,
+        outsidePointer: 'dismiss',
+        onDismiss: dismiss,
+      });
     });
     overlay.setOpen(true);
     await settle();

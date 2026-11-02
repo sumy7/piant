@@ -44,6 +44,8 @@ export interface OverlayOptions extends OverlayPositionOptions {
   onDismiss?: (reason: OverlayDismissReason, event?: Event) => boolean | void;
   /** Defaults to true for modal surfaces. */
   autoFocus?: boolean;
+  /** Resolve once when ready. An unavailable target falls back to the surface. */
+  initialFocus?: () => HTMLElement | undefined;
   restoreFocus?: boolean;
   /** Called under the creation context once per opening. Use reactive content. */
   children: (overlay: OverlayState) => unknown;
@@ -295,13 +297,37 @@ class OverlayManager {
       return;
     this.focusSurface();
   };
-  focusSurface() {
+  focusSurface(initialFocus?: () => HTMLElement | undefined) {
     if (this.redirecting) return;
     this.redirecting = true;
     try {
       const index = this.modalIndex();
       const active = this.stack.slice(Math.max(0, index));
       const top = active.at(-1);
+      if (initialFocus) {
+        const target = initialFocus();
+        if (this.stack.at(-1) !== top) return;
+        const entry = this.focus.entries.find(
+          (entry) => entry.binding.element === target,
+        );
+        if (
+          entry &&
+          top?.content.contains(entry.binding.element) &&
+          this.focus.focus(entry)
+        )
+          return;
+        if (
+          !entry &&
+          target &&
+          top?.content.contains(target) &&
+          visible(target)
+        ) {
+          target.focus({ preventScroll: true });
+          if (this.doc.activeElement === target) return;
+        }
+        top?.content.focus({ preventScroll: true });
+        return;
+      }
       const first = this.focus
         .tabEntries()
         .find((entry) => top?.content.contains(entry.binding.element));
@@ -487,16 +513,16 @@ export function createOverlay(options: OverlayOptions): OverlayState {
       if (closed) return;
       const hadFocus = content.contains(manager.doc.activeElement);
       closed = true;
-      controller.abort();
       // Remove DOM before restoring focus; detached entries are unavailable.
       let failure: unknown;
       let failed = false;
       for (const task of [
+        () => setReady(false),
+        () => controller.abort(),
         () => shell.remove(),
         () => instance?.destroy(),
         stopContent,
         () => manager.remove(surface, hadFocus),
-        () => setReady(false),
         () => setElement(undefined),
         () => setPosition(undefined),
       ]) {
@@ -680,7 +706,7 @@ export function createOverlay(options: OverlayOptions): OverlayState {
             manager.stack.at(-1) === surface &&
             (options.autoFocus ?? options.modal)
           )
-            manager.focusSurface();
+            manager.focusSurface(options.initialFocus);
           if (!closed) setReady(true);
         })
         .catch((cause: unknown) => {

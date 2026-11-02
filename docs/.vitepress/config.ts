@@ -69,6 +69,7 @@ export default defineConfig({
             { text: '受控状态与按压行为', link: '/ui/interactions' },
             { text: '焦点与语义桥接', link: '/ui/focus' },
             { text: '浮层底座与实例隔离', link: '/ui/overlays' },
+            { text: 'Dialog 与 AlertDialog', link: '/ui/dialogs' },
           ],
         },
       ],

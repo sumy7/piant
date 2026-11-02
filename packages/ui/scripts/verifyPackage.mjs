@@ -376,6 +376,37 @@ destroy.onclick = () => {
 document.body.append(destroy);
 `,
 );
+writeFileSync(
+  join(consumer, 'src/dialogs.ts'),
+  `import { mount, View } from '@piant/core';
+import { UIProvider, OverlayHost, Dialog, DialogTrigger, DialogContent, DialogTitle, DialogDescription, DialogClose, AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogTitle, AlertDialogDescription, AlertDialogCancel, AlertDialogConfirm, TextField, type DialogProps, type DialogContentProps, type DialogTextProps, type DialogTriggerProps, type DialogCloseProps, type AlertDialogProps, type AlertDialogContentProps, type AlertDialogTextProps, type AlertDialogTriggerProps, type AlertDialogCancelProps, type AlertDialogConfirmProps } from '@piant/ui';
+const target = document.createElement('div');
+target.style.cssText = 'width:640px;height:480px'; document.body.append(target);
+let confirmed = 0;
+const close: DialogCloseProps = { children: 'Packed close' };
+const cancel: AlertDialogCancelProps = { children: 'Packed cancel' };
+const confirm: AlertDialogConfirmProps = { children: 'Packed confirm', onPress: () => { confirmed++; } };
+const trigger: DialogTriggerProps = { children: 'Packed dialog' };
+const alertTrigger: AlertDialogTriggerProps = { children: 'Packed alert' };
+const title: DialogTextProps = { children: 'Packed dialog title' };
+const alertTitle: AlertDialogTextProps = { children: 'Packed alert title' };
+const content: DialogContentProps = {
+  children: () => [DialogTitle(title), DialogDescription({ children: 'Packed description' }), TextField({ 'aria-label': 'Packed dialog input' })],
+  actions: () => DialogClose(close),
+};
+const alertContent: AlertDialogContentProps = {
+  children: () => [AlertDialogTitle(alertTitle), AlertDialogDescription({ children: 'Confirm explicitly' })],
+  actions: () => [AlertDialogConfirm(confirm), AlertDialogCancel(cancel)],
+};
+const dialog: DialogProps = { children: () => [DialogTrigger(trigger), DialogContent(content)] };
+const alert: AlertDialogProps = { children: () => [AlertDialogTrigger(alertTrigger), AlertDialogContent(alertContent)] };
+const mounted = await mount(() => UIProvider({ children: () => OverlayHost({ children: () => View({ style: { gap: 16 }, children: [Dialog(dialog), AlertDialog(alert)] }) }) }), target);
+const status = document.createElement('output'); status.id = 'dialog-status';
+status.textContent = 'Packed dialogs ready'; document.body.append(status);
+const destroy = document.createElement('button'); destroy.textContent = 'Unmount dialogs';
+destroy.onclick = () => { mounted.destroy(); status.textContent = 'Unmounted; confirmed=' + confirmed; }; document.body.append(destroy);
+`,
+);
 const consumerConfigPath = join(consumer, 'rsbuild.config.ts');
 const consumerConfig = readFileSync(consumerConfigPath, 'utf8');
 assert.ok(
@@ -386,7 +417,7 @@ writeFileSync(
   consumerConfigPath,
   consumerConfig.replace(
     "index: './src/index.ts',",
-    "index: './src/index.ts',\n      overlay: './src/overlay.ts',\n      slider: './src/slider.ts',\n      containers: './src/containers.ts',",
+    "index: './src/index.ts',\n      overlay: './src/overlay.ts',\n      slider: './src/slider.ts',\n      containers: './src/containers.ts',\n      dialogs: './src/dialogs.ts',",
   ),
 );
 run(['typecheck'], consumer);
@@ -402,7 +433,7 @@ execFileSync(
 import assert from 'node:assert/strict';
 import { getOwner, runWithOwner, root, useMountSurface } from '@piant/core';
 import * as ui from '@piant/ui';
-for (const name of ['OverlayHost', 'createOverlay', 'createOverlayAnchor', 'computeOverlayPosition', 'Slider', 'Tabs', 'Collapsible', 'Accordion']) assert.equal(typeof ui[name], 'function', name);
+for (const name of ['OverlayHost', 'createOverlay', 'createOverlayAnchor', 'computeOverlayPosition', 'Slider', 'Tabs', 'Collapsible', 'Accordion', 'Dialog', 'DialogTrigger', 'DialogContent', 'DialogTitle', 'DialogDescription', 'DialogClose', 'AlertDialog', 'AlertDialogTrigger', 'AlertDialogContent', 'AlertDialogTitle', 'AlertDialogDescription', 'AlertDialogCancel', 'AlertDialogConfirm']) assert.equal(typeof ui[name], 'function', name);
 assert.equal(getOwner(), null);
 assert.equal(useMountSurface(), undefined);
 const stop = root((dispose) => {
@@ -550,6 +581,19 @@ for (const name of [
   'Tabs',
   'Collapsible',
   'Accordion',
+  'Dialog',
+  'DialogTrigger',
+  'DialogContent',
+  'DialogTitle',
+  'DialogDescription',
+  'DialogClose',
+  'AlertDialog',
+  'AlertDialogTrigger',
+  'AlertDialogContent',
+  'AlertDialogTitle',
+  'AlertDialogDescription',
+  'AlertDialogCancel',
+  'AlertDialogConfirm',
   'componentRoot',
   'createCompositePanel',
   'createCompositeTrigger',

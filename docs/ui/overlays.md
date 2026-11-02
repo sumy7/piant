@@ -111,6 +111,7 @@ Host 读取 DOM 矩形完成 Canvas 与宿主缩放后的坐标转换。内容�
 | `dismissOnEscape`           | `true`；在所属实例内处理栈顶 Escape，消费已处理事件                                                |
 | `outsidePointer`            | 普通浮层 `'dismiss'`，模态 `'block'`；定义实例内视觉面之外的指针策略                               |
 | `autoFocus`                 | 模态默认 `true`，普通默认 `false`；准备完成后进入当前浮层                                          |
+| `initialFocus`              | 可选目标解析函数，每次视觉面就绪时执行一次；不可用或属于其他浮层时聚焦视觉面本身                   |
 | `restoreFocus`              | `true`；关闭时尝试返回先前可用焦点，必要时回退                                                     |
 | `onDismiss(reason, event?)` | `reason` 为 `'escape'` / `'outside-pointer'` / `'anchor-removed'`；返回 `false` 可否决逻辑关闭请求 |
 | `onError(error)`            | 通知异步初始化或渲染失败，同时可从 `error()` 读取                                                  |

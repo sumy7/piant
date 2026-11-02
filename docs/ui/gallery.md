@@ -27,6 +27,8 @@ Gallery 将首批 `@piant/ui` 组件组合成可操作的设置面板：编辑�
 | Checkbox     | [独立选择与混合态](/ui/selection#checkbox)    | 受控/非受控、Space            |
 | ToggleSwitch | [布尔开关](/ui/selection#toggleswitch)        | 稳定名称、禁用                |
 | RadioGroup   | [组内单选](/ui/selection#radiogroup)          | 方向键、动态选项、单 Tab 停靠 |
+| Dialog       | [表单与嵌套弹窗](/ui/dialogs#dialog)          | 原生输入、受控关闭、焦点恢复  |
+| AlertDialog  | [明确取消与确认](/ui/dialogs#alertdialog)     | 取消优先、遮罩阻止、业务动作  |
 
 ## 运行仓库 Gallery
 
@@ -40,7 +42,7 @@ pnpm --filter @piant/examples-ui-gallery dev
 
 打开终端显示的本地地址。仓库 Gallery 同时挂载 A/B 两个 Canvas，提供原生宿主按钮来分别切换主题、密度、200% 字号、窄容器及挂载状态。可移除 B、卸载或重新挂载 A，检查一个实例的编辑和资源清理不会影响另一个实例。
 
-在线文档保留单个面板与主题控制；多挂载、宿主缩窄、卸载和重挂载的检查在仓库 Gallery 中进行。
+在线文档保留单个面板与主题控制，并提供资料编辑与重置确认弹窗；多挂载、宿主缩窄、卸载和重挂载的检查在仓库 Gallery 中进行。弹窗的完整受控、嵌套和输入示例见 [Dialog 与 AlertDialog](/ui/dialogs)。
 
 ## 验收操作
 

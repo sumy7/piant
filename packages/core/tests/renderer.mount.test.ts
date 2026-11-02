@@ -1,4 +1,4 @@
-import { EventBoundary, FederatedPointerEvent, Ticker } from 'pixi.js';
+import { EventBoundary, EventSystem, FederatedPointerEvent, Ticker } from 'pixi.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { View } from '../src/components/View';
 import { effect } from '../src/reactivity/effects';
@@ -260,6 +260,43 @@ describe('mount', () => {
       state.apps[1].renderer.events,
     );
     expect(removed).not.toHaveBeenCalled();
+  });
+
+  it('allows an in-flight Pixi pointerup to finish after its handler destroys the mount', async () => {
+    const first = await mount(() => View({}), host());
+    const sibling = await mount(() => View({}), host());
+    cleanup.push(first.destroy, sibling.destroy);
+    // Exercise Pixi's actual dispatch completion and cursor implementation. Only
+    // GPU setup and pointer normalization are replaced by this mount fixture.
+    const cursorSystem = (instance: typeof first) =>
+      Object.assign(Object.create(EventSystem.prototype), {
+        renderer: instance.app.renderer,
+        domElement: instance.canvas,
+        features: { click: true },
+        cursorStyles: { default: 'inherit', pointer: 'pointer' },
+        _currentCursor: 'default',
+        rootBoundary: { cursor: 'pointer', mapEvent: vi.fn() },
+        _normalizeToPointerData: () => [{}],
+        _bootstrapEvent: () => ({ type: 'pointerup' }),
+      });
+    const events = cursorSystem(first);
+    const siblingEvents = cursorSystem(sibling);
+    state.apps[0].renderer.events = events;
+    state.apps[1].renderer.events = siblingEvents;
+    events.rootBoundary.mapEvent.mockImplementation(first.destroy);
+    state.apps[0].destroy.mockImplementation(() => {
+      state.apps[0].stage.destroy({ children: true });
+      events.domElement = null;
+    });
+    expect(() => events._onPointerUp(new PointerEvent('pointerup'))).not.toThrow();
+    expect(first.isDestroyed).toBe(true);
+    expect(state.apps[0].destroy).toHaveBeenCalledOnce();
+    expect(sibling.isDestroyed).toBe(false);
+    expect(siblingEvents.setCursor).toBe(EventSystem.prototype.setCursor);
+    siblingEvents.setCursor('pointer');
+    expect(sibling.canvas.style.cursor).toBe('pointer');
+    siblingEvents.setCursor('crosshair');
+    expect(sibling.canvas.style.cursor).toBe('crosshair');
   });
 
   it('cleans initialization failure and permits retrying the same target', async () => {

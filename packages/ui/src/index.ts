@@ -10,6 +10,32 @@ export {
 } from './components/Button';
 export { Checkbox, type CheckboxProps } from './components/Checkbox';
 export { Collapsible, type CollapsibleProps } from './components/Collapsible';
+export {
+  AlertDialog,
+  AlertDialogCancel,
+  type AlertDialogCancelProps,
+  AlertDialogConfirm,
+  type AlertDialogConfirmProps,
+  AlertDialogContent,
+  type AlertDialogContentProps,
+  AlertDialogDescription,
+  type AlertDialogProps,
+  type AlertDialogTextProps,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+  type AlertDialogTriggerProps,
+  Dialog,
+  DialogClose,
+  type DialogCloseProps,
+  DialogContent,
+  type DialogContentProps,
+  DialogDescription,
+  type DialogProps,
+  type DialogTextProps,
+  DialogTitle,
+  DialogTrigger,
+  type DialogTriggerProps,
+} from './components/Dialog';
 export { Field, type FieldProps } from './components/Field';
 export { Icon, type IconDraw, type IconProps } from './components/Icon';
 export { IconButton, type IconButtonProps } from './components/IconButton';

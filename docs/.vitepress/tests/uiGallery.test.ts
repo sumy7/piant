@@ -12,6 +12,18 @@ import {
 import { SettingsPanel } from '../../../examples/ui-gallery/src/SettingsPanel';
 import UIGalleryExample from '../../examples/uiGallery';
 
+const mountSurface = vi.hoisted(() => ({
+  target: undefined as HTMLElement | undefined,
+}));
+vi.mock('@piant/core', async (original) => {
+  const core = await original<typeof import('@piant/core')>();
+  return {
+    ...core,
+    useMountSurface: () =>
+      mountSurface.target && { target: mountSurface.target },
+  };
+});
+
 type PanelProps = Parameters<typeof SettingsPanel>[0];
 type Snapshot = Parameters<
   NonNullable<NonNullable<PanelProps>['onStateChange']>
@@ -121,10 +133,12 @@ function fixture(
     options.onStateChange?.(snapshot);
   };
   let disposed = false;
+  mountSurface.target = dom;
   const disposeOwner = render(() => {
     onError(errors);
     return create(props);
   }, host);
+  mountSurface.target = undefined;
   async function settle() {
     for (const node of descendants(host)) {
       seen.add(node);
