@@ -142,3 +142,17 @@ The benchmark runs the same row factory with 10,000 items, a 640×320 viewport, 
 After `verify:package`, serve the reported `consumer/dist` and point `COLLECTIONS_URL` to its `collections.html`; the same functional checks run against installed tarballs. Its `collectionsBenchmark.html` also supports repeat comparison. This validates local tarballs, one core/MobX instance, declarations and tree-shaking, not a registry release. DOM/Chrome AX evidence does not certify VoiceOver or system input method behavior.
 
 Production documentation checks: after `pnpm docs:build`, serve `docs/.vitepress/dist` on4192 and run `collectionsDocsVerify.mjs` with the same Playwright variable. Override `COLLECTIONS_DOCS_URL` / `COLLECTIONS_DOCS_EVIDENCE_DIR` if needed. Both online examples exercise actual distant navigation, keyed draft recovery, theme changes, narrow layouts, empty data and unmount/remount. Screenshots and a JSON check log are saved; the script does not infer native screen reader support.
+
+## ColorPicker
+
+The fixture server exposes `/colorPicker.html`, two independent layer editors with fill/opaque-outline pickers and a live Canvas preview.
+
+```sh
+PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs node packages/ui/browser-tests/colorPickerVerify.mjs
+```
+
+`COLOR_PICKER_URL` defaults to `http://127.0.0.1:4177/colorPicker.html`; `COLOR_PICKER_EVIDENCE_DIR` to `/tmp/piant-cod173/browser`. It records actual Canvas triggers, SV pointer/keyboard and Chrome touch paths, native Hex/HSVA numeric alternatives, hue/alpha sliders, gray/black editing intent, controlled rejection, composition protection, draft cancellation, disabled/re-enable behavior, readonly copying, CSS scaling, external release/cancel, theme/compact/200% typography, narrow viewport bounds, AX alternatives, sibling instance isolation and teardown during active dragging. Scroll the named editor region with Home/PageDown/End to reach every channel; offscreen fields are not extra focus stops.
+
+After `pnpm docs:build`, serve the documentation on4192 and run `colorPickerDocsVerify.mjs` with `PLAYWRIGHT_MODULE`. Override `COLOR_PICKER_DOCS_URL` (full page URL) and `COLOR_PICKER_DOCS_EVIDENCE_DIR`. It checks the production online example at `/ui/color-picker.html`, including opaque controls, theme and remount. After `verify:package`, serve the reported `consumer/dist` and point `COLOR_PICKER_URL` at its `colorPicker.html` to run the same full fixture against strict installed local tarballs. This is local package verification, not a registry release.
+
+Screenshots/JSON logs and Chrome AX are engineering evidence. CDP composition does not certify operating system Chinese candidate windows; synthetic pointercancel and Chrome touch do not certify hardware interruptions or touch devices. VoiceOver and system IME remain separate platform acceptance work.

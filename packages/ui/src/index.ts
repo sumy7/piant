@@ -10,6 +10,7 @@ export {
 } from './components/Button';
 export { Checkbox, type CheckboxProps } from './components/Checkbox';
 export { Collapsible, type CollapsibleProps } from './components/Collapsible';
+export { ColorPicker, type ColorPickerProps } from './components/ColorPicker';
 export {
   Combobox,
   type ComboboxOption,

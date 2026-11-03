@@ -22,6 +22,7 @@ import { Button, type ButtonProps } from './Button';
 import { createTriggerSlot } from './internal/anchoredTrigger';
 import { componentRoot } from './internal/componentRoot';
 import { compositeId } from './internal/compositeParts';
+import { createButton } from './internal/createButton';
 import { createScrollableBody } from './internal/scrollBody';
 
 export interface PopoverProps {
@@ -107,7 +108,7 @@ export function PopoverTrigger(
 ): ReturnType<typeof View> {
   const scope = context();
   return componentRoot(() => {
-    const node = Button(
+    const node = createButton(
       mergeProps(props, {
         ref: undefined,
         onPress(event, target) {
@@ -116,20 +117,18 @@ export function PopoverTrigger(
             scope.setOpen(!scope.open());
         },
       } satisfies Partial<ButtonProps>) as ButtonProps,
+      false,
+      {
+        hasPopup: 'dialog',
+        get expanded() {
+          return scope.open() && Boolean(scope.trigger.current()?.available());
+        },
+        get controls() {
+          return scope.surface() ? scope.id : undefined;
+        },
+      },
     ) as PNode;
-    const trigger = scope.trigger.bind(node, () =>
-      Boolean(props.disabled || props.loading),
-    );
-    createEffect(() => {
-      trigger.element.setAttribute('aria-haspopup', 'dialog');
-      trigger.element.setAttribute(
-        'aria-expanded',
-        String(scope.open() && trigger.available()),
-      );
-      if (scope.surface())
-        trigger.element.setAttribute('aria-controls', scope.id);
-      else trigger.element.removeAttribute('aria-controls');
-    });
+    scope.trigger.bind(node, () => Boolean(props.disabled || props.loading));
     return node;
   }, props.ref);
 }

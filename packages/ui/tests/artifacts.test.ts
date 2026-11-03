@@ -14,6 +14,7 @@ it('ships executable ESM with external core imports and no JSX or bundled runtim
     'components/Button.js',
     'components/Checkbox.js',
     'components/Collapsible.js',
+    'components/ColorPicker.js',
     'components/Combobox.js',
     'components/Dialog.js',
     'components/Field.js',
@@ -40,8 +41,10 @@ it('ships executable ESM with external core imports and no JSX or bundled runtim
     'components/Tooltip.js',
     'components/Tree.js',
     'components/VirtualList.js',
+    'components/internal/ColorArea.js',
     'components/internal/anchoredTrigger.js',
     'components/internal/choiceList.js',
+    'components/internal/colorValue.js',
     'components/internal/componentRoot.js',
     'components/internal/compositeParts.js',
     'components/internal/createButton.js',
@@ -219,4 +222,30 @@ it('ships collection runtime exports and complete public handles', () => {
     'VirtualAlignment',
   ])
     expect(declarations).toContain(name);
+});
+
+it('ships ColorPicker runtime and props from the public entry', () => {
+  const directory = resolve(import.meta.dirname, '../dist');
+  expect(readFileSync(`${directory}/index.js`, 'utf8')).toContain(
+    'ColorPicker',
+  );
+  expect(readFileSync(`${directory}/index.d.ts`, 'utf8')).toContain(
+    'ColorPickerProps',
+  );
+  const declaration = readFileSync(
+    `${directory}/components/ColorPicker.d.ts`,
+    'utf8',
+  );
+  for (const name of [
+    'label',
+    'value',
+    'defaultValue',
+    'onValueChange',
+    'alpha',
+    'readOnly',
+    'disabled',
+    'open',
+    'onOpenChange',
+  ])
+    expect(declaration).toMatch(new RegExp(`\\b${name}\\??:`));
 });

@@ -678,6 +678,21 @@ cpSync(
   join(root, 'packages/ui/browser-tests/collectionsBenchmark.ts'),
   join(consumer, 'src/collectionsBenchmark.ts'),
 );
+// Color editor is a plain public-package consumer, with no private model imports.
+cpSync(
+  join(root, 'examples/ui-gallery/src/ColorEditorPanel.ts'),
+  join(consumer, 'src/ColorEditorPanel.ts'),
+);
+writeFileSync(
+  join(consumer, 'src/colorPicker.ts'),
+  readFileSync(
+    join(root, 'packages/ui/browser-tests/colorPicker.ts'),
+    'utf8',
+  ).replace(
+    '../../../examples/ui-gallery/src/ColorEditorPanel',
+    './ColorEditorPanel',
+  ),
+);
 const consumerConfigPath = join(consumer, 'rsbuild.config.ts');
 const consumerConfig = readFileSync(consumerConfigPath, 'utf8');
 assert.ok(
@@ -688,7 +703,7 @@ writeFileSync(
   consumerConfigPath,
   consumerConfig.replace(
     "index: './src/index.ts',",
-    "index: './src/index.ts',\n      overlay: './src/overlay.ts',\n      slider: './src/slider.ts',\n      containers: './src/containers.ts',\n      dialogs: './src/dialogs.ts',\n      popoverTooltip: './src/popoverTooltip.ts',\n      menuSelect: './src/menuSelect.ts',\n      toast: './src/toast.ts',\n      workflow: './src/workflow.ts',\n      tools: './src/tools.ts',\n      collections: './src/collections.ts',\n      collectionsBenchmark: './src/collectionsBenchmark.ts',",
+    "index: './src/index.ts',\n      overlay: './src/overlay.ts',\n      slider: './src/slider.ts',\n      containers: './src/containers.ts',\n      dialogs: './src/dialogs.ts',\n      popoverTooltip: './src/popoverTooltip.ts',\n      menuSelect: './src/menuSelect.ts',\n      toast: './src/toast.ts',\n      workflow: './src/workflow.ts',\n      tools: './src/tools.ts',\n      collections: './src/collections.ts',\n      collectionsBenchmark: './src/collectionsBenchmark.ts',\n      colorPicker: './src/colorPicker.ts',",
   ),
 );
 run(['typecheck'], consumer);
@@ -704,7 +719,7 @@ execFileSync(
 import assert from 'node:assert/strict';
 import { getOwner, runWithOwner, root, useMountSurface } from '@piant/core';
 import * as ui from '@piant/ui';
-for (const name of ['VirtualList', 'Tree', 'SearchField', 'NumberField', 'SplitPane', 'Combobox', 'OverlayHost', 'createOverlay', 'createOverlayAnchor', 'computeOverlayPosition', 'Slider', 'Tabs', 'Collapsible', 'Accordion', 'Dialog', 'DialogTrigger', 'DialogContent', 'DialogTitle', 'DialogDescription', 'DialogClose', 'AlertDialog', 'AlertDialogTrigger', 'AlertDialogContent', 'AlertDialogTitle', 'AlertDialogDescription', 'AlertDialogCancel', 'AlertDialogConfirm', 'Popover', 'PopoverTrigger', 'PopoverContent', 'PopoverClose', 'Tooltip', 'TooltipTrigger', 'TooltipContent', 'Menu', 'MenuTrigger', 'MenuContent', 'MenuItem', 'Select', 'SelectTrigger', 'SelectContent', 'SelectItem', 'ToastProvider', 'ToastViewport', 'useToast']) assert.equal(typeof ui[name], 'function', name);
+for (const name of ['ColorPicker', 'VirtualList', 'Tree', 'SearchField', 'NumberField', 'SplitPane', 'Combobox', 'OverlayHost', 'createOverlay', 'createOverlayAnchor', 'computeOverlayPosition', 'Slider', 'Tabs', 'Collapsible', 'Accordion', 'Dialog', 'DialogTrigger', 'DialogContent', 'DialogTitle', 'DialogDescription', 'DialogClose', 'AlertDialog', 'AlertDialogTrigger', 'AlertDialogContent', 'AlertDialogTitle', 'AlertDialogDescription', 'AlertDialogCancel', 'AlertDialogConfirm', 'Popover', 'PopoverTrigger', 'PopoverContent', 'PopoverClose', 'Tooltip', 'TooltipTrigger', 'TooltipContent', 'Menu', 'MenuTrigger', 'MenuContent', 'MenuItem', 'Select', 'SelectTrigger', 'SelectContent', 'SelectItem', 'ToastProvider', 'ToastViewport', 'useToast']) assert.equal(typeof ui[name], 'function', name);
 assert.equal(getOwner(), null);
 assert.equal(useMountSurface(), undefined);
 assert.throws(() => ui.useToast(), /ToastProvider|UIProvider/);
@@ -850,6 +865,13 @@ for (const name of [
   'NumberField',
   'SplitPane',
   'Combobox',
+  'ColorPicker',
+  'ColorArea',
+  'parseHexColor',
+  'formatHexColor',
+  'normalizeHsva',
+  'rgbaToHsva',
+  'hsvaToRgba',
   'VirtualList',
   'Tree',
   'createVirtualCollection',

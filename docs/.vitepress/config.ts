@@ -71,6 +71,7 @@ export default defineConfig({
             { text: '工具面板', link: '/ui/tool-panel' },
             { text: 'VirtualList', link: '/ui/virtual-list' },
             { text: 'Tree', link: '/ui/tree' },
+            { text: 'ColorPicker', link: '/ui/color-picker' },
             { text: '选择控件', link: '/ui/selection' },
             { text: 'Slider', link: '/ui/slider' },
             { text: 'Tabs 与折叠容器', link: '/ui/containers' },
