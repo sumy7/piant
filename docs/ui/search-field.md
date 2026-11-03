@@ -25,6 +25,6 @@
 | `disabled` / `readOnly` | `boolean`，`false`                              | 禁用禁止搜索和编辑；只读允许搜索、选择和复制，禁止清除 |
 | `ref`                   | `(node: PInput) => void`                        | 原生输入节点，可调用 `focus()` / `blur()`              |
 
-其余属性见 `TextFieldProps`，`type` 固定为 `text`，语义为 `searchbox`，`enterKeyHint` 默认 `search`；`style` 应用于原生输入。独立使用须提供 `aria-label` 或 `aria-labelledby`，也可放入 Field。输入和清除按钮各有实际键盘焦点；按钮空值时禁用。清除后焦点返回原输入；受控调用方拒绝清除时文本保持不变。
+其余属性见 `TextFieldProps`，`type` 固定为 `text`，语义为 `searchbox`，`enterKeyHint` 默认 `search`；`style` 应用于原生输入。独立使用须提供 `aria-label` 或 `aria-labelledby`，也可放入 Field。输入和清除按钮各有实际键盘焦点；按钮空值时禁用。清除后焦点返回原输入；受控调用方拒绝清除时文本保持不变。如果调用方在 `onKeyDown`、`onValueChange` 或 `onClear` 中同步卸载组件或销毁输入，本次操作会停止后续通知和焦点恢复。
 
 使用原生文本输入而非浏览器 search 输入，避免浏览器在 IME 合成中执行 Escape 默认清除；清除行为由组件显式管理。Enter 触发搜索，Escape 仅在非空可编辑时清除。自定义 `onKeyDown` 先执行，可用 `preventDefault()` 接管快捷键。IME 合成及结束边界的 Enter/Escape 由 core 保护，不触发搜索或清除。`onInput` 只对应真实原生输入，组件清除不会伪造原生编辑或 change 事件。原生输入支持平台输入法和辅助技术；Canvas 图形不是额外的文本编辑器。

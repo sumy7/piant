@@ -1,4 +1,4 @@
-import { mergeProps, type PInput, type PNode, View } from '@piant/core';
+import { mergeProps, onCleanup, type PInput, type PNode, View } from '@piant/core';
 import { createControllableState } from '../primitives/createControllableState';
 import { Button } from './Button';
 import { componentRoot } from './internal/componentRoot';
@@ -14,7 +14,12 @@ export interface SearchFieldProps extends TextFieldProps {
 /** Search editing uses the same native input and focus target as TextField. */
 export function SearchField(props: SearchFieldProps): ReturnType<typeof View> {
   return componentRoot(() => {
-    let input: PInput;
+    let input: PInput | undefined;
+    let disposed = false;
+    onCleanup(() => {
+      disposed = true;
+    });
+    const active = () => !disposed && Boolean(input && !input.isDestroyed);
     const [value, setValue] = createControllableState({
       get value() {
         return props.value;
@@ -22,12 +27,20 @@ export function SearchField(props: SearchFieldProps): ReturnType<typeof View> {
       defaultValue: props.defaultValue ?? '',
     });
     const clear = () => {
-      if (props.disabled || props.readOnly || input?.isComposing || !value())
+      if (
+        !active() ||
+        props.disabled ||
+        props.readOnly ||
+        input?.isComposing ||
+        !value()
+      )
         return;
       setValue('');
+      if (!active()) return;
       props.onValueChange?.('', new Event('input'));
+      if (!active()) return;
       props.onClear?.();
-      input.focus();
+      if (active()) input?.focus();
     };
     const field = TextField(
       mergeProps(props, {
@@ -48,12 +61,16 @@ export function SearchField(props: SearchFieldProps): ReturnType<typeof View> {
           props.ref?.(node);
         },
         onValueChange(next: string, event: Event) {
+          if (!active()) return;
           setValue(next);
+          if (!active()) return;
           props.onValueChange?.(next, event);
         },
         onKeyDown(event: KeyboardEvent) {
+          if (!active()) return;
           props.onKeyDown?.(event);
           if (
+            !active() ||
             event.defaultPrevented ||
             event.isComposing ||
             input?.isComposing ||

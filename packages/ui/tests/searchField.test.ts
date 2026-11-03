@@ -377,3 +377,149 @@ it('does not commit a number from a blur during IME composition', () => {
   node.element.dispatchEvent(new FocusEvent('blur'));
   expect(changed).not.toHaveBeenCalled();
 });
+
+it.each(
+  (['input', 'owner'] as const).flatMap((disposal) =>
+    (['button', 'Escape'] as const).flatMap((activation) =>
+      (['onValueChange', 'onClear'] as const).map((hook) => ({
+        disposal,
+        activation,
+        hook,
+      })),
+    ),
+  ),
+)(
+  'search $activation stops clear callbacks/focus when $hook synchronously disposes its $disposal',
+  ({ disposal, activation, hook }) => {
+    let first!: PInput;
+    let second!: PInput;
+    let teardown = () => {};
+    const siblingSearch = vi.fn();
+    fixture(() =>
+      SearchField({
+        'aria-label': 'Surviving search',
+        defaultValue: 'second',
+        clearLabel: 'Clear surviving search',
+        onSearch: siblingSearch,
+        ref: (node) => {
+          second = node;
+        },
+      }),
+    );
+    const disposeFromCallback = () => {
+      if (disposal === 'input') first.destroyRecursive();
+      else teardown();
+      second.focus();
+    };
+    const change = vi.fn(() => {
+      if (hook === 'onValueChange') disposeFromCallback();
+    });
+    const clear = vi.fn(() => {
+      if (hook === 'onClear') disposeFromCallback();
+    });
+    const scene = fixture(() =>
+      SearchField({
+        'aria-label': 'Removed search',
+        defaultValue: 'needle',
+        clearLabel: 'Clear removed search',
+        onValueChange: change,
+        onClear: clear,
+        ref: (node) => {
+          first = node;
+        },
+      }),
+    );
+    teardown = scene.dispose;
+    first.focus();
+    const focus = vi.spyOn(first, 'focus');
+    if (activation === 'button')
+      scene.dom
+        .querySelector<HTMLButtonElement>('[aria-label="Clear removed search"]')!
+        .click();
+    else key(first, 'Escape');
+    if (disposal === 'input') expect(first.isDestroyed).toBe(true);
+    else expect(first.element.isConnected).toBe(false);
+    expect({
+      changes: change.mock.calls.length,
+      clears: clear.mock.calls.length,
+      focusAttempts: focus.mock.calls.length,
+    }).toEqual({
+      changes: 1,
+      clears: hook === 'onClear' ? 1 : 0,
+      focusAttempts: 0,
+    });
+    expect(document.activeElement).toBe(second.element);
+    // Detached native listeners must not run the same callbacks again.
+    key(first, 'Escape');
+    expect(change).toHaveBeenCalledTimes(1);
+    key(second, 'Enter');
+    expect(siblingSearch).toHaveBeenCalledWith('second', expect.any(KeyboardEvent));
+    scene.host.doLayout();
+  },
+);
+
+it.each(
+  (['input', 'owner'] as const).flatMap((disposal) =>
+    (['Enter', 'Escape'] as const).map((activation) => ({
+      disposal,
+      activation,
+    })),
+  ),
+)(
+  'search $activation skips built-in actions when onKeyDown synchronously disposes its $disposal',
+  ({ disposal, activation }) => {
+    let first!: PInput;
+    let second!: PInput;
+    let teardown = () => {};
+    const siblingSearch = vi.fn();
+    fixture(() =>
+      SearchField({
+        'aria-label': 'Surviving keyboard search',
+        defaultValue: 'second',
+        onSearch: siblingSearch,
+        ref: (node) => {
+          second = node;
+        },
+      }),
+    );
+    const search = vi.fn();
+    const change = vi.fn();
+    const clear = vi.fn();
+    const keyDown = vi.fn(() => {
+      if (disposal === 'input') first.destroyRecursive();
+      else teardown();
+      second.focus();
+    });
+    const scene = fixture(() =>
+      SearchField({
+        'aria-label': 'Removed keyboard search',
+        defaultValue: 'needle',
+        onKeyDown: keyDown,
+        onSearch: search,
+        onValueChange: change,
+        onClear: clear,
+        ref: (node) => {
+          first = node;
+        },
+      }),
+    );
+    teardown = scene.dispose;
+    first.focus();
+    const focus = vi.spyOn(first, 'focus');
+    key(first, activation);
+    if (disposal === 'input') expect(first.isDestroyed).toBe(true);
+    else expect(first.element.isConnected).toBe(false);
+    expect({
+      searches: search.mock.calls.length,
+      changes: change.mock.calls.length,
+      clears: clear.mock.calls.length,
+      focusAttempts: focus.mock.calls.length,
+    }).toEqual({ searches: 0, changes: 0, clears: 0, focusAttempts: 0 });
+    expect(document.activeElement).toBe(second.element);
+    key(first, activation);
+    expect(keyDown).toHaveBeenCalledOnce();
+    key(second, 'Enter');
+    expect(siblingSearch).toHaveBeenCalledWith('second', expect.any(KeyboardEvent));
+    scene.host.doLayout();
+  },
+);

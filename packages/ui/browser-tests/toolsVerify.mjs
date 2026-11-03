@@ -378,6 +378,51 @@ try {
     'instance B state remains independent',
     (await info(1)).query === 'B 独立' && (await info()).query === '',
   );
+  const lifecycleCases = [
+    ['value', 'owner'],
+    ['value', 'input'],
+    ['clear', 'owner'],
+    ['clear', 'input'],
+    ['key', 'owner', 'Enter'],
+    ['key', 'input', 'Enter'],
+    ['key', 'owner', 'Escape'],
+    ['key', 'input', 'Escape'],
+  ];
+  const bSearchesBeforeTeardown = (await info(1)).searches;
+  for (const [index, [stage, target, key]] of lifecycleCases.entries()) {
+    await command('lifecycleStart', stage, target);
+    await named('Lifecycle search').waitFor();
+    if (key) {
+      await named('Lifecycle search').focus();
+      await page.keyboard.press(key);
+      await pause();
+    } else await click('Lifecycle clear');
+    const snapshot = await command('lifecycleSnapshot');
+    const expected =
+      stage === 'value'
+        ? ['value:']
+        : stage === 'clear'
+          ? ['value:', 'clear']
+          : [`key:${key}`];
+    check(
+      `SearchField ${stage}/${target}${key ? `/${key}` : ''} synchronous teardown stops downstream callbacks and focus`,
+      snapshot.destroyed &&
+        snapshot.inputDestroyed &&
+        !snapshot.inputConnected &&
+        snapshot.focusAfterDestroy === 0 &&
+        snapshot.nativeFocusAfterDestroy === 0 &&
+        JSON.stringify(snapshot.events) === JSON.stringify(expected),
+    );
+    await command('lifecycleStop');
+    await named('B 搜索图层').fill(`B lifecycle ${index}`);
+    await page.keyboard.press('Enter');
+    check(
+      `instance B remains usable after SearchField teardown case ${index + 1}`,
+      (await info(1)).query === `B lifecycle ${index}` &&
+        (await info(1)).searches === bSearchesBeforeTeardown + index + 1,
+    );
+  }
+  await named('B 搜索图层').fill('B 独立');
   const ax = await cdp.send('Accessibility.getFullAXTree');
   await writeFile(`${output}/accessibility.json`, JSON.stringify(ax, null, 2));
   check(

@@ -1,4 +1,11 @@
-import { createState, type MountedApp, mount, onError } from '@piant/core';
+import {
+  createState,
+  type MountedApp,
+  mount,
+  onError,
+  type PInput,
+} from '@piant/core';
+import { SearchField, UIProvider } from '@piant/ui';
 import {
   ToolPanel,
   type ToolSnapshot,
@@ -66,11 +73,119 @@ function panel(name: string) {
     },
   };
 }
+// Dedicated callback teardown cases are created only when the verifier asks.
+// Production examples stay unchanged, and the same fixture is copied into the
+// isolated tarball consumer by verifyPackage.mjs.
+type SearchTeardownStage = 'value' | 'clear' | 'key';
+type SearchTeardownTarget = 'owner' | 'input';
+function searchLifecycle() {
+  let active:
+    | {
+        host: HTMLDivElement;
+        mounted: MountedApp;
+        input: PInput;
+        state: {
+          events: string[];
+          destroyed: boolean;
+          focusAfterDestroy: number;
+          nativeFocusAfterDestroy: number;
+        };
+      }
+    | undefined;
+  function stop() {
+    if (!active) return;
+    active.mounted.destroy();
+    active.host.remove();
+    active = undefined;
+  }
+  return {
+    async start(stage: SearchTeardownStage, target: SearchTeardownTarget) {
+      stop();
+      const host = document.createElement('div');
+      host.dataset.searchLifecycle = '';
+      host.style.cssText = 'width:340px;height:100px;position:relative';
+      document.body.append(host);
+      const state = {
+        events: [] as string[],
+        destroyed: false,
+        focusAfterDestroy: 0,
+        nativeFocusAfterDestroy: 0,
+      };
+      let input!: PInput;
+      let mounted!: MountedApp;
+      function destroyFromCallback() {
+        state.destroyed = true;
+        if (target === 'owner') mounted.destroy();
+        else input.destroyRecursive();
+      }
+      mounted = await mount(
+        () =>
+          UIProvider({
+            children: () =>
+              SearchField({
+                'aria-label': 'Lifecycle search',
+                clearLabel: 'Lifecycle clear',
+                defaultValue: 'clear me',
+                ref(node) {
+                  input = node;
+                  const focus = node.focus.bind(node);
+                  node.focus = (options) => {
+                    if (state.destroyed || node.isDestroyed)
+                      state.focusAfterDestroy++;
+                    focus(options);
+                  };
+                  const nativeFocus = node.element.focus.bind(node.element);
+                  node.element.focus = (options) => {
+                    if (state.destroyed || node.isDestroyed)
+                      state.nativeFocusAfterDestroy++;
+                    nativeFocus(options);
+                  };
+                },
+                onValueChange(value) {
+                  state.events.push(`value:${value}`);
+                  if (stage === 'value') destroyFromCallback();
+                },
+                onClear() {
+                  state.events.push('clear');
+                  if (stage === 'clear') destroyFromCallback();
+                },
+                onKeyDown(event) {
+                  state.events.push(`key:${event.key}`);
+                  if (stage === 'key') destroyFromCallback();
+                },
+                onSearch() {
+                  state.events.push('search');
+                },
+              }),
+          }),
+        host,
+      );
+      active = { host, mounted, input, state };
+    },
+    snapshot() {
+      if (!active) return undefined;
+      return {
+        ...active.state,
+        events: [...active.state.events],
+        inputDestroyed: active.input.isDestroyed,
+        inputConnected: active.input.element.isConnected,
+      };
+    },
+    stop,
+  };
+}
+const lifecycle = searchLifecycle();
 panels.push(panel('A'), panel('B'));
 await Promise.all(panels.map((p) => p.start()));
 Object.assign(window, {
   toolFixture: {
     info: () => panels.map((p) => p.info()),
+    lifecycleStart: (
+      stage: SearchTeardownStage,
+      target: SearchTeardownTarget,
+    ) => lifecycle.start(stage, target),
+    lifecycleSnapshot: () => lifecycle.snapshot(),
+    lifecycleStop: () => lifecycle.stop(),
     start: (n: number) => panels[n].start(),
     stop: (n: number) => panels[n].stop(),
     appearance: (n: number, value: boolean) => panels[n].appearance(value),
@@ -82,6 +197,7 @@ Object.assign(window, {
 window.addEventListener(
   'pagehide',
   () => {
+    lifecycle.stop();
     for (const p of panels) p.stop();
   },
   { once: true },
