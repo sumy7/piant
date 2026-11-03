@@ -34,6 +34,8 @@ interface FocusableSemantics {
     | 'spinbutton'
     | 'menu'
     | 'listbox'
+    | 'list'
+    | 'tree'
     | 'combobox'
     | 'searchbox';
   description?: string;
@@ -352,7 +354,10 @@ function registerFocusable(
       setAttribute(
         element,
         'aria-activedescendant',
-        role === 'menu' || role === 'listbox' || role === 'combobox'
+        role === 'menu' ||
+          role === 'listbox' ||
+          role === 'combobox' ||
+          role === 'tree'
           ? options.activeDescendant
           : undefined,
       );

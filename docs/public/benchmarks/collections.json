@@ -1,0 +1,2075 @@
+{
+  "schemaVersion": 1,
+  "scenario": {
+    "rows": 10000,
+    "viewportWidth": 640,
+    "viewportHeight": 320,
+    "rowHeight": 32,
+    "overscan": 2,
+    "warmupFrames": 10,
+    "sampledFrames": 90,
+    "maxDesiredSampledRows": 16
+  },
+  "sources": [
+    "packages/ui/browser-tests/collectionsBenchmark.ts",
+    "packages/ui/browser-tests/collectionsBenchmark.mjs",
+    "packages/ui/browser-tests/collectionsBenchmark.html"
+  ],
+  "conditions": {
+    "platform": "darwin",
+    "architecture": "arm64",
+    "browser": "Installed Chrome headless, no CPU throttling",
+    "sameContent": "Both modes call the identical View+Text row factory; virtual mode fixed estimates and measure=false.",
+    "budget": "16.7ms RAF p95 is a measurement target, not a guarantee;1e-9ms tolerance only removes floating-point timestamp subtraction error.",
+    "caveat": "Single-machine samples; initial isolated virtual run also measured16.8ms RAF p95. Final paired result does not establish universal16.7ms performance.",
+    "nodeAccounting": "sample live counts post-render row windows; maxLive counts constructed-undisposed row children including brief incoming/outgoing keyed For reconciliation overlap."
+  },
+  "baselineBeforeComparison": {
+    "mode": "baseline",
+    "browserVersion": "156.0.8078.80",
+    "capturedAt": "2026-11-03T01:20:25.757Z",
+    "methodology": "One fresh mounted scene per mode; same 640x320 viewport, fixed32px View+Text rows, 10 warmup and90 sampled requestAnimationFrame intervals; jump forward37 rows per frame via public scroll methods, synchronous root.doLayout+app.render measured as workMs; RAF intervals include rendering/scheduling. Headless Chrome, no CPU throttling. Timing includes machine noise;16.7ms is a measured target, not an assertion.",
+    "mounted": {
+      "mode": "baseline",
+      "total": 10000,
+      "viewportHeight": 320,
+      "rowHeight": 32,
+      "overscan": 2,
+      "mountMs": 1012.1999999880791,
+      "initialLayoutRenderMs": 1410.300000011921,
+      "created": 10000,
+      "disposed": 0,
+      "live": 10000,
+      "maxLive": 10000,
+      "nodeCount": 20004,
+      "browser": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36"
+    },
+    "scrolling": {
+      "mode": "baseline",
+      "frames": 90,
+      "warmup": 10,
+      "timings": [
+        {
+          "index": 370,
+          "workMs": 13.5,
+          "frameMs": 16.600000000000364,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 407,
+          "workMs": 13.700000047683716,
+          "frameMs": 16.699999999999818,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 444,
+          "workMs": 13.599999964237213,
+          "frameMs": 33.400000000000546,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 481,
+          "workMs": 13.5,
+          "frameMs": 16.599999999999454,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 518,
+          "workMs": 13.600000023841858,
+          "frameMs": 16.600000000000364,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 555,
+          "workMs": 13.5,
+          "frameMs": 33.399999999999636,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 592,
+          "workMs": 14.399999976158142,
+          "frameMs": 16.699999999999818,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 629,
+          "workMs": 14,
+          "frameMs": 16.600000000000364,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 666,
+          "workMs": 13.899999976158142,
+          "frameMs": 33.399999999999636,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 703,
+          "workMs": 13.800000011920929,
+          "frameMs": 16.600000000000364,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 740,
+          "workMs": 14.099999964237213,
+          "frameMs": 16.699999999999818,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 777,
+          "workMs": 13.699999988079071,
+          "frameMs": 33.30000000000018,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 814,
+          "workMs": 13.800000011920929,
+          "frameMs": 16.699999999999818,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 851,
+          "workMs": 13.800000011920929,
+          "frameMs": 16.600000000000364,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 888,
+          "workMs": 13.800000011920929,
+          "frameMs": 16.699999999999818,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 925,
+          "workMs": 14.100000023841858,
+          "frameMs": 33.30000000000018,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 962,
+          "workMs": 13.799999952316284,
+          "frameMs": 16.800000000000182,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 999,
+          "workMs": 13.800000011920929,
+          "frameMs": 16.599999999999454,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 1036,
+          "workMs": 14,
+          "frameMs": 33.30000000000018,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 1073,
+          "workMs": 13.699999988079071,
+          "frameMs": 16.699999999999818,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 1110,
+          "workMs": 13.700000047683716,
+          "frameMs": 16.600000000000364,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 1147,
+          "workMs": 14,
+          "frameMs": 16.699999999999818,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 1184,
+          "workMs": 13.699999988079071,
+          "frameMs": 33.399999999999636,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 1221,
+          "workMs": 13.700000047683716,
+          "frameMs": 16.600000000000364,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 1258,
+          "workMs": 13.800000011920929,
+          "frameMs": 16.699999999999818,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 1295,
+          "workMs": 13.799999952316284,
+          "frameMs": 33.400000000000546,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 1332,
+          "workMs": 13.800000011920929,
+          "frameMs": 16.5,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 1369,
+          "workMs": 13.800000011920929,
+          "frameMs": 16.699999999999818,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 1406,
+          "workMs": 13.800000011920929,
+          "frameMs": 33.399999999999636,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 1443,
+          "workMs": 13.800000011920929,
+          "frameMs": 16.600000000000364,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 1480,
+          "workMs": 13.800000011920929,
+          "frameMs": 16.699999999999818,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 1517,
+          "workMs": 13.900000035762787,
+          "frameMs": 16.600000000000364,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 1554,
+          "workMs": 13.699999988079071,
+          "frameMs": 33.399999999999636,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 1591,
+          "workMs": 13.700000047683716,
+          "frameMs": 16.699999999999818,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 1628,
+          "workMs": 13.800000011920929,
+          "frameMs": 16.600000000000364,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 1665,
+          "workMs": 13.900000035762787,
+          "frameMs": 33.399999999999636,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 1702,
+          "workMs": 14.399999976158142,
+          "frameMs": 16.600000000000364,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 1739,
+          "workMs": 14.800000011920929,
+          "frameMs": 16.699999999999818,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 1776,
+          "workMs": 14.5,
+          "frameMs": 33.30000000000018,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 1813,
+          "workMs": 15.100000023841858,
+          "frameMs": 16.699999999999818,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 1850,
+          "workMs": 14.5,
+          "frameMs": 33.30000000000018,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 1887,
+          "workMs": 14.799999952316284,
+          "frameMs": 16.699999999999818,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 1924,
+          "workMs": 14.599999964237213,
+          "frameMs": 33.30000000000018,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 1961,
+          "workMs": 14.399999976158142,
+          "frameMs": 16.699999999999818,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 1998,
+          "workMs": 14.399999976158142,
+          "frameMs": 16.699999999999818,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 2035,
+          "workMs": 14.699999988079071,
+          "frameMs": 33.30000000000018,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 2072,
+          "workMs": 14.5,
+          "frameMs": 16.600000000000364,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 2109,
+          "workMs": 14.400000035762787,
+          "frameMs": 33.29999999999927,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 2146,
+          "workMs": 14.900000035762787,
+          "frameMs": 16.800000000000182,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 2183,
+          "workMs": 13.800000011920929,
+          "frameMs": 16.600000000000364,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 2220,
+          "workMs": 14.300000011920929,
+          "frameMs": 33.30000000000018,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 2257,
+          "workMs": 14.5,
+          "frameMs": 16.699999999999818,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 2294,
+          "workMs": 14.399999976158142,
+          "frameMs": 33.30000000000018,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 2331,
+          "workMs": 13.800000011920929,
+          "frameMs": 16.799999999999272,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 2368,
+          "workMs": 14.5,
+          "frameMs": 16.600000000000364,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 2405,
+          "workMs": 13.900000035762787,
+          "frameMs": 33.30000000000018,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 2442,
+          "workMs": 13.800000011920929,
+          "frameMs": 16.699999999999818,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 2479,
+          "workMs": 14.300000011920929,
+          "frameMs": 16.600000000000364,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 2516,
+          "workMs": 13.899999976158142,
+          "frameMs": 33.399999999999636,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 2553,
+          "workMs": 13.899999976158142,
+          "frameMs": 16.600000000000364,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 2590,
+          "workMs": 13.799999952316284,
+          "frameMs": 33.399999999999636,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 2627,
+          "workMs": 13.699999988079071,
+          "frameMs": 16.699999999999818,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 2664,
+          "workMs": 14.199999988079071,
+          "frameMs": 16.699999999999818,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 2701,
+          "workMs": 14.199999988079071,
+          "frameMs": 33.30000000000018,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 2738,
+          "workMs": 14.300000011920929,
+          "frameMs": 16.600000000000364,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 2775,
+          "workMs": 14.300000011920929,
+          "frameMs": 16.599999999999454,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 2812,
+          "workMs": 13.800000011920929,
+          "frameMs": 33.400000000000546,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 2849,
+          "workMs": 13.800000011920929,
+          "frameMs": 16.699999999999818,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 2886,
+          "workMs": 13.899999976158142,
+          "frameMs": 16.600000000000364,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 2923,
+          "workMs": 14.200000047683716,
+          "frameMs": 33.399999999999636,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 2960,
+          "workMs": 14.699999988079071,
+          "frameMs": 16.699999999999818,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 2997,
+          "workMs": 13.800000011920929,
+          "frameMs": 16.600000000000364,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 3034,
+          "workMs": 13.699999988079071,
+          "frameMs": 33.30000000000018,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 3071,
+          "workMs": 13.800000011920929,
+          "frameMs": 16.699999999999818,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 3108,
+          "workMs": 13.800000011920929,
+          "frameMs": 16.699999999999818,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 3145,
+          "workMs": 13.800000011920929,
+          "frameMs": 33.30000000000018,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 3182,
+          "workMs": 13.800000011920929,
+          "frameMs": 16.699999999999818,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 3219,
+          "workMs": 13.800000011920929,
+          "frameMs": 16.600000000000364,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 3256,
+          "workMs": 13.699999988079071,
+          "frameMs": 33.399999999999636,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 3293,
+          "workMs": 13.899999976158142,
+          "frameMs": 16.600000000000364,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 3330,
+          "workMs": 13.800000011920929,
+          "frameMs": 16.699999999999818,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 3367,
+          "workMs": 13.799999952316284,
+          "frameMs": 16.699999999999818,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 3404,
+          "workMs": 13.800000011920929,
+          "frameMs": 33.30000000000018,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 3441,
+          "workMs": 13.699999988079071,
+          "frameMs": 16.699999999999818,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 3478,
+          "workMs": 13.900000035762787,
+          "frameMs": 16.699999999999818,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 3515,
+          "workMs": 13.800000011920929,
+          "frameMs": 33.30000000000018,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 3552,
+          "workMs": 13.699999988079071,
+          "frameMs": 16.600000000000364,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 3589,
+          "workMs": 13.800000011920929,
+          "frameMs": 16.599999999999454,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 3626,
+          "workMs": 14.199999988079071,
+          "frameMs": 33.400000000000546,
+          "live": 10000,
+          "nodeCount": 20004
+        },
+        {
+          "index": 3663,
+          "workMs": 14,
+          "frameMs": 16.699999999999818,
+          "live": 10000,
+          "nodeCount": 20004
+        }
+      ],
+      "created": 10000,
+      "disposed": 0,
+      "live": 10000,
+      "maxLive": 10000,
+      "nodeCount": 20004
+    },
+    "summary": {
+      "workMedianMs": 13.800000011920929,
+      "workP95Ms": 14.699999988079071,
+      "frameMedianMs": 16.699999999999818,
+      "frameP95Ms": 33.399999999999636,
+      "targetFrameBudgetMs": 16.7,
+      "frameBudgetMet": false
+    },
+    "cleanup": {
+      "created": 10000,
+      "disposed": 10000,
+      "live": 0,
+      "retainedRows": 0,
+      "hostChildren": 0
+    },
+    "errors": []
+  },
+  "results": [
+    {
+      "mode": "baseline",
+      "browserVersion": "156.0.8078.80",
+      "capturedAt": "2026-11-03T01:23:04.429Z",
+      "methodology": "One fresh page and mounted scene per mode; same 640x320 viewport, fixed32px View+Text rows, 10 warmup and90 sampled requestAnimationFrame intervals; jump forward37 rows per frame via public scroll methods, synchronous root.doLayout+app.render measured as workMs; RAF intervals include rendering/scheduling. Headless Chrome, no CPU throttling. Timing includes machine noise;16.7ms is a measured target, not an assertion. maxLive counts constructed yet undisposed row children, including brief incoming/outgoing For reconciliation overlap; sample live counts post-render windows.",
+      "mounted": {
+        "mode": "baseline",
+        "total": 10000,
+        "viewportHeight": 320,
+        "rowHeight": 32,
+        "overscan": 2,
+        "mountMs": 1016.2999999523163,
+        "initialLayoutRenderMs": 1361.6000000238419,
+        "created": 10000,
+        "disposed": 0,
+        "live": 10000,
+        "maxLive": 10000,
+        "nodeCount": 20004,
+        "browser": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36"
+      },
+      "scrolling": {
+        "mode": "baseline",
+        "frames": 90,
+        "warmup": 10,
+        "timings": [
+          {
+            "index": 370,
+            "workMs": 15.899999976158142,
+            "frameMs": 16.699999999999818,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 407,
+            "workMs": 15.899999976158142,
+            "frameMs": 33.399999999999636,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 444,
+            "workMs": 15.600000023841858,
+            "frameMs": 16.600000000000364,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 481,
+            "workMs": 15.400000035762787,
+            "frameMs": 16.699999999999818,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 518,
+            "workMs": 16,
+            "frameMs": 33.30000000000018,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 555,
+            "workMs": 15.5,
+            "frameMs": 16.699999999999818,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 592,
+            "workMs": 15.5,
+            "frameMs": 16.600000000000364,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 629,
+            "workMs": 16.100000023841858,
+            "frameMs": 33.399999999999636,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 666,
+            "workMs": 15.899999976158142,
+            "frameMs": 16.699999999999818,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 703,
+            "workMs": 15.799999952316284,
+            "frameMs": 16.600000000000364,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 740,
+            "workMs": 15.800000011920929,
+            "frameMs": 33.30000000000018,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 777,
+            "workMs": 15.699999988079071,
+            "frameMs": 16.699999999999818,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 814,
+            "workMs": 15.699999988079071,
+            "frameMs": 16.600000000000364,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 851,
+            "workMs": 15.699999988079071,
+            "frameMs": 33.399999999999636,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 888,
+            "workMs": 15.800000011920929,
+            "frameMs": 16.600000000000364,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 925,
+            "workMs": 16,
+            "frameMs": 16.799999999999272,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 962,
+            "workMs": 15.799999952316284,
+            "frameMs": 33.30000000000018,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 999,
+            "workMs": 15.599999964237213,
+            "frameMs": 16.600000000000364,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 1036,
+            "workMs": 15.599999964237213,
+            "frameMs": 16.699999999999818,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 1073,
+            "workMs": 15.699999988079071,
+            "frameMs": 16.699999999999818,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 1110,
+            "workMs": 15.800000011920929,
+            "frameMs": 33.30000000000018,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 1147,
+            "workMs": 15.800000011920929,
+            "frameMs": 16.600000000000364,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 1184,
+            "workMs": 15.699999988079071,
+            "frameMs": 16.799999999999272,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 1221,
+            "workMs": 16.200000047683716,
+            "frameMs": 33.30000000000018,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 1258,
+            "workMs": 15.699999988079071,
+            "frameMs": 16.600000000000364,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 1295,
+            "workMs": 15.799999952316284,
+            "frameMs": 16.699999999999818,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 1332,
+            "workMs": 15.799999952316284,
+            "frameMs": 33.30000000000018,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 1369,
+            "workMs": 15.799999952316284,
+            "frameMs": 16.699999999999818,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 1406,
+            "workMs": 15.899999976158142,
+            "frameMs": 16.699999999999818,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 1443,
+            "workMs": 15.600000023841858,
+            "frameMs": 33.30000000000018,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 1480,
+            "workMs": 16.80000001192093,
+            "frameMs": 16.699999999999818,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 1517,
+            "workMs": 16.19999998807907,
+            "frameMs": 16.600000000000364,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 1554,
+            "workMs": 16.900000035762787,
+            "frameMs": 33.399999999999636,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 1591,
+            "workMs": 17.80000001192093,
+            "frameMs": 16.600000000000364,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 1628,
+            "workMs": 16.599999964237213,
+            "frameMs": 33.399999999999636,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 1665,
+            "workMs": 17.799999952316284,
+            "frameMs": 16.600000000000364,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 1702,
+            "workMs": 15.699999988079071,
+            "frameMs": 33.399999999999636,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 1739,
+            "workMs": 15.700000047683716,
+            "frameMs": 16.600000000000364,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 1776,
+            "workMs": 15.5,
+            "frameMs": 16.699999999999818,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 1813,
+            "workMs": 15.600000023841858,
+            "frameMs": 16.699999999999818,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 1850,
+            "workMs": 15.5,
+            "frameMs": 33.30000000000018,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 1887,
+            "workMs": 15.599999964237213,
+            "frameMs": 16.699999999999818,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 1924,
+            "workMs": 15.5,
+            "frameMs": 16.600000000000364,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 1961,
+            "workMs": 15.5,
+            "frameMs": 33.30000000000018,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 1998,
+            "workMs": 15.599999964237213,
+            "frameMs": 16.699999999999818,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 2035,
+            "workMs": 15.599999964237213,
+            "frameMs": 16.699999999999818,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 2072,
+            "workMs": 15.600000023841858,
+            "frameMs": 16.699999999999818,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 2109,
+            "workMs": 15.600000023841858,
+            "frameMs": 33.30000000000018,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 2146,
+            "workMs": 15.5,
+            "frameMs": 16.600000000000364,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 2183,
+            "workMs": 15.599999964237213,
+            "frameMs": 16.699999999999818,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 2220,
+            "workMs": 15.5,
+            "frameMs": 33.30000000000018,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 2257,
+            "workMs": 15.600000023841858,
+            "frameMs": 16.699999999999818,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 2294,
+            "workMs": 15.800000011920929,
+            "frameMs": 16.699999999999818,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 2331,
+            "workMs": 15.5,
+            "frameMs": 16.699999999999818,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 2368,
+            "workMs": 15.700000047683716,
+            "frameMs": 33.19999999999982,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 2405,
+            "workMs": 15.5,
+            "frameMs": 16.800000000000182,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 2442,
+            "workMs": 15.600000023841858,
+            "frameMs": 16.600000000000364,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 2479,
+            "workMs": 15.800000011920929,
+            "frameMs": 33.30000000000018,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 2516,
+            "workMs": 16,
+            "frameMs": 16.699999999999818,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 2553,
+            "workMs": 15.5,
+            "frameMs": 16.599999999999454,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 2590,
+            "workMs": 15.5,
+            "frameMs": 33.400000000000546,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 2627,
+            "workMs": 15.599999964237213,
+            "frameMs": 16.599999999999454,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 2664,
+            "workMs": 15.699999988079071,
+            "frameMs": 16.700000000000728,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 2701,
+            "workMs": 15.5,
+            "frameMs": 16.699999999999818,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 2738,
+            "workMs": 15.800000011920929,
+            "frameMs": 33.30000000000018,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 2775,
+            "workMs": 15.800000011920929,
+            "frameMs": 16.699999999999818,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 2812,
+            "workMs": 15.600000023841858,
+            "frameMs": 16.699999999999818,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 2849,
+            "workMs": 15.5,
+            "frameMs": 33.30000000000018,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 2886,
+            "workMs": 15.699999988079071,
+            "frameMs": 16.599999999999454,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 2923,
+            "workMs": 15.5,
+            "frameMs": 16.700000000000728,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 2960,
+            "workMs": 15.599999964237213,
+            "frameMs": 16.599999999999454,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 2997,
+            "workMs": 15.5,
+            "frameMs": 33.400000000000546,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 3034,
+            "workMs": 15.600000023841858,
+            "frameMs": 16.699999999999818,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 3071,
+            "workMs": 15.599999964237213,
+            "frameMs": 16.699999999999818,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 3108,
+            "workMs": 15.600000023841858,
+            "frameMs": 33.30000000000018,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 3145,
+            "workMs": 15.600000023841858,
+            "frameMs": 16.699999999999818,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 3182,
+            "workMs": 15.599999964237213,
+            "frameMs": 16.699999999999818,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 3219,
+            "workMs": 15.600000023841858,
+            "frameMs": 16.600000000000364,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 3256,
+            "workMs": 15.600000023841858,
+            "frameMs": 33.30000000000018,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 3293,
+            "workMs": 15.600000023841858,
+            "frameMs": 16.699999999999818,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 3330,
+            "workMs": 15.600000023841858,
+            "frameMs": 16.599999999999454,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 3367,
+            "workMs": 15.699999988079071,
+            "frameMs": 33.400000000000546,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 3404,
+            "workMs": 15.5,
+            "frameMs": 16.599999999999454,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 3441,
+            "workMs": 15.600000023841858,
+            "frameMs": 16.700000000000728,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 3478,
+            "workMs": 15.599999964237213,
+            "frameMs": 16.599999999999454,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 3515,
+            "workMs": 15.600000023841858,
+            "frameMs": 33.400000000000546,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 3552,
+            "workMs": 15.599999964237213,
+            "frameMs": 16.699999999999818,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 3589,
+            "workMs": 15.899999976158142,
+            "frameMs": 16.699999999999818,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 3626,
+            "workMs": 15.700000047683716,
+            "frameMs": 33.19999999999982,
+            "live": 10000,
+            "nodeCount": 20004
+          },
+          {
+            "index": 3663,
+            "workMs": 15.5,
+            "frameMs": 16.800000000000182,
+            "live": 10000,
+            "nodeCount": 20004
+          }
+        ],
+        "created": 10000,
+        "disposed": 0,
+        "live": 10000,
+        "maxLive": 10000,
+        "nodeCount": 20004
+      },
+      "summary": {
+        "workMedianMs": 15.600000023841858,
+        "workP95Ms": 16.599999964237213,
+        "frameMedianMs": 16.699999999999818,
+        "frameP95Ms": 33.399999999999636,
+        "targetFrameBudgetMs": 16.7,
+        "maxSampledLiveRows": 10000,
+        "maxConstructedUndisposedRows": 10000,
+        "maxSampledNodeCount": 20004,
+        "frameBudgetMet": false,
+        "comparisonToleranceMs": 1e-9
+      },
+      "cleanup": {
+        "created": 10000,
+        "disposed": 10000,
+        "live": 0,
+        "retainedRows": 0,
+        "hostChildren": 0
+      },
+      "errors": []
+    },
+    {
+      "mode": "virtual",
+      "browserVersion": "156.0.8078.80",
+      "capturedAt": "2026-11-03T01:23:06.258Z",
+      "methodology": "One fresh page and mounted scene per mode; same 640x320 viewport, fixed32px View+Text rows, 10 warmup and90 sampled requestAnimationFrame intervals; jump forward37 rows per frame via public scroll methods, synchronous root.doLayout+app.render measured as workMs; RAF intervals include rendering/scheduling. Headless Chrome, no CPU throttling. Timing includes machine noise;16.7ms is a measured target, not an assertion. maxLive counts constructed yet undisposed row children, including brief incoming/outgoing For reconciliation overlap; sample live counts post-render windows.",
+      "mounted": {
+        "mode": "virtual",
+        "total": 10000,
+        "viewportHeight": 320,
+        "rowHeight": 32,
+        "overscan": 2,
+        "mountMs": 21.80000001192093,
+        "initialLayoutRenderMs": 9.300000011920929,
+        "created": 12,
+        "disposed": 0,
+        "live": 12,
+        "maxLive": 12,
+        "nodeCount": 41,
+        "browser": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36"
+      },
+      "scrolling": {
+        "mode": "virtual",
+        "frames": 90,
+        "warmup": 10,
+        "timings": [
+          {
+            "index": 370,
+            "workMs": 3.399999976158142,
+            "frameMs": 16.69999999999999,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 407,
+            "workMs": 3.5,
+            "frameMs": 16.600000000000023,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 444,
+            "workMs": 3.699999988079071,
+            "frameMs": 16.599999999999966,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 481,
+            "workMs": 3.300000011920929,
+            "frameMs": 16.80000000000001,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 518,
+            "workMs": 3.600000023841858,
+            "frameMs": 16.600000000000023,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 555,
+            "workMs": 3.100000023841858,
+            "frameMs": 16.599999999999966,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 592,
+            "workMs": 3.199999988079071,
+            "frameMs": 16.700000000000045,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 629,
+            "workMs": 3.399999976158142,
+            "frameMs": 16.69999999999999,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 666,
+            "workMs": 3,
+            "frameMs": 16.69999999999999,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 703,
+            "workMs": 3,
+            "frameMs": 16.600000000000023,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 740,
+            "workMs": 3.099999964237213,
+            "frameMs": 16.69999999999999,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 777,
+            "workMs": 2.900000035762787,
+            "frameMs": 16.599999999999966,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 814,
+            "workMs": 2.700000047683716,
+            "frameMs": 16.700000000000045,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 851,
+            "workMs": 3,
+            "frameMs": 16.699999999999932,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 888,
+            "workMs": 3.300000011920929,
+            "frameMs": 16.600000000000023,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 925,
+            "workMs": 3,
+            "frameMs": 16.800000000000068,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 962,
+            "workMs": 3,
+            "frameMs": 16.59999999999991,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 999,
+            "workMs": 3.100000023841858,
+            "frameMs": 16.700000000000045,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 1036,
+            "workMs": 3,
+            "frameMs": 16.600000000000023,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 1073,
+            "workMs": 3,
+            "frameMs": 16.699999999999932,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 1110,
+            "workMs": 3.299999952316284,
+            "frameMs": 16.700000000000045,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 1147,
+            "workMs": 3.399999976158142,
+            "frameMs": 16.600000000000023,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 1184,
+            "workMs": 3.299999952316284,
+            "frameMs": 16.699999999999932,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 1221,
+            "workMs": 3.199999988079071,
+            "frameMs": 16.700000000000045,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 1258,
+            "workMs": 3.600000023841858,
+            "frameMs": 16.600000000000023,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 1295,
+            "workMs": 3.100000023841858,
+            "frameMs": 16.699999999999932,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 1332,
+            "workMs": 3.399999976158142,
+            "frameMs": 16.600000000000023,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 1369,
+            "workMs": 3.300000011920929,
+            "frameMs": 16.700000000000045,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 1406,
+            "workMs": 3.100000023841858,
+            "frameMs": 16.600000000000023,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 1443,
+            "workMs": 3,
+            "frameMs": 16.699999999999932,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 1480,
+            "workMs": 3.299999952316284,
+            "frameMs": 16.700000000000045,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 1517,
+            "workMs": 2.800000011920929,
+            "frameMs": 16.699999999999932,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 1554,
+            "workMs": 3,
+            "frameMs": 16.700000000000045,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 1591,
+            "workMs": 2.899999976158142,
+            "frameMs": 16.600000000000023,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 1628,
+            "workMs": 2.899999976158142,
+            "frameMs": 16.699999999999932,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 1665,
+            "workMs": 2.699999988079071,
+            "frameMs": 16.600000000000023,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 1702,
+            "workMs": 3.399999976158142,
+            "frameMs": 16.800000000000068,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 1739,
+            "workMs": 3.199999988079071,
+            "frameMs": 16.59999999999991,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 1776,
+            "workMs": 3.199999988079071,
+            "frameMs": 16.600000000000023,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 1813,
+            "workMs": 2.900000035762787,
+            "frameMs": 16.700000000000045,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 1850,
+            "workMs": 2.800000011920929,
+            "frameMs": 16.600000000000023,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 1887,
+            "workMs": 2.900000035762787,
+            "frameMs": 16.699999999999932,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 1924,
+            "workMs": 2.800000011920929,
+            "frameMs": 16.699999999999932,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 1961,
+            "workMs": 3.199999988079071,
+            "frameMs": 16.700000000000045,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 1998,
+            "workMs": 3,
+            "frameMs": 16.700000000000045,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 2035,
+            "workMs": 2.899999976158142,
+            "frameMs": 16.59999999999991,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 2072,
+            "workMs": 2.800000011920929,
+            "frameMs": 16.700000000000045,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 2109,
+            "workMs": 2.899999976158142,
+            "frameMs": 16.600000000000136,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 2146,
+            "workMs": 2.699999988079071,
+            "frameMs": 16.699999999999818,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 2183,
+            "workMs": 2.800000011920929,
+            "frameMs": 16.700000000000045,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 2220,
+            "workMs": 2.699999988079071,
+            "frameMs": 16.600000000000136,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 2257,
+            "workMs": 3,
+            "frameMs": 16.699999999999818,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 2294,
+            "workMs": 3.100000023841858,
+            "frameMs": 16.700000000000045,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 2331,
+            "workMs": 2.900000035762787,
+            "frameMs": 16.600000000000136,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 2368,
+            "workMs": 2.900000035762787,
+            "frameMs": 16.699999999999818,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 2405,
+            "workMs": 2.800000011920929,
+            "frameMs": 16.700000000000045,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 2442,
+            "workMs": 2.899999976158142,
+            "frameMs": 16.600000000000136,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 2479,
+            "workMs": 2.800000011920929,
+            "frameMs": 16.699999999999818,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 2516,
+            "workMs": 2.700000047683716,
+            "frameMs": 16.700000000000045,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 2553,
+            "workMs": 2.899999976158142,
+            "frameMs": 16.600000000000136,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 2590,
+            "workMs": 3,
+            "frameMs": 16.699999999999818,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 2627,
+            "workMs": 3.100000023841858,
+            "frameMs": 16.600000000000136,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 2664,
+            "workMs": 3,
+            "frameMs": 16.700000000000045,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 2701,
+            "workMs": 3.300000011920929,
+            "frameMs": 16.699999999999818,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 2738,
+            "workMs": 3.100000023841858,
+            "frameMs": 16.700000000000045,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 2775,
+            "workMs": 3.300000011920929,
+            "frameMs": 16.700000000000045,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 2812,
+            "workMs": 3.199999988079071,
+            "frameMs": 16.59999999999991,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 2849,
+            "workMs": 3,
+            "frameMs": 16.700000000000045,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 2886,
+            "workMs": 3.300000011920929,
+            "frameMs": 16.700000000000045,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 2923,
+            "workMs": 3,
+            "frameMs": 16.59999999999991,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 2960,
+            "workMs": 2.899999976158142,
+            "frameMs": 16.600000000000136,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 2997,
+            "workMs": 2.800000011920929,
+            "frameMs": 16.700000000000045,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 3034,
+            "workMs": 2.899999976158142,
+            "frameMs": 16.699999999999818,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 3071,
+            "workMs": 3,
+            "frameMs": 16.700000000000045,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 3108,
+            "workMs": 2.900000035762787,
+            "frameMs": 16.600000000000136,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 3145,
+            "workMs": 2.899999976158142,
+            "frameMs": 16.699999999999818,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 3182,
+            "workMs": 2.800000011920929,
+            "frameMs": 16.600000000000136,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 3219,
+            "workMs": 2.699999988079071,
+            "frameMs": 16.700000000000045,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 3256,
+            "workMs": 2.700000047683716,
+            "frameMs": 16.699999999999818,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 3293,
+            "workMs": 3,
+            "frameMs": 16.700000000000045,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 3330,
+            "workMs": 3,
+            "frameMs": 16.600000000000136,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 3367,
+            "workMs": 2.699999988079071,
+            "frameMs": 16.699999999999818,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 3404,
+            "workMs": 2.899999976158142,
+            "frameMs": 16.600000000000136,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 3441,
+            "workMs": 3.600000023841858,
+            "frameMs": 16.700000000000045,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 3478,
+            "workMs": 3.400000035762787,
+            "frameMs": 16.59999999999991,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 3515,
+            "workMs": 3.100000023841858,
+            "frameMs": 16.700000000000045,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 3552,
+            "workMs": 2.900000035762787,
+            "frameMs": 16.700000000000045,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 3589,
+            "workMs": 3.099999964237213,
+            "frameMs": 16.59999999999991,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 3626,
+            "workMs": 3.300000011920929,
+            "frameMs": 16.799999999999955,
+            "live": 14,
+            "nodeCount": 47
+          },
+          {
+            "index": 3663,
+            "workMs": 2.899999976158142,
+            "frameMs": 16.600000000000136,
+            "live": 14,
+            "nodeCount": 47
+          }
+        ],
+        "created": 1398,
+        "disposed": 1384,
+        "live": 14,
+        "maxLive": 28,
+        "nodeCount": 47
+      },
+      "summary": {
+        "workMedianMs": 3,
+        "workP95Ms": 3.5,
+        "frameMedianMs": 16.699999999999818,
+        "frameP95Ms": 16.700000000000045,
+        "targetFrameBudgetMs": 16.7,
+        "maxSampledLiveRows": 14,
+        "maxConstructedUndisposedRows": 28,
+        "maxSampledNodeCount": 47,
+        "frameBudgetMet": true,
+        "comparisonToleranceMs": 1e-9
+      },
+      "cleanup": {
+        "created": 1398,
+        "disposed": 1398,
+        "live": 0,
+        "retainedRows": 0,
+        "hostChildren": 0
+      },
+      "errors": []
+    }
+  ],
+  "errors": []
+}

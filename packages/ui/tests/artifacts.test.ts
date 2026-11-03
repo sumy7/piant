@@ -38,6 +38,8 @@ it('ships executable ESM with external core imports and no JSX or bundled runtim
     'components/Toast.js',
     'components/ToggleSwitch.js',
     'components/Tooltip.js',
+    'components/Tree.js',
+    'components/VirtualList.js',
     'components/internal/anchoredTrigger.js',
     'components/internal/choiceList.js',
     'components/internal/componentRoot.js',
@@ -50,6 +52,8 @@ it('ships executable ESM with external core imports and no JSX or bundled runtim
     'components/internal/scrollBody.js',
     'components/internal/sliderValue.js',
     'components/internal/toastStore.js',
+    'components/internal/treeModel.js',
+    'components/internal/virtualCollection.js',
     'index.js',
     'primitives/OverlayHost.js',
     'primitives/createControllableState.js',
@@ -197,4 +201,22 @@ it('ships all tool field runtime and type exports from the public entry', () => 
     expect(source).not.toMatch(/from ["']@piant\/core\//);
   }
   expect(declarations).toContain('ComboboxOption');
+});
+
+it('ships collection runtime exports and complete public handles', () => {
+  const directory = resolve(import.meta.dirname, '../dist');
+  const entry = readFileSync(`${directory}/index.js`, 'utf8');
+  const declarations = readFileSync(`${directory}/index.d.ts`, 'utf8');
+  for (const name of ['VirtualList', 'Tree']) {
+    expect(entry).toContain(name);
+    expect(declarations).toContain(`${name}Props`);
+  }
+  for (const name of [
+    'TreeNode',
+    'TreeHandle',
+    'VirtualListHandle',
+    'VirtualRange',
+    'VirtualAlignment',
+  ])
+    expect(declarations).toContain(name);
 });

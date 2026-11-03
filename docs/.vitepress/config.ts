@@ -69,6 +69,8 @@ export default defineConfig({
             { text: 'Combobox', link: '/ui/combobox' },
             { text: 'SplitPane', link: '/ui/split-pane' },
             { text: '工具面板', link: '/ui/tool-panel' },
+            { text: 'VirtualList', link: '/ui/virtual-list' },
+            { text: 'Tree', link: '/ui/tree' },
             { text: '选择控件', link: '/ui/selection' },
             { text: 'Slider', link: '/ui/slider' },
             { text: 'Tabs 与折叠容器', link: '/ui/containers' },

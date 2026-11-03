@@ -125,3 +125,20 @@ After `pnpm docs:build`, serve `docs/.vitepress/dist` on port4192 and run `tools
 After `pnpm --filter @piant/ui verify:package`, serve the reported `consumer/dist` on port4193 and run the same `toolsVerify.mjs` with `TOOLS_URL=http://127.0.0.1:4193/tools.html` and a separate `TOOLS_EVIDENCE_DIR`. The tool panel is typechecked and compiled against isolated, strictly installed local tarballs; public runtime exports, one core/MobX installation and unused component elimination are checked by the package verifier. This is local release-preview evidence, not an npm registry release.
 
 CDP composition and Chrome AX do not establish actual operating system Chinese candidate-window behavior or VoiceOver reading/navigation. Those remain separate platform acceptance checks. Numerical parsing supports decimal-point notation; split sizes are logical pixels; Combobox is local single selection without virtualization or remote candidates. See each component's API page for precise contracts.
+
+## VirtualList and Tree
+
+The same fixture server exposes `/collections.html` (two collection instances) and `/collectionsBenchmark.html` (isolated baseline/comparison). Use the repository Node engine and build core/UI first; do not rebuild package dist directories while a browser check is running.
+
+```sh
+PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs node packages/ui/browser-tests/collectionsVerify.mjs
+COLLECTIONS_BENCHMARK_MODE=both PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs node packages/ui/browser-tests/collectionsBenchmark.mjs
+```
+
+`COLLECTIONS_URL` defaults to `http://127.0.0.1:4177/collections.html`, and `COLLECTIONS_EVIDENCE_DIR` to `/tmp/piant-cod172/browser`. The functional script records window bounds, native row editing/focus recovery, dynamic insertion/deletion/reorder/measurement, wheel/keyboard scrolling, CSS scaling, hierarchy expansion/selection/cancellation, active-descendant/AX metadata, narrow dark/large-text layouts and repeated teardown. Collection row drafts are keyed in the caller, since offscreen row instances are destroyed.
+
+The benchmark runs the same row factory with 10,000 items, a 640×320 viewport, 32px rows and two-row overscan. It records first mount/layout, 10 warmup frames followed by 90 sampled frames, synchronous work and actual RAF intervals, node counts and created/disposed row counts. Baseline and comparison use separate page loads. Timing is machine/browser-load dependent; the 16.7ms p95 goal is observational, not a general component guarantee. The sampled mounted-window bound and transient construction peak are recorded separately because keyed reconciliation can construct the next window before disposing the preceding one. See the checked-in raw snapshot at `docs/public/benchmarks/collections.json` and the VirtualList documentation for measured conditions and limits.
+
+After `verify:package`, serve the reported `consumer/dist` and point `COLLECTIONS_URL` to its `collections.html`; the same functional checks run against installed tarballs. Its `collectionsBenchmark.html` also supports repeat comparison. This validates local tarballs, one core/MobX instance, declarations and tree-shaking, not a registry release. DOM/Chrome AX evidence does not certify VoiceOver or system input method behavior.
+
+Production documentation checks: after `pnpm docs:build`, serve `docs/.vitepress/dist` on4192 and run `collectionsDocsVerify.mjs` with the same Playwright variable. Override `COLLECTIONS_DOCS_URL` / `COLLECTIONS_DOCS_EVIDENCE_DIR` if needed. Both online examples exercise actual distant navigation, keyed draft recovery, theme changes, narrow layouts, empty data and unmount/remount. Screenshots and a JSON check log are saved; the script does not infer native screen reader support.

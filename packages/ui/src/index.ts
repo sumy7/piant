@@ -129,6 +129,19 @@ export {
   type TooltipTriggerProps,
 } from './components/Tooltip';
 export {
+  Tree,
+  type TreeHandle,
+  type TreeNode,
+  type TreeProps,
+} from './components/Tree';
+export {
+  type VirtualAlignment,
+  VirtualList,
+  type VirtualListHandle,
+  type VirtualListProps,
+  type VirtualRange,
+} from './components/VirtualList';
+export {
   type ControllableStateOptions,
   createControllableState,
 } from './primitives/createControllableState';

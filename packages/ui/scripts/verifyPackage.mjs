@@ -659,6 +659,25 @@ writeFileSync(
     'utf8',
   ).replace('../../../examples/ui-gallery/src/ToolPanel', './ToolPanel'),
 );
+// Collection examples exercise viewport-only construction against installed API types.
+cpSync(
+  join(root, 'examples/ui-gallery/src/CollectionPanel.ts'),
+  join(consumer, 'src/CollectionPanel.ts'),
+);
+writeFileSync(
+  join(consumer, 'src/collections.ts'),
+  readFileSync(
+    join(root, 'packages/ui/browser-tests/collections.ts'),
+    'utf8',
+  ).replace(
+    '../../../examples/ui-gallery/src/CollectionPanel',
+    './CollectionPanel',
+  ),
+);
+cpSync(
+  join(root, 'packages/ui/browser-tests/collectionsBenchmark.ts'),
+  join(consumer, 'src/collectionsBenchmark.ts'),
+);
 const consumerConfigPath = join(consumer, 'rsbuild.config.ts');
 const consumerConfig = readFileSync(consumerConfigPath, 'utf8');
 assert.ok(
@@ -669,7 +688,7 @@ writeFileSync(
   consumerConfigPath,
   consumerConfig.replace(
     "index: './src/index.ts',",
-    "index: './src/index.ts',\n      overlay: './src/overlay.ts',\n      slider: './src/slider.ts',\n      containers: './src/containers.ts',\n      dialogs: './src/dialogs.ts',\n      popoverTooltip: './src/popoverTooltip.ts',\n      menuSelect: './src/menuSelect.ts',\n      toast: './src/toast.ts',\n      workflow: './src/workflow.ts',\n      tools: './src/tools.ts',",
+    "index: './src/index.ts',\n      overlay: './src/overlay.ts',\n      slider: './src/slider.ts',\n      containers: './src/containers.ts',\n      dialogs: './src/dialogs.ts',\n      popoverTooltip: './src/popoverTooltip.ts',\n      menuSelect: './src/menuSelect.ts',\n      toast: './src/toast.ts',\n      workflow: './src/workflow.ts',\n      tools: './src/tools.ts',\n      collections: './src/collections.ts',\n      collectionsBenchmark: './src/collectionsBenchmark.ts',",
   ),
 );
 run(['typecheck'], consumer);
@@ -685,7 +704,7 @@ execFileSync(
 import assert from 'node:assert/strict';
 import { getOwner, runWithOwner, root, useMountSurface } from '@piant/core';
 import * as ui from '@piant/ui';
-for (const name of ['SearchField', 'NumberField', 'SplitPane', 'Combobox', 'OverlayHost', 'createOverlay', 'createOverlayAnchor', 'computeOverlayPosition', 'Slider', 'Tabs', 'Collapsible', 'Accordion', 'Dialog', 'DialogTrigger', 'DialogContent', 'DialogTitle', 'DialogDescription', 'DialogClose', 'AlertDialog', 'AlertDialogTrigger', 'AlertDialogContent', 'AlertDialogTitle', 'AlertDialogDescription', 'AlertDialogCancel', 'AlertDialogConfirm', 'Popover', 'PopoverTrigger', 'PopoverContent', 'PopoverClose', 'Tooltip', 'TooltipTrigger', 'TooltipContent', 'Menu', 'MenuTrigger', 'MenuContent', 'MenuItem', 'Select', 'SelectTrigger', 'SelectContent', 'SelectItem', 'ToastProvider', 'ToastViewport', 'useToast']) assert.equal(typeof ui[name], 'function', name);
+for (const name of ['VirtualList', 'Tree', 'SearchField', 'NumberField', 'SplitPane', 'Combobox', 'OverlayHost', 'createOverlay', 'createOverlayAnchor', 'computeOverlayPosition', 'Slider', 'Tabs', 'Collapsible', 'Accordion', 'Dialog', 'DialogTrigger', 'DialogContent', 'DialogTitle', 'DialogDescription', 'DialogClose', 'AlertDialog', 'AlertDialogTrigger', 'AlertDialogContent', 'AlertDialogTitle', 'AlertDialogDescription', 'AlertDialogCancel', 'AlertDialogConfirm', 'Popover', 'PopoverTrigger', 'PopoverContent', 'PopoverClose', 'Tooltip', 'TooltipTrigger', 'TooltipContent', 'Menu', 'MenuTrigger', 'MenuContent', 'MenuItem', 'Select', 'SelectTrigger', 'SelectContent', 'SelectItem', 'ToastProvider', 'ToastViewport', 'useToast']) assert.equal(typeof ui[name], 'function', name);
 assert.equal(getOwner(), null);
 assert.equal(useMountSurface(), undefined);
 assert.throws(() => ui.useToast(), /ToastProvider|UIProvider/);
@@ -831,6 +850,12 @@ for (const name of [
   'NumberField',
   'SplitPane',
   'Combobox',
+  'VirtualList',
+  'Tree',
+  'createVirtualCollection',
+  'renderVirtualCollection',
+  'createTreeModel',
+  'flattenTree',
   'Checkbox',
   'ToggleSwitch',
   'RadioGroup',

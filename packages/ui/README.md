@@ -195,3 +195,5 @@ pnpm --filter @piant/examples-ui-smoke dev
 [文档编辑工作流](../../docs/ui/workflow.md)将带原生输入的 Dialog、嵌套 Menu/Select/Popover/Tooltip、AlertDialog 和 Toast 保存/撤销反馈组合在一起。在线示例与 `examples/ui-gallery` 的 `workflow.html` 共享场景源码，独立 A/B 工作区可切换外观、窄容器和 CSS 缩放，并分别卸载或重挂载。完整发布消费、浏览器命令与工程证据边界见 [浏览器验收说明](browser-tests/README.md)。
 
 工具场景扩展：`SearchField`、`NumberField`、`Combobox` 和 `SplitPane` 均从根入口导入。交互与边界见[工具面板](https://piant.sumygg.com/ui/tool-panel)，每个组件有独立在线示例和 API 说明。
+
+集合组件 `VirtualList`、`Tree` 从根入口导入。VirtualList 只创建视口与 overscan 行，支持稳定键、估算/测量高度、锚点与公开滚动 handle；Tree 复用窗口并分离活动导航、单选与展开状态。API、独立在线示例及原始性能证据见 [VirtualList](../../docs/ui/virtual-list.md) 与 [Tree](../../docs/ui/tree.md)。离屏行会销毁，需保留的草稿和业务状态按键存放在组件外。
