@@ -76,6 +76,47 @@ describe('Popover', () => {
     expect(named('Open popover').hasAttribute('aria-controls')).toBe(false);
   });
 
+  it('retains trigger popup semantics through disabled focus registration refreshes', async () => {
+    const [disabled, setDisabled] = createState(false);
+    fixture(() =>
+      Popover({
+        children: () => [
+          PopoverTrigger({
+            children: 'Open editor',
+            get disabled() {
+              return disabled();
+            },
+          }),
+          PopoverContent({
+            name: 'Editor',
+            children: () => TextField({ 'aria-label': 'Editor field' }),
+          }),
+        ],
+      }),
+    );
+    const trigger = named('Open editor');
+    press('Open editor');
+    await settle();
+    expect(trigger.getAttribute('aria-haspopup')).toBe('dialog');
+    expect(trigger.getAttribute('aria-expanded')).toBe('true');
+    expect(
+      document
+        .getElementById(trigger.getAttribute('aria-controls')!)
+        ?.getAttribute('role'),
+    ).toBe('dialog');
+    setDisabled(true);
+    await settle();
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+    expect(trigger.hasAttribute('aria-controls')).toBe(false);
+    setDisabled(false);
+    await settle();
+    expect(trigger.getAttribute('aria-haspopup')).toBe('dialog');
+    expect(trigger.getAttribute('aria-expanded')).toBe('false');
+    press('Open editor');
+    await settle();
+    expect(trigger.getAttribute('aria-expanded')).toBe('true');
+  });
+
   it('returns Shift+Tab to the trigger and Tab after the final action to the next background control', async () => {
     fixture(() => [popup(), Button({ children: 'After trigger' })]);
     press('Open popover');

@@ -14,19 +14,24 @@ it('ships executable ESM with external core imports and no JSX or bundled runtim
     'components/Button.js',
     'components/Checkbox.js',
     'components/Collapsible.js',
+    'components/ColorPicker.js',
+    'components/Combobox.js',
     'components/Dialog.js',
     'components/Field.js',
     'components/Icon.js',
     'components/IconButton.js',
     'components/Menu.js',
+    'components/NumberField.js',
     'components/Popover.js',
     'components/ProgressBar.js',
     'components/RadioGroup.js',
+    'components/SearchField.js',
     'components/Select.js',
     'components/Separator.js',
     'components/Slider.js',
     'components/Spacer.js',
     'components/Spinner.js',
+    'components/SplitPane.js',
     'components/Stack.js',
     'components/Surface.js',
     'components/Tabs.js',
@@ -34,8 +39,12 @@ it('ships executable ESM with external core imports and no JSX or bundled runtim
     'components/Toast.js',
     'components/ToggleSwitch.js',
     'components/Tooltip.js',
+    'components/Tree.js',
+    'components/VirtualList.js',
+    'components/internal/ColorArea.js',
     'components/internal/anchoredTrigger.js',
     'components/internal/choiceList.js',
+    'components/internal/colorValue.js',
     'components/internal/componentRoot.js',
     'components/internal/compositeParts.js',
     'components/internal/createButton.js',
@@ -46,6 +55,8 @@ it('ships executable ESM with external core imports and no JSX or bundled runtim
     'components/internal/scrollBody.js',
     'components/internal/sliderValue.js',
     'components/internal/toastStore.js',
+    'components/internal/treeModel.js',
+    'components/internal/virtualCollection.js',
     'index.js',
     'primitives/OverlayHost.js',
     'primitives/createControllableState.js',
@@ -180,4 +191,61 @@ it('ships the container exports, props and shared panel declarations', () => {
   );
   expect(accordion).toContain("type: 'single'");
   expect(accordion).toContain("type: 'multiple'");
+});
+
+it('ships all tool field runtime and type exports from the public entry', () => {
+  const directory = resolve(import.meta.dirname, '../dist');
+  const entry = readFileSync(`${directory}/index.js`, 'utf8');
+  const declarations = readFileSync(`${directory}/index.d.ts`, 'utf8');
+  for (const name of ['SearchField', 'NumberField', 'Combobox', 'SplitPane']) {
+    expect(entry).toContain(name);
+    expect(declarations).toContain(`${name}Props`);
+    const source = readFileSync(`${directory}/components/${name}.js`, 'utf8');
+    expect(source).not.toMatch(/from ["']@piant\/core\//);
+  }
+  expect(declarations).toContain('ComboboxOption');
+});
+
+it('ships collection runtime exports and complete public handles', () => {
+  const directory = resolve(import.meta.dirname, '../dist');
+  const entry = readFileSync(`${directory}/index.js`, 'utf8');
+  const declarations = readFileSync(`${directory}/index.d.ts`, 'utf8');
+  for (const name of ['VirtualList', 'Tree']) {
+    expect(entry).toContain(name);
+    expect(declarations).toContain(`${name}Props`);
+  }
+  for (const name of [
+    'TreeNode',
+    'TreeHandle',
+    'VirtualListHandle',
+    'VirtualRange',
+    'VirtualAlignment',
+  ])
+    expect(declarations).toContain(name);
+});
+
+it('ships ColorPicker runtime and props from the public entry', () => {
+  const directory = resolve(import.meta.dirname, '../dist');
+  expect(readFileSync(`${directory}/index.js`, 'utf8')).toContain(
+    'ColorPicker',
+  );
+  expect(readFileSync(`${directory}/index.d.ts`, 'utf8')).toContain(
+    'ColorPickerProps',
+  );
+  const declaration = readFileSync(
+    `${directory}/components/ColorPicker.d.ts`,
+    'utf8',
+  );
+  for (const name of [
+    'label',
+    'value',
+    'defaultValue',
+    'onValueChange',
+    'alpha',
+    'readOnly',
+    'disabled',
+    'open',
+    'onOpenChange',
+  ])
+    expect(declaration).toMatch(new RegExp(`\\b${name}\\??:`));
 });

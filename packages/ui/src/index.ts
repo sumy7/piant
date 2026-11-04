@@ -10,6 +10,12 @@ export {
 } from './components/Button';
 export { Checkbox, type CheckboxProps } from './components/Checkbox';
 export { Collapsible, type CollapsibleProps } from './components/Collapsible';
+export { ColorPicker, type ColorPickerProps } from './components/ColorPicker';
+export {
+  Combobox,
+  type ComboboxOption,
+  type ComboboxProps,
+} from './components/Combobox';
 export {
   AlertDialog,
   AlertDialogCancel,
@@ -55,6 +61,7 @@ export {
   MenuTrigger,
   type MenuTriggerProps,
 } from './components/Menu';
+export { NumberField, type NumberFieldProps } from './components/NumberField';
 export {
   Popover,
   PopoverClose,
@@ -71,6 +78,7 @@ export {
   type RadioGroupOption,
   type RadioGroupProps,
 } from './components/RadioGroup';
+export { SearchField, type SearchFieldProps } from './components/SearchField';
 export {
   Select,
   SelectContent,
@@ -86,6 +94,7 @@ export { Separator, type SeparatorProps } from './components/Separator';
 export { Slider, type SliderProps } from './components/Slider';
 export { Spacer, type SpacerProps } from './components/Spacer';
 export { Spinner, type SpinnerProps } from './components/Spinner';
+export { SplitPane, type SplitPaneProps } from './components/SplitPane';
 export { Stack, type StackProps } from './components/Stack';
 export { Surface, type SurfaceProps } from './components/Surface';
 export { Tabs, type TabsItem, type TabsProps } from './components/Tabs';
@@ -120,6 +129,19 @@ export {
   TooltipTrigger,
   type TooltipTriggerProps,
 } from './components/Tooltip';
+export {
+  Tree,
+  type TreeHandle,
+  type TreeNode,
+  type TreeProps,
+} from './components/Tree';
+export {
+  type VirtualAlignment,
+  VirtualList,
+  type VirtualListHandle,
+  type VirtualListProps,
+  type VirtualRange,
+} from './components/VirtualList';
 export {
   type ControllableStateOptions,
   createControllableState,

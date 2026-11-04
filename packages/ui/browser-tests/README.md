@@ -109,3 +109,50 @@ Serve the same consumer's `dist-tree` directory on port 4189 and run `node packa
 The mandatory Tooltip regression can also be run alone with `pnpm --filter @piant/ui exec vitest run tests/tooltip.test.ts -t "four instances"`. It disposes four simultaneously open Dialog/Tooltip trees using the GPU-free fixture. Core style bindings stop on node destruction as well as owner cleanup, preventing parent focus/pressed cleanup from writing into already-freed child Yoga nodes. The core lifecycle test intercepts invalid writes in its failing pre-fix case so it does not corrupt the test process. Diagnostic archives and baseline provenance belong in the issue/MR evidence, alongside fresh isolated and combined results.
 
 Actual OS IME candidate windows and VoiceOver remain COD-179/COD-180. CDP composition, Unicode input and Chrome AX inspection are recorded separately and do not establish either native acceptance result. Instance-scoped modals use `aria-modal="false"` and do not block other Canvas instances or external page DOM.
+
+## SearchField, NumberField, SplitPane and Combobox
+
+Use Node matching the repository engines (for example `volta run --node 24.12.0 pnpm ...`). Run the fixture server above and then:
+
+```sh
+PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs node packages/ui/browser-tests/toolsVerify.mjs
+```
+
+`TOOLS_URL` defaults to `http://127.0.0.1:4177/tools.html`; `TOOLS_EVIDENCE_DIR` defaults to `/tmp/piant-cod171/browser`. The two tool panels share `examples/ui-gallery/src/ToolPanel.ts` with the online docs. Checks cover Chinese CDP composition and Enter/Escape protection, explicit search clear/focus, temporary numerical strings and commit/blur/decimal steps/ranges/null, real mouse/touch divider drags, scaled coordinates, outside release/cancel, keyboard constraints and container resize restoration, editable filtering/selection/cancellation/empty candidates, active descendant/AX associations, dark/compact/200% typography, narrow containers, instance isolation and live teardown/remount. JSON logs, screenshots and Chrome's AX tree are saved under the evidence directory. `pointercancel` is dispatched; mouse/touch movement uses actual Chrome input.
+
+After `pnpm docs:build`, serve `docs/.vitepress/dist` on port4192 and run `toolsDocsVerify.mjs` with `PLAYWRIGHT_MODULE`. Override `TOOLS_DOCS_URL` and `TOOLS_DOCS_EVIDENCE_DIR` as needed. This executes all four independent production examples and the composed online tool panel, including dynamic empty options and remount.
+
+After `pnpm --filter @piant/ui verify:package`, serve the reported `consumer/dist` on port4193 and run the same `toolsVerify.mjs` with `TOOLS_URL=http://127.0.0.1:4193/tools.html` and a separate `TOOLS_EVIDENCE_DIR`. The tool panel is typechecked and compiled against isolated, strictly installed local tarballs; public runtime exports, one core/MobX installation and unused component elimination are checked by the package verifier. This is local release-preview evidence, not an npm registry release.
+
+CDP composition and Chrome AX do not establish actual operating system Chinese candidate-window behavior or VoiceOver reading/navigation. Those remain separate platform acceptance checks. Numerical parsing supports decimal-point notation; split sizes are logical pixels; Combobox is local single selection without virtualization or remote candidates. See each component's API page for precise contracts.
+
+## VirtualList and Tree
+
+The same fixture server exposes `/collections.html` (two collection instances) and `/collectionsBenchmark.html` (isolated baseline/comparison). Use the repository Node engine and build core/UI first; do not rebuild package dist directories while a browser check is running.
+
+```sh
+PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs node packages/ui/browser-tests/collectionsVerify.mjs
+COLLECTIONS_BENCHMARK_MODE=both PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs node packages/ui/browser-tests/collectionsBenchmark.mjs
+```
+
+`COLLECTIONS_URL` defaults to `http://127.0.0.1:4177/collections.html`, and `COLLECTIONS_EVIDENCE_DIR` to `/tmp/piant-cod172/browser`. The functional script records window bounds, native row editing/focus recovery, dynamic insertion/deletion/reorder/measurement, wheel/keyboard scrolling, CSS scaling, hierarchy expansion/selection/cancellation, active-descendant/AX metadata, narrow dark/large-text layouts and repeated teardown. Collection row drafts are keyed in the caller, since offscreen row instances are destroyed.
+
+The benchmark runs the same row factory with 10,000 items, a 640×320 viewport, 32px rows and two-row overscan. It records first mount/layout, 10 warmup frames followed by 90 sampled frames, synchronous work and actual RAF intervals, node counts and created/disposed row counts. Baseline and comparison use separate page loads. Timing is machine/browser-load dependent; the 16.7ms p95 goal is observational, not a general component guarantee. The sampled mounted-window bound and transient construction peak are recorded separately because keyed reconciliation can construct the next window before disposing the preceding one. See the checked-in raw snapshot at `docs/public/benchmarks/collections.json` and the VirtualList documentation for measured conditions and limits.
+
+After `verify:package`, serve the reported `consumer/dist` and point `COLLECTIONS_URL` to its `collections.html`; the same functional checks run against installed tarballs. Its `collectionsBenchmark.html` also supports repeat comparison. This validates local tarballs, one core/MobX instance, declarations and tree-shaking, not a registry release. DOM/Chrome AX evidence does not certify VoiceOver or system input method behavior.
+
+Production documentation checks: after `pnpm docs:build`, serve `docs/.vitepress/dist` on4192 and run `collectionsDocsVerify.mjs` with the same Playwright variable. Override `COLLECTIONS_DOCS_URL` / `COLLECTIONS_DOCS_EVIDENCE_DIR` if needed. Both online examples exercise actual distant navigation, keyed draft recovery, theme changes, narrow layouts, empty data and unmount/remount. Screenshots and a JSON check log are saved; the script does not infer native screen reader support.
+
+## ColorPicker
+
+The fixture server exposes `/colorPicker.html`, two independent layer editors with fill/opaque-outline pickers and a live Canvas preview.
+
+```sh
+PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs node packages/ui/browser-tests/colorPickerVerify.mjs
+```
+
+`COLOR_PICKER_URL` defaults to `http://127.0.0.1:4177/colorPicker.html`; `COLOR_PICKER_EVIDENCE_DIR` to `/tmp/piant-cod173/browser`. It records actual Canvas triggers, SV pointer/keyboard and Chrome touch paths, native Hex/HSVA numeric alternatives, hue/alpha sliders, gray/black editing intent, controlled rejection, composition protection, draft cancellation, disabled/re-enable behavior, readonly copying, CSS scaling, external release/cancel, theme/compact/200% typography, narrow viewport bounds, AX alternatives, sibling instance isolation and teardown during active dragging. Scroll the named editor region with Home/PageDown/End to reach every channel; offscreen fields are not extra focus stops.
+
+After `pnpm docs:build`, serve the documentation on4192 and run `colorPickerDocsVerify.mjs` with `PLAYWRIGHT_MODULE`. Override `COLOR_PICKER_DOCS_URL` (full page URL) and `COLOR_PICKER_DOCS_EVIDENCE_DIR`. It checks the production online example at `/ui/color-picker.html`, including opaque controls, theme and remount. After `verify:package`, serve the reported `consumer/dist` and point `COLOR_PICKER_URL` at its `colorPicker.html` to run the same full fixture against strict installed local tarballs. This is local package verification, not a registry release.
+
+Screenshots/JSON logs and Chrome AX are engineering evidence. CDP composition does not certify operating system Chinese candidate windows; synthetic pointercancel and Chrome touch do not certify hardware interruptions or touch devices. VoiceOver and system IME remain separate platform acceptance work.

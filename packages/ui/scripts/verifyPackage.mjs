@@ -647,6 +647,52 @@ cpSync(join(workflowDirectory, 'style.css'), join(consumer, 'src/style.css'));
 console.log(
   'Prepared workflow: original TSX checked against installed declarations; browser runs precompiled JavaScript with no consumer JSX/Babel transform.',
 );
+// Tool panel consumes all four extension components from installed declarations.
+cpSync(
+  join(root, 'examples/ui-gallery/src/ToolPanel.ts'),
+  join(consumer, 'src/ToolPanel.ts'),
+);
+writeFileSync(
+  join(consumer, 'src/tools.ts'),
+  readFileSync(
+    join(root, 'packages/ui/browser-tests/tools.ts'),
+    'utf8',
+  ).replace('../../../examples/ui-gallery/src/ToolPanel', './ToolPanel'),
+);
+// Collection examples exercise viewport-only construction against installed API types.
+cpSync(
+  join(root, 'examples/ui-gallery/src/CollectionPanel.ts'),
+  join(consumer, 'src/CollectionPanel.ts'),
+);
+writeFileSync(
+  join(consumer, 'src/collections.ts'),
+  readFileSync(
+    join(root, 'packages/ui/browser-tests/collections.ts'),
+    'utf8',
+  ).replace(
+    '../../../examples/ui-gallery/src/CollectionPanel',
+    './CollectionPanel',
+  ),
+);
+cpSync(
+  join(root, 'packages/ui/browser-tests/collectionsBenchmark.ts'),
+  join(consumer, 'src/collectionsBenchmark.ts'),
+);
+// Color editor is a plain public-package consumer, with no private model imports.
+cpSync(
+  join(root, 'examples/ui-gallery/src/ColorEditorPanel.ts'),
+  join(consumer, 'src/ColorEditorPanel.ts'),
+);
+writeFileSync(
+  join(consumer, 'src/colorPicker.ts'),
+  readFileSync(
+    join(root, 'packages/ui/browser-tests/colorPicker.ts'),
+    'utf8',
+  ).replace(
+    '../../../examples/ui-gallery/src/ColorEditorPanel',
+    './ColorEditorPanel',
+  ),
+);
 const consumerConfigPath = join(consumer, 'rsbuild.config.ts');
 const consumerConfig = readFileSync(consumerConfigPath, 'utf8');
 assert.ok(
@@ -657,7 +703,7 @@ writeFileSync(
   consumerConfigPath,
   consumerConfig.replace(
     "index: './src/index.ts',",
-    "index: './src/index.ts',\n      overlay: './src/overlay.ts',\n      slider: './src/slider.ts',\n      containers: './src/containers.ts',\n      dialogs: './src/dialogs.ts',\n      popoverTooltip: './src/popoverTooltip.ts',\n      menuSelect: './src/menuSelect.ts',\n      toast: './src/toast.ts',\n      workflow: './src/workflow.ts',",
+    "index: './src/index.ts',\n      overlay: './src/overlay.ts',\n      slider: './src/slider.ts',\n      containers: './src/containers.ts',\n      dialogs: './src/dialogs.ts',\n      popoverTooltip: './src/popoverTooltip.ts',\n      menuSelect: './src/menuSelect.ts',\n      toast: './src/toast.ts',\n      workflow: './src/workflow.ts',\n      tools: './src/tools.ts',\n      collections: './src/collections.ts',\n      collectionsBenchmark: './src/collectionsBenchmark.ts',\n      colorPicker: './src/colorPicker.ts',",
   ),
 );
 run(['typecheck'], consumer);
@@ -673,7 +719,7 @@ execFileSync(
 import assert from 'node:assert/strict';
 import { getOwner, runWithOwner, root, useMountSurface } from '@piant/core';
 import * as ui from '@piant/ui';
-for (const name of ['OverlayHost', 'createOverlay', 'createOverlayAnchor', 'computeOverlayPosition', 'Slider', 'Tabs', 'Collapsible', 'Accordion', 'Dialog', 'DialogTrigger', 'DialogContent', 'DialogTitle', 'DialogDescription', 'DialogClose', 'AlertDialog', 'AlertDialogTrigger', 'AlertDialogContent', 'AlertDialogTitle', 'AlertDialogDescription', 'AlertDialogCancel', 'AlertDialogConfirm', 'Popover', 'PopoverTrigger', 'PopoverContent', 'PopoverClose', 'Tooltip', 'TooltipTrigger', 'TooltipContent', 'Menu', 'MenuTrigger', 'MenuContent', 'MenuItem', 'Select', 'SelectTrigger', 'SelectContent', 'SelectItem', 'ToastProvider', 'ToastViewport', 'useToast']) assert.equal(typeof ui[name], 'function', name);
+for (const name of ['ColorPicker', 'VirtualList', 'Tree', 'SearchField', 'NumberField', 'SplitPane', 'Combobox', 'OverlayHost', 'createOverlay', 'createOverlayAnchor', 'computeOverlayPosition', 'Slider', 'Tabs', 'Collapsible', 'Accordion', 'Dialog', 'DialogTrigger', 'DialogContent', 'DialogTitle', 'DialogDescription', 'DialogClose', 'AlertDialog', 'AlertDialogTrigger', 'AlertDialogContent', 'AlertDialogTitle', 'AlertDialogDescription', 'AlertDialogCancel', 'AlertDialogConfirm', 'Popover', 'PopoverTrigger', 'PopoverContent', 'PopoverClose', 'Tooltip', 'TooltipTrigger', 'TooltipContent', 'Menu', 'MenuTrigger', 'MenuContent', 'MenuItem', 'Select', 'SelectTrigger', 'SelectContent', 'SelectItem', 'ToastProvider', 'ToastViewport', 'useToast']) assert.equal(typeof ui[name], 'function', name);
 assert.equal(getOwner(), null);
 assert.equal(useMountSurface(), undefined);
 assert.throws(() => ui.useToast(), /ToastProvider|UIProvider/);
@@ -815,6 +861,23 @@ for (const name of [
   'IconButton',
   'Field',
   'TextField',
+  'SearchField',
+  'NumberField',
+  'SplitPane',
+  'Combobox',
+  'ColorPicker',
+  'ColorArea',
+  'parseHexColor',
+  'formatHexColor',
+  'normalizeHsva',
+  'rgbaToHsva',
+  'hsvaToRgba',
+  'VirtualList',
+  'Tree',
+  'createVirtualCollection',
+  'renderVirtualCollection',
+  'createTreeModel',
+  'flattenTree',
   'Checkbox',
   'ToggleSwitch',
   'RadioGroup',
