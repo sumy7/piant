@@ -42,11 +42,16 @@ const activeText = (locator) =>
   );
 const focusName = () =>
   page.evaluate(() => document.activeElement.getAttribute('aria-label'));
+const legacyDocsURL = process.env.MENU_SELECT_DOCS_URL;
+const menuURL =
+  process.env.MENU_DOCS_URL ?? legacyDocsURL ?? 'http://127.0.0.1:5173/ui/menu';
+const selectURL =
+  process.env.SELECT_DOCS_URL ??
+  legacyDocsURL ??
+  'http://127.0.0.1:5173/ui/select';
 let complete = false;
 try {
-  await page.goto(
-    process.env.MENU_SELECT_DOCS_URL ?? 'http://127.0.0.1:5173/ui/menu-select',
-  );
+  await page.goto(menuURL);
   await button('打开项目操作').waitFor();
   await activate('打开项目操作', 'ArrowUp');
   await menu().waitFor();
@@ -92,6 +97,46 @@ try {
     'Menu docs second Escape closes modal and restores outer trigger',
     (await focusName()) === '打开含 Menu 的 Dialog',
   );
+  await activate('切换 Menu 主题、密度与字号');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await button('打开项目操作').scrollIntoViewIfNeeded();
+  await activate('打开项目操作');
+  await menu().waitFor();
+  await page.keyboard.press('End');
+  await page.waitForTimeout(100);
+  check(
+    'Menu docs narrow 200% retains current item visibility',
+    await menu().evaluate((e) => {
+      const a = document.getElementById(
+        e.getAttribute('aria-activedescendant'),
+      );
+      const r = a?.getBoundingClientRect();
+      const c = e.getBoundingClientRect();
+      return r && r.top >= c.top - 1 && r.bottom <= c.bottom + 1;
+    }),
+  );
+  check(
+    'Menu docs narrow popup fits viewport',
+    await page
+      .locator('[data-piant-overlay-surface]')
+      .last()
+      .evaluate((e) => {
+        const r = e.getBoundingClientRect();
+        return (
+          r.left >= 0 &&
+          r.right <= innerWidth &&
+          r.top >= 0 &&
+          r.bottom <= innerHeight
+        );
+      }),
+  );
+  await page.screenshot({ path: `${output}/review-menu-narrow-200.png` });
+  await page.keyboard.press('Escape');
+  await page.setViewportSize({ width: 1440, height: 1100 });
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  if (selectURL !== menuURL) await page.goto(selectURL);
+  await combo().waitFor();
   await combo().focus();
   check(
     'Select docs starts with committed Team DOM value',
@@ -183,43 +228,9 @@ try {
     .focus();
   await page.keyboard.press('Space');
   await page.keyboard.press('Escape');
-  await activate('切换 Menu 主题、密度与字号');
   await activate('切换 Select 主题、密度与字号');
   await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await button('打开项目操作').scrollIntoViewIfNeeded();
-  await activate('打开项目操作');
-  await menu().waitFor();
-  await page.keyboard.press('End');
-  await page.waitForTimeout(100);
-  check(
-    'Menu docs narrow 200% retains current item visibility',
-    await menu().evaluate((e) => {
-      const a = document.getElementById(
-        e.getAttribute('aria-activedescendant'),
-      );
-      const r = a?.getBoundingClientRect();
-      const c = e.getBoundingClientRect();
-      return r && r.top >= c.top - 1 && r.bottom <= c.bottom + 1;
-    }),
-  );
-  check(
-    'Menu docs narrow popup fits viewport',
-    await page
-      .locator('[data-piant-overlay-surface]')
-      .last()
-      .evaluate((e) => {
-        const r = e.getBoundingClientRect();
-        return (
-          r.left >= 0 &&
-          r.right <= innerWidth &&
-          r.top >= 0 &&
-          r.bottom <= innerHeight
-        );
-      }),
-  );
-  await page.screenshot({ path: `${output}/review-menu-narrow-200.png` });
-  await page.keyboard.press('Escape');
   await combo().scrollIntoViewIfNeeded();
   await combo().focus();
   await page.keyboard.press('Enter');

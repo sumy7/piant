@@ -6,7 +6,6 @@ import {
   readdirSync,
   readFileSync,
   rmSync,
-  writeFileSync,
 } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -15,7 +14,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const root = path.resolve(__dirname, '..');
 const examplesRoot = path.join(root, 'examples');
-const examplesDocsMd = path.join(root, 'docs/guide/examples.md');
 const docsDist = path.join(root, 'docs/.vitepress/dist');
 const examplesDistRoot = path.join(docsDist, 'examples');
 
@@ -52,7 +50,6 @@ function discoverExamples() {
     examples.push({
       name,
       pkgName: pkg.name,
-      description: pkg.description || '暂无描述',
       dist: path.join(dir, 'dist'),
       previewPath: `/examples/${name}/`,
     });
@@ -60,26 +57,6 @@ function discoverExamples() {
 
   examples.sort((a, b) => a.name.localeCompare(b.name));
   return examples;
-}
-
-function generateExamplesDoc(examples) {
-  const lines = [
-    '# 示例项目',
-    '',
-    '> 本页由 `pnpm pages:build` 自动生成，请勿手工编辑。',
-    '',
-    '| 项目 | 说明 | 预览地址 |',
-    '| --- | --- | --- |',
-  ];
-
-  for (const example of examples) {
-    lines.push(
-      `| ${example.pkgName} | ${example.description} | <a href="${example.previewPath}" target="_blank">${example.previewPath}</a> |`,
-    );
-  }
-
-  lines.push('');
-  writeFileSync(examplesDocsMd, lines.join('\n'), 'utf8');
 }
 
 const examples = discoverExamples();
@@ -94,7 +71,6 @@ for (const example of examples) {
   });
 }
 
-generateExamplesDoc(examples);
 run('pnpm docs:build');
 
 rmSync(examplesDistRoot, { recursive: true, force: true });

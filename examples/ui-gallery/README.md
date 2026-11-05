@@ -1,32 +1,28 @@
-# UI Gallery
+# Piant UI 组合示例
 
-使用 `@piant/ui` 公开组件构建的 Canvas 设置面板示例。`src/SettingsPanel.tsx` 同时用于仓库 Gallery 和文档在线示例，便于比较独立组件与组合后的布局、编辑和交互。
+| 场景                                                                     | 可以试试                                                                         |
+| ------------------------------------------------------------------------ | -------------------------------------------------------------------------------- |
+| [设置面板](https://piant.sumygg.com/examples/ui-gallery/)                | 编辑显示名称、切换提醒与导出质量，再保存。试着分别调整 A/B 面板的值和外观。      |
+| [文档工作流](https://piant.sumygg.com/examples/ui-gallery/workflow.html) | 打开文档编辑器，用菜单和下拉框调整选项。保存后从通知中撤销，或从编辑器请求归档。 |
 
-## 运行
+设置面板和工作流分别复用 `src/SettingsPanel.tsx` 和 `src/OverlayWorkflow.tsx`。两个场景都使用当前会话中的本地数据。要查看单个控件的用法，参见 [UI 组件目录](../../docs/ui/introduction.md)。
 
-在仓库根目录安装依赖，并切换到满足仓库 engines 的 Node.js 版本：
+## 本地运行
 
-```bash
-pnpm --filter @piant/core build
-pnpm --filter @piant/ui build
+在仓库根目录用符合 engines 要求的 Node.js 安装依赖，再启动开发服务。
+
+```sh
+pnpm install
 pnpm --filter @piant/examples-ui-gallery dev
 ```
 
-访问终端输出的本地地址。页面挂载独立的 A/B Canvas，宿主控制支持主题、密度、200% 字号、窄容器、移除 B、卸载和重挂载 A。面板的保存只演示本地设置状态与反馈，不接入网络服务。
+打开终端显示的地址即可试用设置面板，从页面导航进入文档工作流。
 
-## 检查
+## 工程检查
 
-```bash
+```sh
 pnpm --filter @piant/examples-ui-gallery typecheck
 pnpm --filter @piant/examples-ui-gallery build
 ```
 
-在浏览器中验证编辑、标签聚焦、字段校验、复选框、开关、单选、按钮键盘操作、保存/加载反馈，以及两次挂载之间的状态和清理隔离。组合明暗主题、紧凑密度、200% 字号和窄宽度，保留截图与操作日志。
-
-实际系统输入法和 VoiceOver 等辅助技术需要分别验收，不能由合成事件、DOM/AX 检查或构建通过推断。详细组件索引、在线面板和验收操作见 [Gallery 文档](../../docs/ui/gallery.md)；每个组件的独立示例见该文档索引。
-
-## 文档编辑与浮层组合
-
-同一个开发服务的 `/workflow`（生产产物为 `workflow.html`）提供第二条验收路径：带原生输入的 Dialog 中组合 Menu、Select、Popover、Tooltip 与明确确认的 AlertDialog，保存后用 Toast 反馈并可显式撤销。A/B 工作区支持独立主题、密度、200% 字号、窄容器、CSS 缩放及卸载/重挂载。
-
-场景源码 `src/OverlayWorkflow.tsx` 与文档在线示例复用；所有保存、归档、撤销均为当前内存中的本地示例，不连接真实数据服务。完整 API 与支持边界见 [组合工作流指南](../../docs/ui/workflow.md)。
+浏览器验证步骤见 [UI 浏览器回归说明](../../packages/ui/browser-tests/README.md)。两个场景保留独立 Canvas 与挂载控制，技术状态可在页面底部展开。

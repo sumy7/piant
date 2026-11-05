@@ -47,14 +47,23 @@ h2 {
   font-size: 14px;
   margin: 0;
 }
-.page-header a {
+.scenario-nav {
+  display: flex;
+  flex-wrap: wrap;
   flex-shrink: 0;
+  gap: 6px 16px;
+}
+.scenario-nav a {
   font-size: 13px;
   font-weight: 600;
   color: #285d59;
   text-decoration: none;
   border-bottom: 1px solid #9bb9b4;
   padding: 6px 0;
+}
+.scenario-nav a[aria-current='page'] {
+  border-bottom-color: currentColor;
+  color: #172632;
 }
 .gallery-actions {
   display: flex;
@@ -175,6 +184,7 @@ summary:focus-visible {
 }
 .diagnostics {
   border-top: 1px solid #d5dfdf;
+  margin-top: 18px;
   padding-top: 14px;
   color: #61726f;
   font-size: 12px;
@@ -189,12 +199,6 @@ summary:focus-visible {
   background: #e5edeb;
   padding: 16px;
   border-radius: 8px;
-}
-footer {
-  margin-top: 28px;
-  color: #70827d;
-  font-size: 11px;
-  letter-spacing: 0.03em;
 }
 @media (max-width: 900px) {
   main {
