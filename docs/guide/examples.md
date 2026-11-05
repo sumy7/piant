@@ -1,17 +1,30 @@
 # 示例项目
 
-> 本页由 `pnpm pages:build` 自动生成，请勿手工编辑。
+从一个完整场景开始，看看组件、状态和 Canvas 如何配合。要单独试用一个控件，请打开 [UI 组件目录](/ui/introduction)。
 
-| 项目 | 说明 | 预览地址 |
-| --- | --- | --- |
-| @piant/examples-animation-demo | 动画示例：演示 Transition、TransitionGroup 组件与 @piant/animation 的动画能力。 | <a href="/examples/animation-demo/" target="_blank">/examples/animation-demo/</a> |
-| @piant/examples-clock | 时钟示例：演示 onTick 与 CustomView 绘制动态时钟。 | <a href="/examples/clock/" target="_blank">/examples/clock/</a> |
-| @piant/examples-devtools-demo | Piant Devtools：元素树、选中高亮、只读状态与动画观测。 | <a href="/examples/devtools-demo/" target="_blank">/examples/devtools-demo/</a> |
-| @piant/examples-dino-game | Chrome 断网恐龙游戏示例：演示 onTick 游戏循环、响应式状态与键盘/点击交互。 | <a href="/examples/dino-game/" target="_blank">/examples/dino-game/</a> |
-| @piant/examples-router-basic | 路由示例：演示 @piant/router 的基础匹配、参数与 query。 | <a href="/examples/router-basic/" target="_blank">/examples/router-basic/</a> |
-| @piant/examples-tetris | 俄罗斯方块示例：演示 @piant/hooks 键盘事件处理、游戏循环与响应式状态管理。 | <a href="/examples/tetris/" target="_blank">/examples/tetris/</a> |
-| @piant/examples-text-layout | 文本排版示例：演示 TextView 与图文混排相关能力。 | <a href="/examples/text-layout/" target="_blank">/examples/text-layout/</a> |
-| @piant/examples-tic-tac-toe | 井字棋示例：演示组件组合、状态更新与交互事件处理。 | <a href="/examples/tic-tac-toe/" target="_blank">/examples/tic-tac-toe/</a> |
-| @piant/examples-todos | 待办清单示例：演示列表渲染、局部更新与常见表单交互。 | <a href="/examples/todos/" target="_blank">/examples/todos/</a> |
-| @piant/examples-ui-gallery | Piant UI Gallery：独立 Canvas 设置面板、主题、表单与生命周期验收。 | <a href="/examples/ui-gallery/" target="_blank">/examples/ui-gallery/</a> |
-| @piant/examples-ui-smoke | UI 产物消费：响应式间距、渲染与卸载验证。 | <a href="/examples/ui-smoke/" target="_blank">/examples/ui-smoke/</a> |
+## 表单与工具界面
+
+| 示例                                             | 可以试试                                                                                 |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------------- |
+| [设置面板](/examples/ui-gallery/)                | 修改显示名称、切换提醒与导出质量，然后保存。切换外观，观察同一套控件在两种主题下的表现。 |
+| [文档工作流](/examples/ui-gallery/workflow.html) | 编辑文档，用菜单和下拉框修改选项，保存后在通知中撤销。                                   |
+| [工具面板](/ui/tool-panel)                       | 搜索图层、选择预设、调整数字参数，拖动分隔线改变两个区域的宽度。                         |
+| [待办清单](/examples/todos/)                     | 新建待办、勾选完成项，观察列表随状态更新。                                               |
+
+## Canvas 绘制与交互
+
+| 示例                               | 可以试试                                               |
+| ---------------------------------- | ------------------------------------------------------ |
+| [文本排版](/examples/text-layout/) | 在同一画布中查看行内图片、换行、对齐、字距与文本溢出。 |
+| [时钟](/examples/clock/)           | 观察时、分、秒指针如何随时间绘制。                     |
+| [井字棋](/examples/tic-tac-toe/)   | 轮流落子，观察棋盘、当前玩家与胜负提示。               |
+| [恐龙跑酷](/examples/dino-game/)   | 让恐龙跳过障碍，观察键盘操作、游戏循环与计分。         |
+| [俄罗斯方块](/examples/tetris/)    | 移动、旋转和下落方块，体验连续键盘操作。               |
+
+## 路由、动画与调试
+
+| 示例                                      | 可以试试                                               |
+| ----------------------------------------- | ------------------------------------------------------ |
+| [基础路由](/examples/router-basic/)       | 切换页面，查看路径参数和查询参数。                     |
+| [界面动画](/examples/animation-demo/)     | 展开内容或增删列表项，比较单项与列表的进入、退出动画。 |
+| [DevTools 调试](/examples/devtools-demo/) | 从画布选取元素，在面板中查看元素树、状态与动画。       |

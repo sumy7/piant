@@ -1,5 +1,6 @@
 import { defineConfig } from 'vitepress';
 import { piantExamples } from './piantExamples';
+import { uiCatalog } from './uiCatalog';
 
 export default defineConfig({
   title: 'Piant',
@@ -55,33 +56,32 @@ export default defineConfig({
     sidebar: {
       '/ui/': [
         {
-          text: 'UI',
+          text: '开始使用',
           items: [
-            { text: '简介与接入', link: '/ui/introduction' },
-            { text: 'Gallery 设置面板', link: '/ui/gallery' },
-            { text: '浮层组合工作流', link: '/ui/workflow' },
-            { text: '主题与 UIProvider', link: '/ui/theme' },
-            { text: '布局与状态组件', link: '/ui/foundations' },
-            { text: 'Button 与 IconButton', link: '/ui/buttons' },
-            { text: 'TextField 与 Field', link: '/ui/text-field' },
-            { text: 'SearchField', link: '/ui/search-field' },
-            { text: 'NumberField', link: '/ui/number-field' },
-            { text: 'Combobox', link: '/ui/combobox' },
-            { text: 'SplitPane', link: '/ui/split-pane' },
-            { text: '工具面板', link: '/ui/tool-panel' },
-            { text: 'VirtualList', link: '/ui/virtual-list' },
-            { text: 'Tree', link: '/ui/tree' },
-            { text: 'ColorPicker', link: '/ui/color-picker' },
-            { text: '选择控件', link: '/ui/selection' },
-            { text: 'Slider', link: '/ui/slider' },
-            { text: 'Tabs 与折叠容器', link: '/ui/containers' },
-            { text: '受控状态与按压行为', link: '/ui/interactions' },
-            { text: '焦点与语义桥接', link: '/ui/focus' },
-            { text: '浮层底座与实例隔离', link: '/ui/overlays' },
-            { text: 'Dialog 与 AlertDialog', link: '/ui/dialogs' },
-            { text: 'Popover 与 Tooltip', link: '/ui/popovers' },
-            { text: 'Menu 与 Select', link: '/ui/menu-select' },
-            { text: 'Toast 通知', link: '/ui/toast' },
+            { text: '组件目录', link: '/ui/introduction' },
+            { text: '快速接入', link: '/ui/quick-start' },
+            { text: '主题与外观', link: '/ui/theme' },
+          ],
+        },
+        ...uiCatalog.map(({ text, items }) => ({
+          text,
+          items: items.map(({ text, slug }) => ({ text, link: `/ui/${slug}` })),
+        })),
+        {
+          text: '组合示例',
+          items: [
+            { text: '设置面板', link: '/ui/gallery' },
+            { text: '文档编辑', link: '/ui/workflow' },
+            { text: '图层工具面板', link: '/ui/tool-panel' },
+          ],
+        },
+        {
+          text: '自定义控件',
+          collapsed: true,
+          items: [
+            { text: '状态与按压', link: '/ui/interactions' },
+            { text: '键盘焦点与语义', link: '/ui/focus' },
+            { text: '浮层与定位', link: '/ui/overlays' },
           ],
         },
       ],

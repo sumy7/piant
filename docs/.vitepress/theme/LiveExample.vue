@@ -7,6 +7,7 @@ const props = withDefaults(
     example: string;
     title: string;
     height?: number;
+    hideSource?: boolean;
   }>(),
   { height: 300 },
 );
@@ -114,6 +115,7 @@ onBeforeUnmount(stop);
       <span class="example-title">{{ title }}</span>
       <div class="example-actions">
         <button
+          v-if="!hideSource"
           type="button"
           :aria-expanded="codeShown"
           :aria-controls="sourceId"
@@ -136,6 +138,7 @@ onBeforeUnmount(stop);
       示例运行失败：{{ error }}。可以重新运行。
     </p>
     <div
+      v-if="!hideSource"
       :id="sourceId"
       v-show="codeShown"
       class="example-source"

@@ -1,6 +1,6 @@
 {
   "name": "@piant/examples-ui-gallery",
-  "description": "Piant UI Gallery：独立 Canvas 设置面板、主题、表单与生命周期验收。",
+  "description": "Piant UI 组合示例，包含设置面板与文档编辑工作流。",
   "private": true,
   "type": "module",
   "scripts": {
