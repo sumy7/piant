@@ -1,6 +1,8 @@
 import { DOMContainer, type Renderer } from 'pixi.js';
+import { useContext } from '../reactivity/context';
 import { onCleanup } from '../reactivity/hooks';
 import { getDOMElementClip } from './domElementClip';
+import { DOMHostContext } from './domHostContext';
 import type { PNode } from './PNode';
 
 export interface DOMElementBinding<T extends HTMLElement = HTMLElement> {
@@ -34,6 +36,7 @@ export function attachDOMElement<T extends HTMLElement>(
   element.style.left = '0';
   element.style.top = '0';
   hostElement.append(element);
+  useContext(DOMHostContext)?.append(hostElement);
   const container = new DOMContainer({ element: hostElement });
   let disposed = false;
   let renderer: Renderer | undefined;

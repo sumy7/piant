@@ -62,6 +62,16 @@ try {
   await page.goto(url);
   await input('A 背景草稿').waitFor();
   await input('B 背景草稿').waitFor();
+  const originalCanvases = await page.locator('canvas').elementHandles();
+  const sharedCanvases = async () =>
+    (await page.locator('canvas').count()) === originalCanvases.length &&
+    (
+      await Promise.all(
+        originalCanvases.map((canvas) =>
+          canvas.evaluate((element) => element.isConnected),
+        ),
+      )
+    ).every(Boolean);
   check(
     'two independent workflow instances initialize',
     (await snapshot('A')).savedName === '季度计划' &&
@@ -71,6 +81,7 @@ try {
   await input('B 背景草稿').fill('B background独立');
   await click(button('A 编辑文档'));
   await input('A 文档名称').waitFor();
+  check('Dialog reuses the original instance Canvas', await sharedCanvases());
   check(
     'real Canvas Dialog trigger enters native document field',
     (await activeName()) === 'A 文档名称' && (await inside('A 文档名称')),
@@ -143,6 +154,7 @@ try {
   await activate('A 更多操作');
   const menu = page.getByRole('menu', { name: 'A 文档操作', exact: true });
   await menu.waitFor();
+  check('nested Menu shares the modal Canvas', await sharedCanvases());
   await page.keyboard.press('End');
   await page.keyboard.press('Enter');
   check(
@@ -273,6 +285,10 @@ try {
   );
   await activate('A 归档文档');
   await page.getByRole('alertdialog').waitFor();
+  check(
+    'nested AlertDialog shares the original Canvas',
+    await sharedCanvases(),
+  );
   await click(button('A 确认归档'));
   await wait();
   check(

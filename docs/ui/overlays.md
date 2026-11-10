@@ -53,7 +53,7 @@ export function App() {
 }
 ```
 
-在 core `mount` 创建的组件内，Host 自动使用 `useMountSurface()` 提供的目标。使用手动 `render` 时传入 `target`，它应与所属 Canvas 的 DOM 宿主一致。每个 target 与 UIProvider 焦点作用域只能安装一个 Host；独立 Canvas 使用独立根 UIProvider。Host 的 `target` 在创建时确定。
+在 core `mount` 创建的组件内，Host 自动使用 `useMountSurface()` 提供的目标。使用手动 `render` 时传入 `target` 和所属 Pixi `app`，它们应对应同一个 Canvas 实例。每个 target 与 UIProvider 焦点作用域只能安装一个 Host；独立 Canvas 使用独立根 UIProvider。Host 的 `target` 在创建时确定。
 
 ## 双 Canvas 与卸载
 
@@ -70,7 +70,7 @@ export function App() {
 | 状态与方法         | 行为                                                         |
 | ------------------ | ------------------------------------------------------------ |
 | `open()`           | 当前受控或非受控逻辑打开值                                   |
-| `ready()`          | 视觉 Canvas 已完成异步挂载                                   |
+| `ready()`          | 视觉内容已完成挂载与首次绘制                                 |
 | `error()`          | 最近一次初始化或渲染失败；下一次打开清除                     |
 | `position()`       | 当前 viewport 坐标、最终方向及可用宽高；关闭后为 `undefined` |
 | `element()`        | 当前视觉面的 DOM 宿主；关闭后为 `undefined`                  |
@@ -80,7 +80,7 @@ export function App() {
 
 `children(state)` 在每次打开时执行一次，使用独立、显式释放的响应式 owner，继承创建浮层处的主题、焦点、状态及其他 context。内容内部的响应式读取继续更新；关闭、父层关闭或销毁会释放该次内容，不复用过期节点。Host 只改变视觉挂载位置，不将内容重新放入另一个 UIProvider。
 
-视觉 Canvas 初始化是异步过程。快速打开后关闭、卸载及初始化失败均需通过该生命周期释放；应用可用 `ready()` 显示准备状态，用 `error()` 或 `onError` 呈现失败。不要把 `open()` 视作浏览器已经完成绘制。锚点移除或不再可见时，请求 `anchor-removed` 关闭并释放视觉面，即使受控调用方尚未提交 `open=false`，也不会保留失效的画面；调用方应同步逻辑状态。
+视觉内容的挂载保留异步边界。快速打开后关闭、卸载及初始化失败均需通过该生命周期释放；应用可用 `ready()` 显示准备状态，用 `error()` 或 `onError` 呈现失败。不要把 `open()` 视作浏览器已经完成绘制。锚点移除或不再可见时，请求 `anchor-removed` 关闭并释放视觉面，即使受控调用方尚未提交 `open=false`，也不会保留失效的画面；调用方应同步逻辑状态。
 
 ## 坐标、尺寸与更新
 
@@ -97,9 +97,9 @@ export function App() {
 
 `computeOverlayPosition(anchor, contentSize, bounds, options)` 是纯计算函数。矩形使用 `{ x, y, width, height }`，全部是同一 viewport CSS 像素坐标系，不能直接传入 Yoga 局部坐标、Pixi 世界坐标或 Canvas buffer 像素。返回 `{ x, y, placement, availableWidth, availableHeight }`；独立使用此函数时，调用方需应用可用尺寸并重新计算最终位置。
 
-Host 读取 DOM 矩形完成 Canvas 与宿主缩放后的坐标转换。内容尺寸保持 CSS 像素，不随来源 Canvas 的 CSS 缩放倍增。空间不足时仅缩小视觉面的绘制范围，不自动给任意内容添加滚动容器；需要滚动内容时由调用方组合 core `ScrollView`。
+Host 读取 DOM 矩形完成 Canvas 与宿主缩放后的坐标转换。内容尺寸保持 CSS 像素，不随来源 Canvas 的 CSS 缩放倍增。模态浮层和其内部打开的子浮层使用同一个 Canvas，定位范围是 Canvas 与可见 viewport 的交集。空间不足时缩小视觉面的绘制范围，不自动给任意内容添加滚动容器；需要滚动内容时由调用方组合 core `ScrollView`。
 
-打开期间每个 Host 共享一组滚动、窗口、visual viewport 与尺寸监听，并共享一个几何采样帧，用于覆盖没有布局事件的 Pixi 位移和 CSS 动画。几何签名不变时不重复定位或调整 Canvas 大小；关闭最后一个浮层后停止采样并释放监听。关闭状态不会持续注册全局 tick。
+打开期间每个 Host 共享一组滚动、窗口、visual viewport 与尺寸监听，并共享一个几何采样帧，用于覆盖没有布局事件的 Pixi 位移和 CSS 动画。几何签名不变时不重复定位或调整内容尺寸；关闭最后一个浮层后停止采样并释放监听。关闭状态不会持续注册全局 tick。
 
 ## 关闭与事件策略
 
@@ -130,6 +130,8 @@ Host 读取 DOM 矩形完成 Canvas 与宿主缩放后的坐标转换。内容�
 
 ## 视觉宿主与支持范围
 
-Host 要求浏览器支持 HTML Popover API，使用 `popover="manual"` 提升视觉宿主到顶层，并在每个打开的视觉面内创建独立 Canvas。该面自己的原生输入 DOM 层与 Canvas 位于同一个顶层宿主，避免只提高 Pixi `zIndex` 时仍被背景 DOM Input 覆盖。祖先的 `overflow` 裁剪与变换不会成为视觉面的定位包含块；manual 模式的关闭、模态和焦点由实例栈管理。浏览器未提供该 API 时，通过 `error()` / `onError` 明确失败，没有降级到普通 `zIndex` 容器。[Popover 规范](https://html.spec.whatwg.org/multipage/popover.html#the-popover-attribute)、[顶层布局规则](https://drafts.csswg.org/css-position-4/#top-layer)。
+模态浮层及其内部打开的子浮层在所属 Canvas 中绘制，复用同一个 Pixi Application、渲染器和 Canvas。每个打开面板拥有独立的布局和内容状态，关闭时释放该面板。遮罩覆盖当前 Canvas，面板受 Canvas 边界限制；不同挂载实例的浮层互相隔离。
 
-每个打开视觉面持有独立渲染资源，关闭即销毁。适合少量交互浮层；大量持续显示的装饰内容应优先在原 Canvas 内绘制。浏览器顶层顺序属于整个 Document，后来打开的外部 dialog 或 popover 可能覆盖这些浮层。该底座不提供完整 Dialog、Menu、Select 等组件的角色、项目导航或业务交互语义，也不将构建通过视为视觉、系统输入法或辅助技术验收。
+原生输入与语义节点仍使用所属实例的 DOM 层，模态打开期间背景 DOM 内容暂停显示和交互，关闭后恢复。面板中的输入保持原生编辑、选区和输入法接入。绘制顺序与焦点范围由 OverlayHost 统一管理。
+
+独立打开的非模态浮层使用浏览器 HTML Popover API，可以越过来源 Canvas 的边界。该路径要求浏览器支持该 API，失败通过 `error()` / `onError` 返回。实际系统输入法与辅助技术的支持范围按目标平台验收。

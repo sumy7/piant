@@ -24,50 +24,58 @@ const runtime = vi.hoisted(() => ({
 vi.mock('@piant/core', async (original) => {
   const core = await original<typeof import('@piant/core')>();
   const { Container } = await import('pixi.js');
+  const createMount = vi.fn(
+    async (
+      create: () => unknown,
+      target: HTMLElement,
+      options = {} as { signal?: AbortSignal },
+    ) => {
+      const owner = core.getOwner();
+      await Promise.resolve();
+      options.signal?.throwIfAborted();
+      const scene = new core.PRoot(new Container(), {
+        width: 360,
+        height: 270,
+      });
+      const previous = runtime.target;
+      runtime.target = target;
+      let dispose = () => {};
+      try {
+        dispose = core.render(() => core.runWithOwner(owner, create), scene);
+      } finally {
+        runtime.target = previous;
+      }
+      let destroyed = false;
+      function destroy() {
+        if (destroyed) return;
+        destroyed = true;
+        options.signal?.removeEventListener('abort', destroy);
+        dispose();
+        scene.destroyRecursive();
+      }
+      const entry = { root: scene, target, destroy };
+      runtime.scenes.push(entry);
+      options.signal?.addEventListener('abort', destroy, { once: true });
+      return {
+        root: scene,
+        destroy,
+        get isDestroyed() {
+          return destroyed;
+        },
+        resize: vi.fn(),
+        app: { render: vi.fn() },
+      };
+    },
+  );
   return {
     ...core,
     useMountSurface: () => runtime.target && { target: runtime.target },
     // Run actual compiled Piant content and lifecycle, replacing only GPU mount.
-    mount: vi.fn(
-      async (
-        create: () => unknown,
-        target: HTMLElement,
-        options = {} as { signal?: AbortSignal },
-      ) => {
-        options.signal?.throwIfAborted();
-        const scene = new core.PRoot(new Container(), {
-          width: 360,
-          height: 270,
-        });
-        const previous = runtime.target;
-        runtime.target = target;
-        let dispose = () => {};
-        try {
-          dispose = core.render(create, scene);
-        } finally {
-          runtime.target = previous;
-        }
-        let destroyed = false;
-        function destroy() {
-          if (destroyed) return;
-          destroyed = true;
-          options.signal?.removeEventListener('abort', destroy);
-          dispose();
-          scene.destroyRecursive();
-        }
-        const entry = { root: scene, target, destroy };
-        runtime.scenes.push(entry);
-        options.signal?.addEventListener('abort', destroy, { once: true });
-        return {
-          root: scene,
-          destroy,
-          get isDestroyed() {
-            return destroyed;
-          },
-          resize: vi.fn(),
-          app: { render: vi.fn() },
-        };
-      },
+    mount: vi.fn((create, target, options) =>
+      createMount(create, target, options),
+    ),
+    mountLayer: vi.fn((create, target, options) =>
+      createMount(create, target, options),
     ),
   };
 });

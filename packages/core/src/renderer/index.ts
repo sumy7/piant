@@ -5,4 +5,9 @@ export {
   mount,
   useMountSurface,
 } from './mount';
+export {
+  type MountedLayer,
+  type MountLayerOptions,
+  mountLayer,
+} from './mountLayer';
 export { render } from './runtime';

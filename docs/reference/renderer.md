@@ -223,3 +223,13 @@ function attachDOMElement<T extends HTMLElement>(
 3. 清除脏标记，等待下一次样式或节点变化。
 
 每帧最多执行一次布局计算，避免重复计算带来的性能损耗。
+
+## mountLayer
+
+`mountLayer(component, target, { app, signal?, domHost?, backdrop?, interactive? })` 将独立布局内容绘制到已有的 Pixi Application。它复用 `app.canvas` 和渲染器，返回 `root`、`canvas`、`resize()`、`destroy()`、`isDestroyed` 与可刷新内容的 `app.render()`。关闭该层只释放这一层的内容。
+
+`target` 是布局区域对应的 DOM 元素。原生输入的宿主可通过 `domHost` 放入应用的 DOM 层。尺寸以目标元素的 CSS 像素计算；应用的 Canvas 边界决定最终绘制范围。通常由 UI 的 `OverlayHost` 管理这些参数。
+
+`interactive: true` 让该区域的空白处也接收指针，阻止点击穿透到背景 Canvas 内容；默认值为 `false`，适合不接收操作的展示层。
+
+`useMountSurface()` 的结果包含所属实例的 `target`、`canvas` 和 `app`，可用于把额外布局层接入同一个 Canvas。

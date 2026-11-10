@@ -2,7 +2,7 @@
 
 `Dialog` 用于在弹窗里编辑内容或完成一项任务。打开时将焦点移入弹窗，并限制同一 Canvas 中的背景操作。
 
-<LiveExample example="uiDialog" title="打开个人资料弹窗并编辑" :height="340" hide-source />
+<LiveExample example="uiDialog" title="打开个人资料弹窗并编辑" :height="520" hide-source />
 
 ## 用法
 

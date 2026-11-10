@@ -31,6 +31,48 @@ const runtime = vi.hoisted(() => ({
 vi.mock('@piant/core', async (original) => {
   const core = await original<typeof import('@piant/core')>();
   const { Container } = await import('pixi.js');
+  const createMount = vi.fn(
+    async (
+      create: () => unknown,
+      target: HTMLElement,
+      options: { signal?: AbortSignal } = {},
+    ) => {
+      const owner = core.getOwner();
+      await Promise.resolve();
+      options.signal?.throwIfAborted();
+      const scene = new core.PRoot(new Container(), {
+        width: 520,
+        height: 600,
+      });
+      const previous = runtime.target;
+      runtime.target = target;
+      let stop = () => {};
+      try {
+        stop = core.render(() => core.runWithOwner(owner, create), scene);
+      } finally {
+        runtime.target = previous;
+      }
+      let closed = false;
+      const destroy = () => {
+        if (closed) return;
+        closed = true;
+        options.signal?.removeEventListener('abort', destroy);
+        stop();
+        scene.destroyRecursive();
+      };
+      runtime.scenes.push({ scene, target, destroy });
+      options.signal?.addEventListener('abort', destroy, { once: true });
+      return {
+        root: scene,
+        destroy,
+        app: { render: () => attach(scene, target) },
+        resize: (width: number, height: number) => {
+          scene.setStyle({ width, height });
+          scene.doLayout();
+        },
+      };
+    },
+  );
   return {
     ...core,
     useMountSurface: () => runtime.target && { target: runtime.target },
@@ -43,41 +85,11 @@ vi.mock('@piant/core', async (original) => {
       return stop;
     },
     // Reuse the online-overlay fixture pattern, replacing only GPU mounting.
-    mount: vi.fn(
-      async (create, target, options: { signal?: AbortSignal } = {}) => {
-        options.signal?.throwIfAborted();
-        const scene = new core.PRoot(new Container(), {
-          width: 520,
-          height: 600,
-        });
-        const previous = runtime.target;
-        runtime.target = target;
-        let stop = () => {};
-        try {
-          stop = core.render(create, scene);
-        } finally {
-          runtime.target = previous;
-        }
-        let closed = false;
-        const destroy = () => {
-          if (closed) return;
-          closed = true;
-          options.signal?.removeEventListener('abort', destroy);
-          stop();
-          scene.destroyRecursive();
-        };
-        runtime.scenes.push({ scene, target, destroy });
-        options.signal?.addEventListener('abort', destroy, { once: true });
-        return {
-          root: scene,
-          destroy,
-          app: { render: () => attach(scene, target) },
-          resize: (width: number, height: number) => {
-            scene.setStyle({ width, height });
-            scene.doLayout();
-          },
-        };
-      },
+    mount: vi.fn((create, target, options) =>
+      createMount(create, target, options),
+    ),
+    mountLayer: vi.fn((create, target, options) =>
+      createMount(create, target, options),
     ),
   };
 });

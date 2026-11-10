@@ -127,7 +127,13 @@ try {
         ),
     ),
   );
-  const background = await input('Dialog 背景输入').elementHandle();
+  const background = await page
+    .getByRole('textbox', {
+      name: 'Dialog 背景输入',
+      exact: true,
+      includeHidden: true,
+    })
+    .elementHandle();
   test(
     'background native input cannot receive programmatic focus',
     await background.evaluate((element) => {

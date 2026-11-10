@@ -2,7 +2,7 @@
 
 `AlertDialog` 在删除、覆盖等高影响操作前，请用户明确确认或取消。
 
-<LiveExample example="uiAlertDialog" title="打开删除确认并尝试取消" :height="280" hide-source />
+<LiveExample example="uiAlertDialog" title="打开删除确认并尝试取消" :height="420" hide-source />
 
 ## 用法
 
