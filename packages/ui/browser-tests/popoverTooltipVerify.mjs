@@ -67,10 +67,17 @@ const tooltip = () => page.getByRole('tooltip');
 const fixtureURL =
   process.env.FLOATING_FIXTURE_URL ??
   'http://127.0.0.1:4177/popoverTooltip.html';
+const legacyDocsURL = process.env.FLOATING_DOCS_URL;
+const popoverURL =
+  process.env.POPOVER_DOCS_URL ??
+  legacyDocsURL ??
+  'http://127.0.0.1:5173/ui/popover';
+const tooltipURL =
+  process.env.TOOLTIP_DOCS_URL ??
+  legacyDocsURL ??
+  'http://127.0.0.1:5173/ui/tooltip';
 try {
-  await page.goto(
-    process.env.FLOATING_DOCS_URL ?? 'http://127.0.0.1:5173/ui/popovers',
-  );
+  await page.goto(popoverURL);
   await button('编辑 Popover 备注').waitFor();
   await canvasClick('编辑 Popover 备注');
   await input('Popover 备注草稿').waitFor();
@@ -215,6 +222,7 @@ try {
   );
   await activate('恢复 Popover 触发器');
 
+  if (tooltipURL !== popoverURL) await page.goto(tooltipURL);
   await button('保存带提示的草稿').scrollIntoViewIfNeeded();
   await page.mouse.move(1250, 800);
   await page.evaluate(() => {
@@ -315,7 +323,7 @@ try {
   );
   await page
     .getByRole('button', { name: '重新运行代码', exact: true })
-    .nth(1)
+    .last()
     .click();
   await button('保存带提示的草稿').waitFor();
   test(

@@ -57,10 +57,17 @@ const outside = async () => {
     .boundingBox();
   await page.mouse.click(rect.x + 3, rect.y + 3);
 };
+const legacyDocsURL = process.env.DIALOG_TEST_URL;
+const dialogURL =
+  process.env.DIALOG_DOCS_URL ??
+  legacyDocsURL ??
+  'http://127.0.0.1:5173/ui/dialog';
+const alertDialogURL =
+  process.env.ALERT_DIALOG_DOCS_URL ??
+  legacyDocsURL ??
+  'http://127.0.0.1:5173/ui/alert-dialog';
 try {
-  await page.goto(
-    process.env.DIALOG_TEST_URL ?? 'http://127.0.0.1:5173/ui/dialogs',
-  );
+  await page.goto(dialogURL);
   await button('编辑个人资料').waitFor();
   await activate('编辑个人资料', 'Space');
   await dialog().waitFor();
@@ -120,7 +127,13 @@ try {
         ),
     ),
   );
-  const background = await input('Dialog 背景输入').elementHandle();
+  const background = await page
+    .getByRole('textbox', {
+      name: 'Dialog 背景输入',
+      exact: true,
+      includeHidden: true,
+    })
+    .elementHandle();
   test(
     'background native input cannot receive programmatic focus',
     await background.evaluate((element) => {
@@ -224,6 +237,10 @@ try {
     ),
   );
   await activate('恢复 Dialog 触发器');
+  if (alertDialogURL !== dialogURL) {
+    await page.goto(alertDialogURL);
+    await button('删除示例项目').waitFor();
+  }
   await activate('删除示例项目');
   await alert().waitFor();
   await wait();
@@ -299,10 +316,18 @@ try {
     'AlertDialog Escape closes without firing implicit confirmation',
     (await activeName()) === '删除示例项目',
   );
+  if (alertDialogURL !== dialogURL) {
+    await page.goto(dialogURL);
+    await button('编辑个人资料').waitFor();
+  }
   await page.setViewportSize({ width: 390, height: 700 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await activate('编辑个人资料');
   await input('Dialog 个人名称').waitFor();
+  if (alertDialogURL !== dialogURL) {
+    await button('切换 Dialog 主题').waitFor();
+    await invokeWithoutFocus('切换 Dialog 主题');
+  }
   await wait();
   const closeBox = await button('保存并关闭').boundingBox();
   test(

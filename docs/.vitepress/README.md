@@ -11,7 +11,7 @@
    <LiveExample example="counter" title="计数器" />
    ```
 
-   `example` 对应 TSX 文件名，不含扩展名；`height` 可选，默认 `300`（像素）。预览宽度跟随正文，示例也应适应窄屏。画布背景固定为 `#f8fafc`。
+   `example` 对应 TSX 文件名，不含扩展名。`height` 可选，默认 `300`（像素）。正文已给出独立的用法代码时，可加 `hide-source`，只保留预览与重跑操作。预览宽度跟随正文，示例也应适应窄屏。画布背景固定为 `#f8fafc`。
 3. 使用 `onCleanup` 清理定时器、动画和订阅；Router 使用 `mode: 'memory'`，避免修改文档 URL。不要向 `document.body` 挂载内容或覆写 `window.onresize`。
 
 `piantExamples.ts` 只转换此目录内的 TSX，复用 `@piant/babel-preset-piant`。`?highlighted` 请求使用 VitePress 的 Markdown 渲染器生成与文档一致的明暗主题高亮 HTML，不参与 JSX 转换。Vite 继续移除 TypeScript 类型；Vue 的编译流程保持独立。运行时在组件挂载到浏览器后才导入，因此静态生成阶段不会初始化 Pixi 或访问 DOM。切换示例文件时也会自动重新运行。

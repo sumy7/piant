@@ -9,19 +9,22 @@ import './style.css';
 const page = document.createElement('main');
 page.innerHTML = `
   <header class="page-header">
-    <div><p class="eyebrow">PIANT / UI GALLERY</p><h1>让偏好成为界面</h1>
-    <p class="intro">同一套组件，两个独立的设置面板。编辑名称、调整提醒与导出质量，再保存你的选择。</p></div>
-    <a href="../../ui/gallery.html">组件与验收指南 ↗</a>
+    <div><p class="eyebrow">PIANT UI · 组合示例</p><h1>设置面板</h1>
+    <p class="intro">编辑名称、调整提醒与导出质量，再保存你的选择。试着给两侧面板设置不同的值和外观。</p></div>
+    <nav class="scenario-nav" aria-label="Piant UI 示例">
+      <a href="./" aria-current="page">设置面板</a>
+      <a href="./workflow.html">文档工作流</a>
+      <a class="component-catalog" href="../../ui/introduction.html">组件目录 ↗</a>
+    </nav>
   </header>
   <div class="gallery-actions"><span>本页的设置仅保留在当前会话，重新挂载会恢复默认值。</span>
     <button type="button" id="unmount-all">卸载全部</button><button type="button" id="remount-all">重挂载全部</button></div>
   <div class="gallery-grid"></div>
   <p class="lifecycle-status" role="status" aria-live="polite">正在准备独立面板…</p>
-  <details class="diagnostics"><summary>查看验收信息</summary><pre></pre></details>
-  <footer>Canvas 渲染 · 原生文本编辑 · 实例独立的焦点与状态</footer>`;
+  <details class="diagnostics"><summary>调试信息</summary><pre></pre></details>`;
 document.body.append(page);
 if (!location.pathname.startsWith('/examples/ui-gallery'))
-  page.querySelector<HTMLAnchorElement>('.page-header a')!.href =
+  page.querySelector<HTMLAnchorElement>('.component-catalog')!.href =
     'https://piant.sumygg.com/ui/introduction';
 const grid = page.querySelector<HTMLElement>('.gallery-grid')!;
 const lifecycle = page.querySelector<HTMLElement>('.lifecycle-status')!;

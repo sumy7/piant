@@ -3,6 +3,8 @@ import {
   createState,
   getOwner,
   mergeProps,
+  mount,
+  mountLayer,
   onCleanup,
   type PNode,
   PRoot,
@@ -36,54 +38,63 @@ const mounts = vi.hoisted(() => ({
 vi.mock('@piant/core', async (importOriginal) => {
   const core = await importOriginal<typeof import('@piant/core')>();
   const pixi = await import('pixi.js');
+  const createMount = vi.fn(async (component, target, options) => {
+    const owner = core.getOwner();
+    if (mounts.pending)
+      await new Promise<void>((resolve) => mounts.finish.push(resolve));
+    options.signal.throwIfAborted();
+    if (mounts.fail) throw mounts.fail;
+    const scene = new core.PRoot(new pixi.Container(), {
+      width: 300,
+      height: 200,
+    });
+    mounts.target = target;
+    let stop: () => void;
+    try {
+      stop = core.render(() => core.runWithOwner(owner, component), scene);
+    } finally {
+      mounts.target = undefined;
+    }
+    scene.doLayout();
+    const destroy = vi.fn(() => {
+      try {
+        stop();
+      } finally {
+        scene.destroyRecursive();
+      }
+    });
+    mounts.destroyed.push(destroy);
+    const render = vi.fn(() => {
+      if (destroy.mock.calls.length) mounts.rendersAfterDestroy++;
+    });
+    mounts.renders.push(render);
+    return {
+      root: scene,
+      canvas: document.createElement('canvas'),
+      app: { render },
+      resize: (width: number, height: number) => {
+        scene.setStyle({ width, height });
+        scene.doLayout();
+      },
+      destroy,
+    };
+  });
   return {
     ...core,
-    mount: vi.fn(async (component, target, options) => {
-      if (mounts.pending)
-        await new Promise<void>((resolve) => mounts.finish.push(resolve));
-      options.signal.throwIfAborted();
-      if (mounts.fail) throw mounts.fail;
-      const scene = new core.PRoot(new pixi.Container(), {
-        width: 300,
-        height: 200,
-      });
-      mounts.target = target;
-      let stop: () => void;
-      try {
-        stop = core.render(component, scene);
-      } finally {
-        mounts.target = undefined;
-      }
-      scene.doLayout();
-      const destroy = vi.fn(() => {
-        try {
-          stop();
-        } finally {
-          scene.destroyRecursive();
-        }
-      });
-      mounts.destroyed.push(destroy);
-      const render = vi.fn(() => {
-        if (destroy.mock.calls.length) mounts.rendersAfterDestroy++;
-      });
-      mounts.renders.push(render);
-      return {
-        root: scene,
-        canvas: document.createElement('canvas'),
-        app: { render },
-        resize: (width: number, height: number) => {
-          scene.setStyle({ width, height });
-          scene.doLayout();
-        },
-        destroy,
-      };
-    }),
+    mount: vi.fn((component, target, options) =>
+      createMount(component, target, options),
+    ),
+    mountLayer: vi.fn((component, target, options) =>
+      createMount(component, target, options),
+    ),
   };
 });
 
 const cleanup: (() => void)[] = [];
 let frames: Map<number, FrameRequestCallback>;
 beforeEach(() => {
+  vi.mocked(mount).mockClear();
+  vi.mocked(mountLayer).mockClear();
   mounts.pending = false;
   mounts.finish = [];
   mounts.destroyed = [];
@@ -216,6 +227,45 @@ function key(
 }
 
 describe('instance-scoped overlays', () => {
+  it('shares the instance renderer for modal content and its nested surfaces', async () => {
+    let modal!: OverlayState;
+    let nested!: OverlayState;
+    setup((add) => {
+      modal = add({
+        modal: true,
+        children: () => {
+          nested = createOverlay({
+            width: 100,
+            height: 80,
+            children: () => View({}),
+          });
+          return View({});
+        },
+      });
+    });
+    modal.setOpen(true);
+    await settle();
+    nested.setOpen(true);
+    await settle();
+    expect(mountLayer).toHaveBeenCalledTimes(2);
+    expect(mount).not.toHaveBeenCalled();
+    modal.setOpen(false);
+    expect(
+      mounts.destroyed.every((dispose) => dispose.mock.calls.length === 1),
+    ).toBe(true);
+  });
+
+  it('retains the independent nonmodal surface path outside a modal', async () => {
+    let overlay!: OverlayState;
+    setup((add) => {
+      overlay = add({});
+    });
+    overlay.setOpen(true);
+    await settle();
+    expect(mount).toHaveBeenCalledTimes(1);
+    expect(mountLayer).not.toHaveBeenCalled();
+  });
+
   it('retains a surface when computed open dependencies change without changing its boolean value', async () => {
     const [metadata, setMetadata] = createState(0);
     const children = vi.fn(() => View({}));

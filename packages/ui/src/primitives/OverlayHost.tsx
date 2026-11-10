@@ -7,7 +7,9 @@ import {
   getOwner,
   isComposingInput,
   type MountedApp,
+  type MountedLayer,
   mount,
+  mountLayer,
   onCleanup,
   root,
   runWithOwner,
@@ -16,6 +18,7 @@ import {
   useMountSurface,
   type View,
 } from '@piant/core';
+import type { Application } from 'pixi.js';
 import { createControllableState } from './createControllableState';
 import { type FocusScope, getFocusScope } from './focusScope';
 import type { OverlayAnchor } from './overlayAnchor';
@@ -78,6 +81,8 @@ export interface OverlayState {
 export interface OverlayHostProps {
   /** Defaults to the current core mount target. Fixed for this host's lifetime. */
   target?: HTMLElement;
+  /** Existing application when using low-level render() instead of mount(). */
+  app?: Application;
   children?: () => ReturnType<typeof View>;
 }
 
@@ -88,7 +93,8 @@ const escapeDispatches = new WeakMap<KeyboardEvent, Set<OverlayManager>>();
 
 /** Install once inside the UIProvider of each independently mounted instance. */
 export function OverlayHost(props: OverlayHostProps) {
-  const target = props.target ?? useMountSurface()?.target;
+  const surface = useMountSurface();
+  const target = props.target ?? surface?.target;
   if (!target)
     throw new Error('OverlayHost requires a core mount or explicit target.');
   const focus = getFocusScope();
@@ -96,7 +102,7 @@ export function OverlayHost(props: OverlayHostProps) {
     throw new Error(
       'Each OverlayHost requires its own mount target and UIProvider focus scope.',
     );
-  const manager = new OverlayManager(target, focus);
+  const manager = new OverlayManager(target, focus, props.app ?? surface?.app);
   hosts.set(target, manager);
   scopes.set(focus, manager);
   onCleanup(() => {
@@ -111,6 +117,7 @@ export function OverlayHost(props: OverlayHostProps) {
 }
 
 interface Surface {
+  shared: boolean;
   shell: HTMLDivElement;
   content: HTMLDivElement;
   blocker: HTMLDivElement;
@@ -125,6 +132,15 @@ interface Surface {
 function viewportRect(element: HTMLElement): OverlayRect {
   const rect = element.getBoundingClientRect();
   return { x: rect.left, y: rect.top, width: rect.width, height: rect.height };
+}
+function containsPoint(element: HTMLElement, event: MouseEvent) {
+  const rect = element.getBoundingClientRect();
+  return (
+    event.clientX >= rect.left &&
+    event.clientX < rect.right &&
+    event.clientY >= rect.top &&
+    event.clientY < rect.bottom
+  );
 }
 function stopEvent(event: Event) {
   event.preventDefault();
@@ -160,10 +176,12 @@ class OverlayManager {
   private mutation?: MutationObserver;
   readonly doc: Document;
   readonly win: Window & typeof globalThis;
+  private readonly hiddenDOM = new Map<HTMLElement, string>();
 
   constructor(
     readonly target: HTMLElement,
     readonly focus: FocusScope,
+    readonly app?: Application,
   ) {
     this.doc = target.ownerDocument;
     this.win = this.doc.defaultView!;
@@ -257,6 +275,7 @@ class OverlayManager {
       !top ||
       !this.belongs(event) ||
       top.content.contains(event.target as Node) ||
+      (top.shared && containsPoint(top.content, event)) ||
       this.stack
         .slice(this.stack.indexOf(top) + 1)
         .some(
@@ -299,7 +318,10 @@ class OverlayManager {
     if (
       this.modalIndex() >= 0 &&
       this.belongs(event) &&
-      !this.permitted(event.target as HTMLElement)
+      !this.permitted(event.target as HTMLElement) &&
+      !this.stack.some(
+        (surface) => surface.shared && containsPoint(surface.content, event),
+      )
     )
       stopEvent(event);
   };
@@ -468,6 +490,7 @@ class OverlayManager {
   }
   private refresh = () => {
     for (const surface of [...this.stack]) surface.update();
+    this.syncConstraint();
   };
   private sample = () => {
     this.refresh();
@@ -500,6 +523,34 @@ class OverlayManager {
     this.syncConstraint();
   }
   syncConstraint() {
+    const modal = this.modalIndex();
+    const allowed = this.stack.slice(Math.max(0, modal));
+    const hidden = new Set<HTMLElement>();
+    if (modal >= 0 && this.stack[modal].shared && this.app) {
+      const visit = (element: HTMLElement) => {
+        if (allowed.some((surface) => surface.shell === element)) return;
+        if (allowed.some((surface) => element.contains(surface.shell))) {
+          for (const child of Array.from(element.children))
+            if (child instanceof this.win.HTMLElement) visit(child);
+        } else hidden.add(element);
+      };
+      for (const child of Array.from(this.app.domContainerRoot.children))
+        if (child instanceof this.win.HTMLElement) visit(child);
+      for (const surface of this.stack.slice(0, modal))
+        if (!surface.shared) hidden.add(surface.shell);
+    }
+    for (const [element, previous] of this.hiddenDOM) {
+      if (!hidden.has(element)) {
+        element.style.visibility = previous;
+        this.hiddenDOM.delete(element);
+      }
+    }
+    for (const element of hidden) {
+      if (!this.hiddenDOM.has(element)) {
+        this.hiddenDOM.set(element, element.style.visibility);
+        element.style.visibility = 'hidden';
+      }
+    }
     this.focus.setConstraint(
       this.modalIndex() < 0 ? undefined : (element) => this.permitted(element),
     );
@@ -559,6 +610,9 @@ class OverlayManager {
     for (const surface of [...this.stack].reverse()) surface.close();
     this.disconnect();
     this.stopGesture();
+    for (const [element, previous] of this.hiddenDOM)
+      element.style.visibility = previous;
+    this.hiddenDOM.clear();
     this.focus.setConstraint();
   }
 }
@@ -606,14 +660,25 @@ export function createOverlay(options: OverlayOptions): OverlayState {
     },
   };
   function start() {
-    if (typeof manager.doc.documentElement.showPopover !== 'function')
+    const shared = Boolean(
+      options.modal ||
+      Object.getOwnPropertyDescriptor(options, 'modal')?.get ||
+      manager.stack.some((surface) => surface.shared),
+    );
+    if (
+      !shared &&
+      typeof manager.doc.documentElement.showPopover !== 'function'
+    )
       throw new Error('OverlayHost requires the browser Popover API.');
     const controller = new AbortController();
     const shell = manager.doc.createElement('div');
-    shell.popover = 'manual';
+    if (!shared) shell.popover = 'manual';
     shell.dataset.piantOverlay = '';
     shell.style.cssText =
       'position:fixed;inset:0;margin:0;padding:0;border:0;width:100%;height:100%;background:transparent;overflow:visible;pointer-events:none;';
+    if (shared)
+      shell.style.cssText =
+        'position:absolute;left:0;top:0;width:0;height:0;margin:0;padding:0;border:0;overflow:visible;pointer-events:none;';
     const style = manager.doc.createElement('style');
     style.textContent =
       '[data-piant-overlay]::backdrop{background:transparent;pointer-events:none}';
@@ -625,9 +690,15 @@ export function createOverlay(options: OverlayOptions): OverlayState {
     if (!options.noninteractive) content.tabIndex = -1;
     content.style.cssText =
       'position:fixed;pointer-events:auto;overflow:hidden;outline:none;';
+    if (shared) {
+      content.style.position = 'absolute';
+      content.style.pointerEvents = options.noninteractive ? 'auto' : 'none';
+      blocker.style.pointerEvents = 'none';
+      blocker.style.background = 'transparent';
+    }
     shell.append(style, blocker, content);
     manager.doc.body.append(shell);
-    let instance: MountedApp | undefined;
+    let instance: MountedApp | MountedLayer | undefined;
     let closed = false;
     let last = '';
     let lastSize = '';
@@ -691,13 +762,33 @@ export function createOverlay(options: OverlayOptions): OverlayState {
         return;
       }
       const vv = manager.win.visualViewport;
-      const bounds = {
+      let bounds = {
         x: vv?.offsetLeft ?? 0,
         y: vv?.offsetTop ?? 0,
         width: vv?.width ?? manager.win.innerWidth,
         height: vv?.height ?? manager.win.innerHeight,
       };
-      const target = viewportRect(manager.target);
+      const target = viewportRect(
+        shared && manager.app ? manager.app.canvas : manager.target,
+      );
+      if (shared) {
+        const right = Math.min(
+          bounds.x + bounds.width,
+          target.x + target.width,
+        );
+        const bottom = Math.min(
+          bounds.y + bounds.height,
+          target.y + target.height,
+        );
+        bounds = {
+          x: Math.max(bounds.x, target.x),
+          y: Math.max(bounds.y, target.y),
+          width: 0,
+          height: 0,
+        };
+        bounds.width = Math.max(1, right - bounds.x);
+        bounds.height = Math.max(1, bottom - bounds.y);
+      }
       const rect = anchorElement ? viewportRect(anchorElement) : undefined;
       const width = options.width;
       const height = options.height;
@@ -713,6 +804,9 @@ export function createOverlay(options: OverlayOptions): OverlayState {
       const signature = JSON.stringify([
         rect,
         target,
+        shared
+          ? [manager.app?.screen.width, manager.app?.screen.height]
+          : undefined,
         bounds,
         width,
         height,
@@ -770,16 +864,20 @@ export function createOverlay(options: OverlayOptions): OverlayState {
           availableHeight: bounds.height - padding * 2,
         };
       }
-      content.style.left = `${next.x}px`;
-      content.style.top = `${next.y}px`;
-      content.style.width = `${w}px`;
-      content.style.height = `${h}px`;
+      const sx =
+        shared && manager.app ? target.width / manager.app.screen.width : 1;
+      const sy =
+        shared && manager.app ? target.height / manager.app.screen.height : 1;
+      content.style.left = `${(next.x - (shared ? target.x : 0)) / sx}px`;
+      content.style.top = `${(next.y - (shared ? target.y : 0)) / sy}px`;
+      content.style.width = `${w / sx}px`;
+      content.style.height = `${h / sy}px`;
       blocker.hidden = !options.modal;
-      blocker.style.left = `${target.x}px`;
-      blocker.style.top = `${target.y}px`;
-      blocker.style.width = `${target.width}px`;
-      blocker.style.height = `${target.height}px`;
-      const size = `${w},${h}`;
+      blocker.style.left = `${shared ? 0 : target.x}px`;
+      blocker.style.top = `${shared ? 0 : target.y}px`;
+      blocker.style.width = `${target.width / sx}px`;
+      blocker.style.height = `${target.height / sy}px`;
+      const size = `${w},${h},${next.x},${next.y},${sx},${sy},${options.modal}`;
       if (lastSize !== size) {
         lastSize = size;
         instance?.resize(w, h);
@@ -797,6 +895,7 @@ export function createOverlay(options: OverlayOptions): OverlayState {
       }
     };
     const surface: Surface = {
+      shared,
       shell,
       blocker,
       content,
@@ -813,16 +912,31 @@ export function createOverlay(options: OverlayOptions): OverlayState {
       safeLayout();
     };
     try {
-      shell.showPopover();
+      if (!shared) shell.showPopover();
       manager.add(surface);
       layout();
       if (closed) return;
       setElement(content);
-      void mount(
-        () => runWithOwner(contentOwner, () => options.children(state)),
-        content,
-        { signal: controller.signal },
-      )
+      const mounted = shared
+        ? runWithOwner(contentOwner, () =>
+            mountLayer(() => options.children(state), content, {
+              signal: controller.signal,
+              app: manager.app!,
+              domHost: shell,
+              get interactive() {
+                return !options.noninteractive;
+              },
+              get backdrop() {
+                return Boolean(options.modal);
+              },
+            }),
+          )
+        : mount(
+            () => runWithOwner(contentOwner, () => options.children(state)),
+            content,
+            { signal: controller.signal },
+          );
+      void mounted
         .then((mounted) => {
           if (closed) {
             mounted.destroy();
@@ -835,6 +949,7 @@ export function createOverlay(options: OverlayOptions): OverlayState {
           // last: consumers may synchronously close the surface when it changes.
           instance.app.render();
           if (closed) return;
+          manager.syncConstraint();
           manager.focus.refresh();
           if (closed) return;
           if (

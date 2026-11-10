@@ -121,8 +121,8 @@ describe('mount', () => {
     const second = await mount(make, secondTarget);
     cleanup.push(first.destroy, second.destroy);
     expect(surfaces).toEqual([
-      { target: firstTarget, canvas: first.canvas },
-      { target: secondTarget, canvas: second.canvas },
+      { target: firstTarget, canvas: first.canvas, app: first.app },
+      { target: secondTarget, canvas: second.canvas, app: second.app },
     ]);
     expect(surfaces[0]).not.toBe(surfaces[1]);
     expect(useMountSurface()).toBeUndefined();

@@ -24,7 +24,8 @@ Piant 是一个基于 [PixiJS](https://pixijs.com/) 的画布（Canvas）布局�
 
 Piant 是一个 monorepo，包含以下主要包：
 
-- `@piant/core`：核心运行时，包含组件、响应式系统、渲染器和样式模块
+- `@piant/core`：核心运行时，包含 Canvas 基础组件、响应式状态、渲染和样式
+- [`@piant/ui`](/ui/introduction)：在 Core 上组合按钮、表单、容器、弹窗等可直接使用的组件
 - `@piant/babel-preset-piant`：Babel 预设，用于将 JSX 语法转换为运行时调用
 - `@piant/router`：轻量路由能力，提供路径匹配、导航与路由上下文
 - `@piant/store`：基于 MobX 的共享状态、持久化与可选历史记录
@@ -34,3 +35,5 @@ Piant 是一个 monorepo，包含以下主要包：
 
 - [快速开始](/guide/quick-start) — 5 分钟构建第一个 Piant 应用
 - [安装与配置](/guide/installation) — 详细的环境搭建指南
+- [UI 组件目录](/ui/introduction) — 按用途查找组件并操作预览
+- [示例项目](/guide/examples) — 按场景了解组件如何组成应用

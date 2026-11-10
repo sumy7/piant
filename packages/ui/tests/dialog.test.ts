@@ -44,49 +44,48 @@ function attach(scene: PNode, target: HTMLElement) {
 vi.mock('@piant/core', async (original) => {
   const core = await original<typeof import('@piant/core')>();
   const pixi = await import('pixi.js');
-  return {
-    ...core,
-    mount: vi.fn(async (component, target, options) => {
-      if (runtime.pending)
-        await new Promise<void>((resolve) => runtime.finish.push(resolve));
-      options.signal.throwIfAborted();
-      const scene = new core.PRoot(new pixi.Container(), {
-        width: 440,
-        height: 320,
-      });
-      const stop = core.render(component, scene);
-      const sync = () => {
-        attach(scene, target);
-        scene.doLayout();
-      };
-      sync();
-      runtime.sync.push(sync);
-      let disposed = false;
-      const destroy = vi.fn(() => {
-        stop();
-        scene.destroyRecursive();
-      });
-      const dispose = () => {
-        if (disposed) return;
-        disposed = true;
-        options.signal.removeEventListener('abort', dispose);
-        runtime.sync.splice(runtime.sync.indexOf(sync), 1);
-        destroy();
-      };
-      options.signal.addEventListener('abort', dispose, { once: true });
-      runtime.destroyed.push(destroy);
-      return {
-        root: scene,
-        canvas: document.createElement('canvas'),
-        app: { render: sync },
-        resize: (width: number, height: number) => {
-          scene.setStyle({ width, height });
-          sync();
-        },
-        destroy: dispose,
-      };
-    }),
-  };
+  const createMount = vi.fn(async (component, target, options) => {
+    const owner = core.getOwner();
+    if (runtime.pending)
+      await new Promise<void>((resolve) => runtime.finish.push(resolve));
+    options.signal.throwIfAborted();
+    const scene = new core.PRoot(new pixi.Container(), {
+      width: 440,
+      height: 320,
+    });
+    const stop = core.render(() => core.runWithOwner(owner, component), scene);
+    const sync = () => {
+      attach(scene, target);
+      scene.doLayout();
+    };
+    sync();
+    runtime.sync.push(sync);
+    let disposed = false;
+    const destroy = vi.fn(() => {
+      stop();
+      scene.destroyRecursive();
+    });
+    const dispose = () => {
+      if (disposed) return;
+      disposed = true;
+      options.signal.removeEventListener('abort', dispose);
+      runtime.sync.splice(runtime.sync.indexOf(sync), 1);
+      destroy();
+    };
+    options.signal.addEventListener('abort', dispose, { once: true });
+    runtime.destroyed.push(destroy);
+    return {
+      root: scene,
+      canvas: document.createElement('canvas'),
+      app: { render: sync },
+      resize: (width: number, height: number) => {
+        scene.setStyle({ width, height });
+        sync();
+      },
+      destroy: dispose,
+    };
+  });
+  return { ...core, mount: createMount, mountLayer: createMount };
 });
 const cleanups: (() => void)[] = [];
 beforeEach(() => {

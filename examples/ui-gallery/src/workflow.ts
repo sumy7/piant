@@ -6,11 +6,24 @@ import {
 import './style.css';
 
 const page = document.createElement('main');
-page.innerHTML = `<header class="page-header"><div><p class="eyebrow">PIANT / OVERLAY WORKFLOW</p><h1>编辑、确认与反馈</h1><p class="intro">两个独立工作区：编辑文档，在嵌套菜单和选择中浏览，明确确认操作，再查看或撤销本地状态通知。</p></div><a href="../../ui/workflow.html">组合指南 ↗</a></header><div class="gallery-actions"><span>本例不连接真实存储或归档服务，重挂载恢复初始状态。</span><button type="button" id="unmount-all">卸载全部工作区</button><button type="button" id="remount-all">重挂载全部工作区</button></div><div class="gallery-grid"></div><details class="diagnostics"><summary>查看工作区状态</summary><pre></pre></details>`;
+page.innerHTML = `
+  <header class="page-header">
+    <div><p class="eyebrow">PIANT UI · 组合示例</p><h1>文档工作流</h1>
+    <p class="intro">打开文档编辑器，用菜单和下拉框调整设置，保存后试着从通知中撤销。归档前会弹出确认。</p></div>
+    <nav class="scenario-nav" aria-label="Piant UI 示例">
+      <a href="./">设置面板</a>
+      <a href="./workflow.html" aria-current="page">文档工作流</a>
+      <a class="component-catalog" href="../../ui/introduction.html">组件目录 ↗</a>
+    </nav>
+  </header>
+  <div class="gallery-actions"><span>修改只在当前示例中保留，重挂载会恢复初始状态。</span>
+    <button type="button" id="unmount-all">卸载全部工作区</button><button type="button" id="remount-all">重挂载全部工作区</button></div>
+  <div class="gallery-grid"></div>
+  <details class="diagnostics"><summary>调试信息</summary><pre></pre></details>`;
 document.body.append(page);
 if (!location.pathname.startsWith('/examples/ui-gallery'))
-  page.querySelector<HTMLAnchorElement>('a')!.href =
-    'https://piant.sumygg.com/ui/workflow';
+  page.querySelector<HTMLAnchorElement>('.component-catalog')!.href =
+    'https://piant.sumygg.com/ui/introduction';
 const grid = page.querySelector<HTMLElement>('.gallery-grid')!;
 const report = () => {
   page.querySelector('pre')!.textContent = JSON.stringify(

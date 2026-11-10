@@ -7,6 +7,7 @@ import { render } from './runtime';
 export interface MountSurface {
   readonly target: HTMLElement | HTMLCanvasElement;
   readonly canvas: HTMLCanvasElement;
+  readonly app: Application;
 }
 
 const MountSurfaceContext = createContext<MountSurface>();
@@ -353,7 +354,7 @@ export async function mount(
       let failure: unknown;
       let failed = false;
       const content = MountSurfaceContext.Provider({
-        value: { target, canvas },
+        value: { target, canvas, app },
         children: () => {
           try {
             // Creating the top-level component must not subscribe the
