@@ -18,6 +18,8 @@ PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs node packages/ui/browse
 
 The checks use real Pixi renderers and native Inputs for ancestor clipping, Canvas/Input occlusion and hit testing, viewport edge positioning, CSS/Pixi scaling, Canvas and document scrolling, available height, focus traversal/restoration, nested dismissal, independent sibling lifetimes, overlapping foreign surfaces and external native popovers, instance isolation, rapid cancellation, reactive context and teardown. The IME check uses Chrome's `Input.imeSetComposition` protocol; it does not validate an operating system candidate window or VoiceOver.
 
+The [native platform acceptance record](reports/nativeAcceptance20261110.md) separates actual system IME events and human-observed VoiceOver speech from pending candidate-window, navigation and activation checks. COD-179 and COD-180 retain the full platform acceptance checklists.
+
 ## Slider
 
 The same fixture server provides `/slider.html`. Run its checks with:
