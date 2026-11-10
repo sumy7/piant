@@ -1,63 +1,60 @@
-import { createState, Input, StyleSheet, Text, View } from '@piant/core';
+import { createState, Input, type PInput, View } from '@piant/core';
+import { TodoAction } from './TodoAction';
+import { adoptTodoDOM } from './TodoSemantics';
 
 interface TodoInputProps {
-  onAddTodo?: (text: string) => void;
+  onAddTodo: (text: string) => string | undefined;
+  ref?: (node: PInput) => void;
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginBottom: 16,
-  },
-  input: {
-    flex: 1,
-    height: 40,
-    borderRadius: 6,
-    backgroundColor: 'rgb(245, 245, 245)',
-    padding: 8,
-  },
-  button: {
-    width: 60,
-    height: 40,
-    borderRadius: 6,
-    backgroundColor: '#171717',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: 'white',
-  },
-});
-
-const TodoInput = (props: TodoInputProps) => {
-  const [inputValue, setInputValue] = createState('');
-
-  const onClick = () => {
-    if (inputValue()) {
-      props.onAddTodo?.(inputValue());
-      setInputValue('');
-    }
-  };
-
-  const onInput = (value: string) => {
-    setInputValue(value);
+export default function TodoInput(props: TodoInputProps) {
+  const [value, setValue] = createState('');
+  let input: PInput;
+  function add() {
+    if (!props.onAddTodo(value())) return;
+    setValue('');
+    input.focus();
   }
-
   return (
-    <View style={styles.container}>
+    <View style={{ flexDirection: 'row', gap: 10, flexShrink: 0 }}>
       <Input
-        style={styles.input}
-        value={inputValue()}
-        placeholder="Enter todo item..."
-        onInput={onInput}
+        ref={(node) => {
+          input = node;
+          adoptTodoDOM(node.domElement.hostElement);
+          props.ref?.(node);
+        }}
+        value={value()}
+        onInput={setValue}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            add();
+          }
+        }}
+        aria-label="New task"
+        placeholder="What needs to get done?"
+        autoComplete="off"
+        enterKeyHint="done"
+        style={{
+          flex: 1,
+          minWidth: 0,
+          height: 46,
+          fontSize: 16,
+          color: '#172033',
+          backgroundColor: '#f6f8fb',
+          borderWidth: 1,
+          borderColor: '#dce3ec',
+          borderRadius: 9,
+          padding: 12,
+        }}
       />
-      <View style={styles.button} onClick={onClick}>
-        <Text style={styles.buttonText}>Add</Text>
-      </View>
+      <TodoAction
+        label="Add task"
+        variant="primary"
+        disabled={!value().trim()}
+        onPress={add}
+        style={{ minHeight: 46 }}
+      />
     </View>
   );
-};
-
-export default TodoInput;
+}
